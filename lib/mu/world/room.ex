@@ -1,10 +1,10 @@
 defmodule Mu.World.Room do
+  alias Mu.World.Room.Events
+
   def initialized(room), do: :ok
 
   def event(context, event) do
-    alias Kalevala.World.Room.Context
-    IO.inspect(event)
-    event(context, event.from_id, self(), event.topic, event.data)
+    Events.call(context, event)
   end
 
   defimpl Kalevala.World.Room.Callbacks do
@@ -17,7 +17,7 @@ defmodule Mu.World.Room do
     def init(room), do: room
 
     @impl true
-    def initialized(room), do: :ok
+    def initialized(_room), do: :ok
 
     @impl true
     def event(_room, context, event), do: Room.event(context, event)
@@ -41,7 +41,16 @@ defmodule Mu.World.Room do
     def load_item(_room, item_instance), do: Room.load_item(item_instance)
 
     @impl true
-    def item_request_pickup(room, context, event, item_instance),
+    def item_request_pickup(_room, context, event, item_instance),
       do: BasicRoom.item_request_pickup(context, event, item_instance)
+  end
+end
+
+defmodule Mu.World.Room.Events do
+  import Kalevala.World.Room.Context
+
+  def call(context, event) do
+    IO.inspect(event)
+    event(context, event.from_id, self(), event.topic, event.data)
   end
 end
