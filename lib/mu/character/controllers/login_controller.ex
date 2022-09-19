@@ -7,6 +7,7 @@ defmodule Mu.Character.LoginController do
 
   use Kalevala.Character.Controller
   alias Mu.Character.LoginView
+  alias Mu.Character.CharacterController
 
   @impl true
   def init(conn) do
@@ -21,6 +22,24 @@ defmodule Mu.Character.LoginController do
 
   @impl true
   def recv(conn, data) do
+    case get_flash(conn, :login_state) do
+      :login -> process_username(conn, data)
+      :echo -> echo_mode(conn, data)
+    end
+  end
+
+  def process_username(conn, username) do
+    username = String.trim(username)
+
+    case username do
+      "" -> render(conn, LoginView, "username")
+      <<4>> -> halt(conn)
+      "quit" -> halt(conn)
+      username -> put_controller(conn, CharacterController, %{username: username})
+    end
+  end
+
+  def echo_mode(conn, data) do
     conn
     |> assign(:data, data)
     |> render(LoginView, "echo")
