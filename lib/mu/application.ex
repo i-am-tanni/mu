@@ -31,6 +31,8 @@ defmodule Mu.Application do
 
     children = [
       {Kalevala.Character.Foreman.Supervisor, [name: Mu.Character.Foreman.Supervisor]},
+      {Mu.World, []},
+      {Mu.Character.Presence, []},
       {Kalevala.Telnet.Listener, telnet_config}
     ]
 

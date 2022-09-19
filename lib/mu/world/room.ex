@@ -1,6 +1,13 @@
 defmodule Mu.World.Room do
   alias Mu.World.Room.Events
 
+  defstruct [
+    :id,
+    :zone_id,
+    :name,
+    :description
+  ]
+
   def initialized(room), do: :ok
 
   def event(context, event) do

@@ -1,18 +1,11 @@
 defmodule Mu do
-  @moduledoc """
-  Documentation for `Mu`.
-  """
+  def test() do
+    alias Mu.World.{Room, Zone, Kickoff}
 
-  @doc """
-  Hello world.
+    zone = %Zone{id: 1}
+    room = %Room{id: 1, zone_id: zone.id}
 
-  ## Examples
-
-      iex> Mu.hello()
-      :world
-
-  """
-  def hello do
-    :world
+    Kickoff.start_zone(zone)
+    Kickoff.start_room(room)
   end
 end
