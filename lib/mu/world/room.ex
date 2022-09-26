@@ -5,10 +5,11 @@ defmodule Mu.World.Room do
     :id,
     :zone_id,
     :name,
-    :description
+    :description,
+    :exits
   ]
 
-  def initialized(room), do: :ok
+  def initialized(_room), do: :ok
 
   def event(context, event) do
     Events.call(context, event)
@@ -54,10 +55,21 @@ defmodule Mu.World.Room do
 end
 
 defmodule Mu.World.Room.Events do
+  use Kalevala.Event.Router
+
+  scope(Mu.World.Room) do
+    module(LookEvent) do
+      event("room/look", :call)
+    end
+  end
+end
+
+defmodule Mu.World.Room.LookEvent do
   import Kalevala.World.Room.Context
 
+  alias Mu.Character.LookView
+
   def call(context, event) do
-    IO.inspect(event)
-    event(context, event.from_id, self(), event.topic, event.data)
+    render(context, event.from_pid, LookView, "look")
   end
 end

@@ -1,8 +1,6 @@
 defmodule Mu.Character.LoginView do
   use Kalevala.Character.View
 
-  alias Mu.Character.CharacterController
-
   def render("echo", assigns) do
     assigns.data
   end
