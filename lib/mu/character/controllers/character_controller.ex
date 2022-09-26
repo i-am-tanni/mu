@@ -20,6 +20,9 @@ defmodule Mu.Character.CharacterController do
     conn
     |> put_character(character)
     |> move(:to, character.room_id, MoveView, "enter", %{})
+    |> assign(:character, character)
+    |> render(CharacterView, "name")
+    |> event("room/look", %{})
   end
 
   defp build_character(name) do
