@@ -7,6 +7,8 @@ defmodule Mu.Application do
 
   @impl true
   def start(_type, _args) do
+    IO.puts("\n!!! Reminder! Initiate rooms with Mu.test() !!!\n")
+
     foreman_options = [
       supervisor_name: Mu.Character.Foreman.Supervisor,
       communication_module: Mu.Communication,
@@ -30,6 +32,7 @@ defmodule Mu.Application do
     ]
 
     children = [
+      {Mu.Communication, []},
       {Kalevala.Character.Foreman.Supervisor, [name: Mu.Character.Foreman.Supervisor]},
       {Mu.World, []},
       {Mu.Character.Presence, []},

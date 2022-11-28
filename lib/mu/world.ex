@@ -6,8 +6,9 @@ defmodule Mu.World do
   end
 
   @impl true
-  def init(opts) do
+  def init(_opts) do
     children = [
+      {Mu.World.Items, [id: Mu.World.Items, name: Mu.World.Items]},
       {Kalevala.World, [name: Mu.World]}
     ]
 
