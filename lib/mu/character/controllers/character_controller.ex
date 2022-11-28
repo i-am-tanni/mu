@@ -4,6 +4,12 @@ defmodule Mu.Character.CharacterController do
   alias Kalevala.Character
   alias Mu.Character.CharacterView
   alias Mu.Character.MoveView
+  alias Mu.Character.CommandController
+  alias Mu.Communication
+  alias Mu.CharacterChannel
+  alias Mu.Character.ChannelEvent
+  alias Mu.Character.TellEvent
+  alias Mu.Character.MoveEvent
 
   @impl true
   def init(conn) do
@@ -20,9 +26,13 @@ defmodule Mu.Character.CharacterController do
     conn
     |> put_character(character)
     |> move(:to, character.room_id, MoveView, "enter", %{})
+    |> subscribe("rooms:#{character.room_id}", [], &MoveEvent.subscribe_error/2)
+    |> register_and_subscribe_character_channel(character)
+    |> subscribe("general", [], &ChannelEvent.subscribe_error/2)
     |> assign(:character, character)
     |> render(CharacterView, "name")
     |> event("room/look", %{})
+    |> put_controller(CommandController)
   end
 
   defp build_character(name) do
@@ -38,5 +48,13 @@ defmodule Mu.Character.CharacterController do
       inventory: [],
       meta: %{}
     }
+  end
+
+  defp register_and_subscribe_character_channel(conn, character) do
+    options = [character_id: character.id]
+    :ok = Communication.register("characters:#{character.id}", CharacterChannel, options)
+
+    options = [character: character]
+    subscribe(conn, "characters:#{character.id}", options, &TellEvent.subscribe_error/2)
   end
 end
