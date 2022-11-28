@@ -6,8 +6,9 @@ defmodule Mu.Character.QuitView do
   # passed to foreman disconnect
   def render("disconnected", %{character: character}) do
     [
+      "Notify: ",
       CharacterView.render("name", %{character: character}),
-      " has left the game."
+      " leaves in a swirl of mist."
     ]
   end
 

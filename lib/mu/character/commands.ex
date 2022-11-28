@@ -7,6 +7,22 @@ defmodule Mu.Character.Commands do
     parse("look", :run, aliases: ["l"])
   end
 
+  module(SayCommand) do
+    parse("say", :run, fn command ->
+      command
+      |> spaces()
+      |> optional(
+        repeat(
+          choice([
+            symbol("@") |> word(:at) |> spaces(),
+            symbol(">") |> word(:adverb) |> spaces()
+          ])
+        )
+      )
+      |> text(:text)
+    end)
+  end
+
   module(MoveCommand) do
     parse("north", :north, aliases: ["n"])
     parse("south", :south, aliases: ["s"])
