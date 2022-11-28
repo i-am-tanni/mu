@@ -4,12 +4,19 @@ defmodule Mu.Character.Events do
   use Kalevala.Event.Router
 
   alias Kalevala.Event.Movement
+  alias Kalevala.Event.Message
+  alias Mu.Character.SayEvent
 
   scope(Mu.Character) do
     module(MoveEvent) do
       event(Movement.Commit, :commit)
       event(Movement.Abort, :abort)
       event(Movement.Notice, :notice)
+    end
+
+    module(SayEvent) do
+      event("say/send", :broadcast)
+      event(Message, :echo, interested?: &SayEvent.interested?/1)
     end
   end
 end

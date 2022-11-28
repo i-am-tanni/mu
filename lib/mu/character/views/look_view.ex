@@ -1,16 +1,63 @@
 defmodule Mu.Character.LookView do
   use Kalevala.Character.View
 
+  alias Mu.Character.CharacterView
+  alias Mu.Character.ItemView
+
   def render("look", %{room: room}) do
     ~E"""
     <%= room.name %>
-    Exits: [<%= exits(room.exits) %>]
     """
   end
 
-  defp exits(exits) do
-    exits
-    |> Enum.map(& &1.exit_name)
-    |> View.join(", ")
+  def render("look.extra", %{room: room, characters: characters, item_instances: item_instances}) do
+    lines = [
+      render("_items", %{item_instances: item_instances}),
+      render("_exits", %{room: room}),
+      render("_characters", %{characters: characters})
+    ]
+
+    lines
+    |> Enum.reject(&is_nil/1)
+    |> Enum.map(fn line ->
+      [line, "\n"]
+    end)
+  end
+
+  def render("_exits", %{room: room}) do
+    exits =
+      room.exits
+      |> Enum.map(fn room_exit ->
+        ~i({exit name="#{room_exit.exit_name}"}#{room_exit.exit_name}{/exit})
+      end)
+      |> View.join(", ")
+
+    ~i(Exits: [#{exits}])
+  end
+
+  def render("_characters", %{characters: []}), do: nil
+
+  def render("_characters", %{characters: characters}) do
+    characters =
+      characters
+      |> Enum.map(&render("_character", %{character: &1}))
+      |> View.join("\n")
+
+    View.join(["You see:", characters], "\n")
+  end
+
+  def render("_character", %{character: character}) do
+    ~i(  #{CharacterView.render("name", %{character: character})})
+  end
+
+  def render("_items", %{item_instances: []}), do: nil
+
+  def render("_items", %{item_instances: item_instances}) do
+    items =
+      item_instances
+      |> Enum.map(&ItemView.render("name", %{item_instance: &1, context: :room}))
+      |> View.join(", ")
+
+    View.join(["Items:", items], " ")
   end
 end

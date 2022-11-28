@@ -1,14 +1,20 @@
+defmodule Mu.Exit do
+  defstruct [:id, :exit_name, :start_room_id, :end_room_id, :hidden?, :dormant?]
+end
+
 defmodule Mu do
   def test() do
     alias Mu.World.{Room, Zone, Kickoff}
-    alias Kalevala.World.Exit
+    alias Mu.Exit
 
     exits1 = [
       %Exit{
         id: 1,
         exit_name: "north",
         start_room_id: 1,
-        end_room_id: 2
+        end_room_id: 2,
+        hidden?: false,
+        dormant?: false
       }
     ]
 
@@ -17,7 +23,9 @@ defmodule Mu do
         id: 2,
         exit_name: "south",
         start_room_id: 2,
-        end_room_id: 1
+        end_room_id: 1,
+        hidden?: false,
+        dormant?: false
       }
     ]
 

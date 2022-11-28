@@ -11,6 +11,15 @@ defmodule Mu.Character.MoveView do
     ~i(#{CharacterView.render("name", %{character: character})} leaves.)
   end
 
+  def render("notice", %{direction: :to, reason: reason}) do
+    [reason, "\n"]
+  end
+
+  def render("notice", %{direction: :from, reason: reason}) do
+    IO.inspect(reason)
+    [reason, "\n"]
+  end
+
   def render("fail", %{reason: :no_exit, exit_name: exit_name}) do
     ~i(There is no exit #{exit_name}.\n)
   end
