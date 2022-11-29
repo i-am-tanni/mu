@@ -6,6 +6,8 @@ defmodule Mu.Character.Events do
   alias Kalevala.Event.Movement
   alias Kalevala.Event.Message
   alias Mu.Character.SayEvent
+  alias Mu.Character.WhisperEvent
+  alias Mu.Character.TellEvent
 
   scope(Mu.Character) do
     module(MoveEvent) do
@@ -17,6 +19,16 @@ defmodule Mu.Character.Events do
     module(SayEvent) do
       event("say/send", :broadcast)
       event(Message, :echo, interested?: &SayEvent.interested?/1)
+    end
+
+    module(TellEvent) do
+      event("tell/send", :broadcast)
+      event(Message, :echo, interested?: &TellEvent.interested?/1)
+    end
+
+    module(WhisperEvent) do
+      event("whisper/send", :broadcast)
+      event(Message, :echo, interested?: &WhisperEvent.interested?/1)
     end
   end
 end

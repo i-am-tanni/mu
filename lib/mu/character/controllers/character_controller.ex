@@ -46,7 +46,7 @@ defmodule Mu.Character.CharacterController do
       status: "#{name} is here.",
       description: "#{name} is a person.",
       inventory: [],
-      meta: %{}
+      meta: %Mu.Character.PlayerMeta{}
     }
   end
 

@@ -7,6 +7,12 @@ defmodule Mu.Character.Commands do
     parse("look", :run, aliases: ["l"])
   end
 
+  module(ReplyCommand) do
+    parse("reply", :run, fn command ->
+      command |> spaces() |> text(:text)
+    end)
+  end
+
   module(SayCommand) do
     parse("say", :run, fn command ->
       command
@@ -23,13 +29,39 @@ defmodule Mu.Character.Commands do
     end)
   end
 
+  module(TellCommand) do
+    parse("tell", :run, fn command ->
+      command
+      |> spaces()
+      |> word(:name)
+      |> spaces()
+      |> text(:text)
+    end)
+  end
+
+  module(WhisperCommand) do
+    parse("whisper", :run, fn command ->
+      command
+      |> spaces()
+      |> word(:name)
+      |> spaces()
+      |> text(:text)
+    end)
+  end
+
   module(MoveCommand) do
     parse("north", :north, aliases: ["n"])
     parse("south", :south, aliases: ["s"])
     parse("east", :east, aliases: ["e"])
     parse("west", :west, aliases: ["w"])
-    parse("up", :up, aliases: ["u"])
-    parse("down", :down, aliases: ["d"])
+    # parse("up", :up, aliases: ["u"])
+    # parse("down", :down, aliases: ["d"])
+    # parse("northwest", :northwest, aliases: ["nw", "nwest"])
+    # parse("northeast", :northeast, aliases: ["ne", "neast"])
+    # parse("southwest", :southwest, aliases: ["sw", "swest"])
+    # parse("southeast", :southeast, aliases: ["se", "seast"])
+    # parse("in", :in)
+    # parse("out", :out)
   end
 
   module(QuitCommand) do
