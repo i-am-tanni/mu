@@ -16,7 +16,6 @@ defmodule Mu.Character.MoveView do
   end
 
   def render("notice", %{direction: :from, reason: reason}) do
-    IO.inspect(reason)
     [reason, "\n"]
   end
 

@@ -10,9 +10,9 @@ defmodule Mu.Character.TellEvent do
     match?("characters:" <> _, event.data.channel_name)
   end
 
-  def broadcast(conn, %{data: %{character: character, text: text}}) when character != nil do
+  def broadcast(conn, %{data: %{character: character, text: text}})
+      when character != nil do
     conn
-    |> put_meta(:reply_to, character.name)
     |> assign(:character, character)
     |> assign(:text, text)
     |> render(TellView, "echo")
@@ -32,6 +32,7 @@ defmodule Mu.Character.TellEvent do
     |> assign(:character, event.data.character)
     |> assign(:id, event.data.id)
     |> assign(:text, event.data.text)
+    |> put_meta(:reply_to, event.data.character.name)
     |> render(TellView, "listen")
     |> prompt(CommandView, "prompt", %{})
   end
