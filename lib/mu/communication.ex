@@ -9,6 +9,6 @@ defmodule Mu.Communication do
 
   @impl true
   def initial_channels() do
-    [{"general", Mu.Communication.BroadcastChannel, []}]
+    [{"ooc", Mu.Communication.BroadcastChannel, []}]
   end
 end

@@ -28,7 +28,7 @@ defmodule Mu.Character.CharacterController do
     |> move(:to, character.room_id, MoveView, "enter", %{})
     |> subscribe("rooms:#{character.room_id}", [], &MoveEvent.subscribe_error/2)
     |> register_and_subscribe_character_channel(character)
-    |> subscribe("general", [], &ChannelEvent.subscribe_error/2)
+    |> subscribe("ooc", [], &ChannelEvent.subscribe_error/2)
     |> assign(:character, character)
     |> render(CharacterView, "name")
     |> event("room/look", %{})

@@ -5,7 +5,7 @@ defmodule Mu.Character.ChannelEvent do
   alias Mu.Character.CommandView
 
   def interested?(event) do
-    match?("general", event.data.channel_name)
+    match?("ooc", event.data.channel_name)
   end
 
   def echo(conn, event) do

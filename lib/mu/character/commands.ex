@@ -29,6 +29,12 @@ defmodule Mu.Character.Commands do
     end)
   end
 
+  module(ChannelCommand) do
+    parse("ooc", :ooc, fn command ->
+      command |> spaces() |> text(:text)
+    end)
+  end
+
   module(TellCommand) do
     parse("tell", :run, fn command ->
       command
