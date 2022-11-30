@@ -8,6 +8,7 @@ defmodule Mu.Character.Events do
   alias Mu.Character.SayEvent
   alias Mu.Character.WhisperEvent
   alias Mu.Character.TellEvent
+  alias Mu.Character.ChannelEvent
 
   scope(Mu.Character) do
     module(MoveEvent) do
@@ -29,6 +30,10 @@ defmodule Mu.Character.Events do
     module(WhisperEvent) do
       event("whisper/send", :broadcast)
       event(Message, :echo, interested?: &WhisperEvent.interested?/1)
+    end
+
+    module(ChannelEvent) do
+      event(Message, :echo, interested?: &ChannelEvent.interested?/1)
     end
   end
 end
