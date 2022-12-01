@@ -55,6 +55,10 @@ defmodule Mu.Character.Commands do
     end)
   end
 
+  module(WhoCommand) do
+    parse("who", :run)
+  end
+
   module(MoveCommand) do
     parse("north", :north, aliases: ["n"])
     parse("south", :south, aliases: ["s"])
