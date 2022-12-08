@@ -9,8 +9,13 @@ defmodule Mu.Character.Events do
   alias Mu.Character.WhisperEvent
   alias Mu.Character.TellEvent
   alias Mu.Character.ChannelEvent
+  alias Mu.Character.EmoteEvent
 
   scope(Mu.Character) do
+    module(EmoteEvent) do
+      event(Message, :echo, interested?: &EmoteEvent.interested?/1)
+    end
+
     module(MoveEvent) do
       event(Movement.Commit, :commit)
       event(Movement.Abort, :abort)

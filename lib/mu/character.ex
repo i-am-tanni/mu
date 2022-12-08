@@ -6,7 +6,7 @@ end
 
 defmodule Mu.Character.PlayerMeta do
   @moduledoc """
-  Specific metadata for a character in Kantele
+  Specific metadata for a character in Mu
   """
 
   defstruct [:reply_to, :vitals]
