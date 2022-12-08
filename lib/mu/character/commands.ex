@@ -3,6 +3,12 @@ defmodule Mu.Character.Commands do
 
   use Kalevala.Character.Command.Router, scope: Mu.Character
 
+  module(EmoteCommand) do
+    parse("emote", :broadcast, fn command ->
+      command |> spaces() |> text(:text)
+    end)
+  end
+
   module(LookCommand) do
     parse("look", :run, aliases: ["l"])
   end
