@@ -36,6 +36,7 @@ defmodule Mu.Application do
       {Kalevala.Character.Foreman.Supervisor, [name: Mu.Character.Foreman.Supervisor]},
       {Mu.World, []},
       {Mu.Character.Presence, []},
+      {Mu.Character.Socials, [name: Mu.Character.Socials]},
       {Kalevala.Telnet.Listener, telnet_config}
     ]
 

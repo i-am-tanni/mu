@@ -83,4 +83,6 @@ defmodule Mu.Character.Commands do
   module(QuitCommand) do
     parse("quit", :run, aliases: ["q"])
   end
+
+  dynamic(SocialCommand, :social, [])
 end

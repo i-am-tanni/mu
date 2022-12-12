@@ -1,0 +1,22 @@
+[
+  {
+    "char_auto": "You accuse yourself.",
+    "char_found": "You look accusingly at $N.",
+    "char_no_arg": "Accuse whom?",
+    "command": "accuse",
+    "others_auto": "$n seems to have a bad conscience.",
+    "others_found": "$n looks accusingly at $N.",
+    "others_no_arg": "$n is in an accusing mood.",
+    "vict_found": "$n looks accusingly at you."
+  },
+  {
+    "char_auto": "You ACK yourself.",
+    "char_found": "You ACK $M.",
+    "char_no_arg": "You gasp and say 'ACK!' at your mistake.",
+    "command": "ack",
+    "others_auto": "$n ACKS $mself.  Must be a bad day.",
+    "others_found": "$n ACKS $N.",
+    "others_no_arg": "$n ACKS at $s big mistake.",
+    "vict_found": "$n ACKS you."
+  }
+]
