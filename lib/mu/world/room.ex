@@ -81,6 +81,10 @@ defmodule Mu.World.Room.Events do
       event("say/send", :call)
     end
 
+    module(SocialEvent) do
+      event("social/send", :call)
+    end
+
     module(TellEvent) do
       event("tell/send", :call)
     end
@@ -124,6 +128,23 @@ defmodule Mu.World.Room.SayEvent do
     name = event.data["at"]
     character = find_local_character(context, name)
     data = Map.put(event.data, "at_character", character)
+    event(context, event.from_pid, self(), event.topic, data)
+  end
+
+  defp find_local_character(context, name) do
+    Enum.find(context.characters, fn character ->
+      Kalevala.Character.matches?(character, name)
+    end)
+  end
+end
+
+defmodule Mu.World.Room.SocialEvent do
+  import Kalevala.World.Room.Context
+
+  def call(context, event) do
+    name = event.data.name
+    character = find_local_character(context, name)
+    data = Map.put(event.data, :character, character)
     event(context, event.from_pid, self(), event.topic, data)
   end
 
