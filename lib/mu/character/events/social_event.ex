@@ -44,10 +44,10 @@ defmodule Mu.Character.SocialEvent do
 
   defp social_view(conn, event) do
     cond do
-      conn.character.id == event.acting_character.id and event.data.meta.at == nil ->
+      event.data.meta.at == nil and conn.character.id == event.acting_character.id ->
         "char-no-arg"
 
-      conn.character.id != event.acting_character.id and event.data.meta.at == nil ->
+      event.data.meta.at == nil ->
         "others-no-arg"
 
       conn.character.id == event.acting_character.id and
