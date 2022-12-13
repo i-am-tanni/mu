@@ -34,7 +34,7 @@ defmodule Mu.Character.SocialsEEx do
 
   def subject_name() do
     ignore(string("$n"))
-    |> replace("<= acting_character.name %>")
+    |> replace("<%= acting_character.name %>")
   end
 
   def subject_he() do
@@ -44,37 +44,37 @@ defmodule Mu.Character.SocialsEEx do
 
   def subject_him() do
     ignore(string("$m"))
-    |> replace("<%= acting_character.pronouns.object %>")
+    |> replace("<%= acting_character.meta.pronouns.object %>")
   end
 
   def subject_reflexive() do
     ignore(string("$mself"))
-    |> replace("<%= acting_character.pronouns.reflexive %>")
+    |> replace("<%= acting_character.meta.pronouns.reflexive %>")
   end
 
   def subject_his() do
     ignore(string("$s"))
-    |> replace("<%= acting_character.pronouns.possessive %>")
+    |> replace("<%= acting_character.meta.pronouns.possessive %>")
   end
 
   def victim_name() do
     ignore(string("$N"))
-    |> replace("<= character.name %>")
+    |> replace("<%= character.name %>")
   end
 
   def victim_reflexive() do
     ignore(string("$Mself"))
-    |> replace("<%= character.pronouns.reflexive %>")
+    |> replace("<%= character.meta.pronouns.reflexive %>")
   end
 
   def victim_him() do
     ignore(string("$M"))
-    |> replace("<%= character.pronouns.object %>")
+    |> replace("<%= character.meta.pronouns.object %>")
   end
 
   def victim_his() do
     ignore(string("$S"))
-    |> replace("<%= character.pronouns.possessive %>")
+    |> replace("<%= character.meta.pronouns.possessive %>")
   end
 
   defp text(), do: utf8_string([not: ?$], min: 1)

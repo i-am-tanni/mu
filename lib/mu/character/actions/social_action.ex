@@ -5,13 +5,9 @@ defmodule Mu.Character.SocialAction do
 
   use Kalevala.Character.Action
 
-  alias Mu.Character.SocialView
-
   @impl true
-  def run(conn, params = %{character: nil}) do
+  def run(conn, params = %{"character" => nil}) do
     conn
-    |> assign(:social, params["social"])
-    |> render(SocialView, "char-no-arg")
     |> publish_message(
       params["channel_name"],
       params["social"],

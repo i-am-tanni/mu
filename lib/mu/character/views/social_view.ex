@@ -13,12 +13,12 @@ defmodule Mu.Character.SocialView do
 
   def render("others-no-arg", %{text: social, acting_character: acting_character}) do
     text = EEx.eval_string(social.others_no_arg, acting_character: acting_character)
-    ~i(#{text})
+    ~i(#{text}\n)
   end
 
   def render("others-auto", %{text: social, acting_character: acting_character}) do
     text = EEx.eval_string(social.others_auto, acting_character: acting_character)
-    ~i(#{text})
+    ~i(#{text}\n)
   end
 
   def render("char-found", %{
@@ -32,7 +32,7 @@ defmodule Mu.Character.SocialView do
         character: character
       )
 
-    ~i(#{text})
+    ~i(#{text}\n)
   end
 
   def render("others-found", %{
@@ -43,7 +43,7 @@ defmodule Mu.Character.SocialView do
     text =
       EEx.eval_string(social.char_found, acting_character: acting_character, character: character)
 
-    ~i(#{text})
+    ~i(#{text}\n)
   end
 
   def render("victim-found", %{
@@ -54,7 +54,7 @@ defmodule Mu.Character.SocialView do
     text =
       EEx.eval_string(social.vict_found, acting_character: acting_character, character: character)
 
-    ~i(#{text})
+    ~i(#{text}\n)
   end
 
   def render("character-not-found", %{name: name}) do
