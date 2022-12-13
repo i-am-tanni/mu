@@ -63,6 +63,7 @@ defmodule Mu.Character.SocialCommand do
 
   def broadcast(conn, params) do
     params = Map.put(params, "channel_name", "rooms:#{conn.character.room_id}")
+    IO.inspect(params)
 
     conn
     |> SocialAction.run(params)

@@ -35,29 +35,32 @@ defmodule Mu.Character.SocialEvent do
   def echo(conn, event) do
     conn
     |> assign(:acting_character, event.acting_character)
-    |> assign(:character, event.meta.at)
+    |> assign(:character, event.data.meta.at)
     |> assign(:id, event.data.id)
-    |> assign(:text, event.data.social)
+    |> assign(:text, event.data.text)
     |> render(SocialView, social_view(conn, event))
     |> prompt(CommandView, "prompt", %{})
   end
 
-  defp social_view(_conn, event) when event.meta.at == nil do
-    "others-no-arg"
-  end
-
   defp social_view(conn, event) do
     cond do
-      conn.character.id == event.acting_character.id and conn.character.id == event.meta.at.id ->
+      conn.character.id == event.acting_character.id and event.data.meta.at == nil ->
+        "char-no-arg"
+
+      conn.character.id != event.acting_character.id and event.data.meta.at == nil ->
+        "others-no-arg"
+
+      conn.character.id == event.acting_character.id and
+          conn.character.id == event.data.meta.at.id ->
         "char-auto"
 
       conn.character.id == event.acting_character.id ->
         "char-found"
 
-      conn.character.id == event.meta.at.id ->
+      conn.character.id == event.data.meta.at.id ->
         "vict-found"
 
-      event.acting_character.id == event.meta.at.id ->
+      event.acting_character.id == event.data.meta.at.id ->
         "others-auto"
 
       true ->
