@@ -3,12 +3,14 @@ defmodule Mu.Character.SocialView do
 
   alias Mu.Character.CharacterView
 
-  def render("char-no-arg", %{text: social}) do
-    ~i(#{social.char_no_arg}\n)
+  def render("char-no-arg", %{text: social, acting_character: acting_character}) do
+    text = EEx.eval_string(social.char_no_arg, acting_character: acting_character)
+    ~i(#{text}\n)
   end
 
-  def render("char-auto", %{text: social}) do
-    ~i(#{social.char_auto}\n)
+  def render("char-auto", %{text: social, acting_character: acting_character}) do
+    text = EEx.eval_string(social.char_auto, acting_character: acting_character)
+    ~i(#{text}\n)
   end
 
   def render("others-no-arg", %{text: social, acting_character: acting_character}) do
