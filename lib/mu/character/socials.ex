@@ -34,7 +34,9 @@ defmodule Mu.Character.SocialsEEx do
 
   def subject_name() do
     ignore(string("$n"))
-    |> replace("<%= acting_character.name %>")
+    |> replace(
+      "<%= Mu.Character.CharacterView.render(\\\"name\\\", %{character: acting_character}) %>"
+    )
   end
 
   def subject_he() do
@@ -59,7 +61,7 @@ defmodule Mu.Character.SocialsEEx do
 
   def victim_name() do
     ignore(string("$N"))
-    |> replace("<%= character.name %>")
+    |> replace("<%= Mu.Character.CharacterView.render(\\\"name\\\", %{character: character}) %>")
   end
 
   def victim_reflexive() do
