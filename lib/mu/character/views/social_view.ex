@@ -27,7 +27,7 @@ defmodule Mu.Character.SocialView do
         character: character
       }) do
     text =
-      EEx.eval_string(social.others_found,
+      EEx.eval_string(social.char_found,
         acting_character: acting_character,
         character: character
       )
@@ -41,12 +41,15 @@ defmodule Mu.Character.SocialView do
         character: character
       }) do
     text =
-      EEx.eval_string(social.char_found, acting_character: acting_character, character: character)
+      EEx.eval_string(social.others_found,
+        acting_character: acting_character,
+        character: character
+      )
 
     ~i(#{text}\n)
   end
 
-  def render("victim-found", %{
+  def render("vict-found", %{
         text: social,
         acting_character: acting_character,
         character: character
