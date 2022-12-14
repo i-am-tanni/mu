@@ -29,6 +29,7 @@ defmodule Mu.Character.Events do
     end
 
     module(SocialEvent) do
+      event("social/send", :broadcast)
       event(Message, :echo, interested?: &SocialEvent.interested?/1)
     end
 

@@ -10,7 +10,7 @@ defmodule Mu.Character.SocialEvent do
     event.data.type == "social" && match?("rooms:" <> _, event.data.channel_name)
   end
 
-  def broadcast(conn, %{data: %{character: character, social: social}}) when character != nil do
+  def broadcast(conn, %{data: %{character: character, text: social}}) when character != nil do
     options = [
       type: "social",
       meta: %{
@@ -19,9 +19,6 @@ defmodule Mu.Character.SocialEvent do
     ]
 
     conn
-    |> assign(:character, character)
-    |> assign(:social, social)
-    |> render(SocialView, "broadcast-with-target")
     |> publish_message("rooms:#{conn.character.room_id}", social, options, &publish_error/2)
   end
 
