@@ -10,6 +10,7 @@ defmodule Mu.Character.CharacterController do
   alias Mu.Character.ChannelEvent
   alias Mu.Character.TellEvent
   alias Mu.Character.MoveEvent
+  alias Mu.Character.Pronouns
 
   @impl true
   def init(conn) do
@@ -46,7 +47,9 @@ defmodule Mu.Character.CharacterController do
       status: "#{name} is here.",
       description: "#{name} is a person.",
       inventory: [],
-      meta: %Mu.Character.PlayerMeta{}
+      meta: %Mu.Character.PlayerMeta{
+        pronouns: Pronouns.male()
+      }
     }
   end
 

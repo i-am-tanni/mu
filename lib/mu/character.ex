@@ -9,11 +9,11 @@ defmodule Mu.Character.PlayerMeta do
   Specific metadata for a character in Mu
   """
 
-  defstruct [:reply_to, :vitals]
+  defstruct [:reply_to, :vitals, :pronouns]
 
   defimpl Kalevala.Meta.Trim do
     def trim(meta) do
-      Map.take(meta, [:vitals])
+      Map.take(meta, [:vitals, :pronouns])
     end
   end
 
