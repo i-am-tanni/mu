@@ -1,9 +1,7 @@
 defmodule Mu.Character.EmoteCommand do
-  use Kalevala.Character.Command, dynamic: true
+  use Kalevala.Character.Command
 
-  alias Mu.Character.Emotes
   alias Mu.Character.EmoteAction
-  alias Mu.Character.EmoteView
 
   def broadcast(conn, params) do
     params = Map.put(params, "channel_name", "rooms:#{conn.character.room_id}")
