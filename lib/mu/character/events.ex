@@ -23,6 +23,10 @@ defmodule Mu.Character.Events do
       event(Movement.Notice, :notice)
     end
 
+    module(RandomExitEvent) do
+      event("room/wander", :run)
+    end
+
     module(SayEvent) do
       event("say/send", :broadcast)
       event(Message, :echo, interested?: &SayEvent.interested?/1)

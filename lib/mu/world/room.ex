@@ -89,6 +89,10 @@ defmodule Mu.World.Room.Events do
       event("tell/send", :call)
     end
 
+    module(RandomExitEvent) do
+      event("room/wander", :call)
+    end
+
     module(WhisperEvent) do
       event("whisper/send", :call)
     end
@@ -118,6 +122,19 @@ defmodule Mu.World.Room.LookEvent do
     |> assign(:item_instances, item_instances)
     |> render(event.from_pid, LookView, "look")
     |> render(event.from_pid, LookView, "look.extra")
+  end
+end
+
+defmodule Mu.World.Room.RandomExitEvent do
+  import Kalevala.World.Room.Context
+
+  def call(context, event) do
+    exits =
+      Enum.map(context.data.exits, fn room_exit ->
+        room_exit.exit_name
+      end)
+
+    event(context, event.from_pid, self(), event.topic, %{exits: exits})
   end
 end
 
