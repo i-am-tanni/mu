@@ -32,7 +32,7 @@ defmodule Mu.Character.SocialAction do
     |> event("social/send", params)
   end
 
-  def meta(character: character) do
+  defp meta(character: character) do
     %{
       at: character
     }
