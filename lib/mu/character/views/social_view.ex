@@ -1,8 +1,6 @@
 defmodule Mu.Character.SocialView do
   use Kalevala.Character.View
 
-  alias Mu.Character.CharacterView
-
   def render("char-no-arg", %{text: social, acting_character: acting_character}) do
     text = EEx.eval_string(social.char_no_arg, acting_character: acting_character)
     ~i(#{text}\n)
