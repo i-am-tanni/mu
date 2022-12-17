@@ -1,5 +1,5 @@
 defmodule Mu.Exit do
-  defstruct [:id, :exit_name, :start_room_id, :end_room_id, :hidden?, :dormant?]
+  defstruct [:id, :exit_name, :start_room_id, :end_room_id, :door, :hidden?, :secret?]
 end
 
 defmodule Mu do
@@ -14,7 +14,7 @@ defmodule Mu do
         start_room_id: 1,
         end_room_id: 2,
         hidden?: false,
-        dormant?: false
+        secret?: false
       }
     ]
 
