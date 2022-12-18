@@ -10,7 +10,6 @@ defmodule Mu.Character.CharacterController do
   alias Mu.Character.ChannelEvent
   alias Mu.Character.TellEvent
   alias Mu.Character.MoveEvent
-  alias Mu.Character.Pronouns
 
   @impl true
   def init(conn) do
