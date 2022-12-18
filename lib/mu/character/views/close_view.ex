@@ -19,6 +19,6 @@ defmodule Mu.Character.CloseView do
   end
 
   def render("door-already-closed", %{direction: direction}) do
-    ~i(The door #{direction} is already closed.)
+    ~i(The door #{direction} is already closed.\n)
   end
 end
