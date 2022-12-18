@@ -23,6 +23,11 @@ defmodule Mu.Character.Events do
       event(Movement.Notice, :notice)
     end
 
+    module(OpenEvent) do
+      event("room/open", :call)
+      event("door/open", :notice)
+    end
+
     module(RandomExitEvent) do
       event("room/wander", :run)
     end

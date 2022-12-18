@@ -22,4 +22,12 @@ defmodule Mu.Character.MoveView do
   def render("fail", %{reason: :no_exit, exit_name: exit_name}) do
     ~i(There is no exit #{exit_name}.\n)
   end
+
+  def render("fail", %{reason: :door_locked, exit_name: exit_name}) do
+    ~i(The door #{exit_name} is closed and locked.\n)
+  end
+
+  def render("fail", %{reason: :door_closed, exit_name: exit_name}) do
+    ~i(The door #{exit_name} is closed.\n)
+  end
 end

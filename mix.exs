@@ -22,7 +22,7 @@ defmodule Mu.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:kalevala, git: "https://github.com/oestrich/kalevala"},
+      {:kalevala, git: "https://github.com/i-am-tanni/kalevala"},
       {:ranch, "~> 1.7"},
       {:jason, "~> 1.4"}
       # {:dep_from_hexpm, "~> 0.3.0"},

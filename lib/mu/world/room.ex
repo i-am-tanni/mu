@@ -26,6 +26,18 @@ defmodule Mu.World.Room do
     end
   end
 
+  def movement_request(_context, event, room_exit) when room_exit.door == nil do
+    {:proceed, event, room_exit}
+  end
+
+  def movement_request(_context, event, room_exit = %{door: door}) do
+    cond do
+      door.closed? == false -> {:proceed, event, room_exit}
+      door.locked? -> {:abort, event, :door_locked}
+      door.closed? -> {:abort, event, :door_closed}
+    end
+  end
+
   def event(context, event) do
     Events.call(context, event)
   end
@@ -50,7 +62,7 @@ defmodule Mu.World.Room do
 
     @impl true
     def movement_request(_room, context, event, room_exit),
-      do: BasicRoom.movement_request(context, event, room_exit)
+      do: Room.movement_request(context, event, room_exit)
 
     @impl true
     def confirm_movement(_room, context, event),
@@ -75,6 +87,11 @@ defmodule Mu.World.Room.Events do
   scope(Mu.World.Room) do
     module(LookEvent) do
       event("room/look", :call)
+    end
+
+    module(OpenEvent) do
+      event("room/open", :call)
+      event("door/open", :open_door)
     end
 
     module(SayEvent) do
@@ -122,6 +139,85 @@ defmodule Mu.World.Room.LookEvent do
     |> assign(:item_instances, item_instances)
     |> render(event.from_pid, LookView, "look")
     |> render(event.from_pid, LookView, "look.extra")
+  end
+end
+
+defmodule Mu.World.Room.OpenEvent do
+  import Kalevala.World.Room.Context
+  alias Kalevala.World.Room
+  alias Mu.World.Exit
+
+  def call(context, event) do
+    name = event.data.text
+    room_exit = find_local_door(context, name)
+    data = Map.put(event.data, :room_exit, room_exit)
+    event(context, event.from_pid, self(), event.topic, data)
+  end
+
+  def open_door(context, event = %{data: %{door_id: door_id}}) do
+    room_exit = find_local_door(context, door_id)
+
+    case room_exit != nil do
+      true ->
+        door = Map.put(room_exit.door, :closed?, false)
+        room_exit = Map.put(room_exit, :door, door)
+
+        context
+        |> pass_along(event)
+        |> update_exit(room_exit)
+        |> broadcast(event, params(context, event))
+
+      false ->
+        context
+    end
+  end
+
+  defp find_local_door(context, keyword) do
+    Enum.find(context.data.exits, fn room_exit ->
+      (room_exit.door && room_exit.door.id == keyword) ||
+        (room_exit.door && Exit.matches?(room_exit, keyword))
+    end)
+  end
+
+  defp update_exit(context, room_exit) do
+    exits = [room_exit | Enum.reject(context.data.exits, &Exit.matches?(&1, room_exit.id))]
+    put_data(context, :exits, exits)
+  end
+
+  defp pass_along(context, event) when context.data.id == event.data.start_room_id do
+    end_room_id = event.data.end_room_id
+
+    Room.global_name(end_room_id)
+    |> GenServer.whereis()
+    |> send(event)
+
+    context
+  end
+
+  defp pass_along(context, _), do: context
+
+  defp params(context, event) do
+    params = %{direction: event.data.direction}
+
+    case context.data.id == event.data.start_room_id do
+      true -> Map.put(params, "side", "start")
+      false -> Map.put(params, "side", "end")
+    end
+  end
+
+  defp broadcast(context, event, params) do
+    event = %Kalevala.Event{
+      acting_character: event.acting_character,
+      from_pid: event.from_pid,
+      topic: event.topic,
+      data: params
+    }
+
+    Enum.each(context.characters, fn character ->
+      send(character.pid, event)
+    end)
+
+    context
   end
 end
 
