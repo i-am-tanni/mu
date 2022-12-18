@@ -48,7 +48,7 @@ defmodule Mu.Character.CharacterController do
       description: "#{name} is a person.",
       inventory: [],
       meta: %Mu.Character.PlayerMeta{
-        pronouns: Pronouns.male()
+        pronouns: :male
       }
     }
   end

@@ -2,6 +2,12 @@ defmodule Mu.Character do
   @moduledoc """
   Character callbacks for Kalevala
   """
+  alias Mu.Character.Pronouns
+
+  def fill_pronouns(character) do
+    meta = %{character.meta | pronouns: Pronouns.get(character.meta.pronouns)}
+    Map.put(character, :meta, meta)
+  end
 end
 
 defmodule Mu.Character.PlayerMeta do
