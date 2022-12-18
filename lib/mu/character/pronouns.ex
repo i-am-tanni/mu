@@ -1,23 +1,12 @@
 defmodule Mu.Character.Pronouns do
-  def untrim(character) do
-    case character do
-      nil ->
-        nil
-
-      character ->
-        meta = Map.put(character.meta, :pronouns, get(character.meta.pronouns))
-        Map.put(character, :meta, meta)
-    end
-  end
-
-  defp get(group_name) do
-    case group_name do
+  def get(pronouns) do
+    case pronouns do
       :male -> male()
       :female -> female()
     end
   end
 
-  def male() do
+  defp male() do
     %{
       subject: "he",
       object: "him",
@@ -26,7 +15,7 @@ defmodule Mu.Character.Pronouns do
     }
   end
 
-  def female() do
+  defp female() do
     %{
       subject: "she",
       object: "her",

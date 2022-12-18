@@ -5,6 +5,7 @@ defmodule Mu.Character.SocialEvent do
 
   alias Mu.Character.CommandView
   alias Mu.Character.SocialView
+  alias Mu.Character
 
   def interested?(event) do
     event.data.type == "social" && match?("rooms:" <> _, event.data.channel_name)
@@ -31,8 +32,8 @@ defmodule Mu.Character.SocialEvent do
 
   def echo(conn, event) do
     conn
-    |> assign(:acting_character, event.acting_character)
-    |> assign(:character, event.data.meta.at)
+    |> assign(:acting_character, Character.fill_pronouns(event.acting_character))
+    |> assign(:character, Character.fill_pronouns(event.data.meta.at))
     |> assign(:id, event.data.id)
     |> assign(:text, event.data.text)
     |> render(SocialView, social_view(conn, event))
