@@ -13,6 +13,11 @@ defmodule Mu.Character.Events do
   alias Mu.Character.SocialEvent
 
   scope(Mu.Character) do
+    module(CloseEvent) do
+      event("room/close", :call)
+      event("door/close", :notice)
+    end
+
     module(EmoteEvent) do
       event(Message, :echo, interested?: &EmoteEvent.interested?/1)
     end

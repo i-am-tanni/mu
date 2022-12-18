@@ -89,11 +89,6 @@ defmodule Mu.World.Room.Events do
       event("room/look", :call)
     end
 
-    module(OpenEvent) do
-      event("room/open", :call)
-      event("door/open", :open_door)
-    end
-
     module(SayEvent) do
       event("say/send", :call)
     end
@@ -104,6 +99,13 @@ defmodule Mu.World.Room.Events do
 
     module(TellEvent) do
       event("tell/send", :call)
+    end
+
+    module(DoorEvent) do
+      event("room/open", :call)
+      event("room/close", :call)
+      event("door/open", :toggle_door)
+      event("door/close", :toggle_door)
     end
 
     module(RandomExitEvent) do
@@ -142,7 +144,7 @@ defmodule Mu.World.Room.LookEvent do
   end
 end
 
-defmodule Mu.World.Room.OpenEvent do
+defmodule Mu.World.Room.DoorEvent do
   import Kalevala.World.Room.Context
   alias Kalevala.World.Room
   alias Mu.World.Exit
@@ -154,16 +156,16 @@ defmodule Mu.World.Room.OpenEvent do
     event(context, event.from_pid, self(), event.topic, data)
   end
 
-  def open_door(context, event = %{data: %{door_id: door_id}}) do
+  def toggle_door(context, event = %{data: %{door_id: door_id}}) do
     room_exit = find_local_door(context, door_id)
 
     case room_exit != nil do
       true ->
-        door = Map.put(room_exit.door, :closed?, false)
+        door = update_door(room_exit.door, event.topic)
         room_exit = Map.put(room_exit, :door, door)
 
         context
-        |> pass_along(event)
+        |> pass(event)
         |> update_exit(room_exit)
         |> broadcast(event, params(context, event))
 
@@ -179,12 +181,21 @@ defmodule Mu.World.Room.OpenEvent do
     end)
   end
 
+  defp update_door(door, action) do
+    case action do
+      "door/open" -> Map.put(door, :closed?, false)
+      "door/close" -> Map.put(door, :closed?, true)
+      "door/lock" -> Map.put(door, :locked?, true)
+      "door/unlock" -> Map.put(door, :locked?, false)
+    end
+  end
+
   defp update_exit(context, room_exit) do
     exits = [room_exit | Enum.reject(context.data.exits, &Exit.matches?(&1, room_exit.id))]
     put_data(context, :exits, exits)
   end
 
-  defp pass_along(context, event) when context.data.id == event.data.start_room_id do
+  defp pass(context, event) when context.data.id == event.data.start_room_id do
     end_room_id = event.data.end_room_id
 
     Room.global_name(end_room_id)
@@ -194,7 +205,7 @@ defmodule Mu.World.Room.OpenEvent do
     context
   end
 
-  defp pass_along(context, _), do: context
+  defp pass(context, _), do: context
 
   defp params(context, event) do
     params = %{direction: event.data.direction}
