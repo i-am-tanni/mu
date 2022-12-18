@@ -1,11 +1,10 @@
-defmodule Mu.Exit do
-  defstruct [:id, :exit_name, :start_room_id, :end_room_id, :door, :hidden?, :secret?]
-end
-
 defmodule Mu do
   def test() do
-    alias Mu.World.{Room, Zone, Kickoff}
-    alias Mu.Exit
+    alias Mu.World.Room
+    alias Mu.World.Zone
+    alias Mu.World.Kickoff
+    alias Mu.World.Exit
+    alias Mu.World.Exit.Door
 
     exits1 = [
       %Exit{
@@ -14,7 +13,12 @@ defmodule Mu do
         start_room_id: 1,
         end_room_id: 2,
         hidden?: false,
-        secret?: false
+        secret?: false,
+        door: %Door{
+          id: 1,
+          closed?: true,
+          locked?: false
+        }
       }
     ]
 
@@ -25,7 +29,12 @@ defmodule Mu do
         start_room_id: 2,
         end_room_id: 1,
         hidden?: false,
-        dormant?: false
+        secret?: false,
+        door: %Door{
+          id: 1,
+          closed?: true,
+          locked?: false
+        }
       }
     ]
 

@@ -13,6 +13,12 @@ defmodule Mu.Character.Commands do
     parse("look", :run, aliases: ["l"])
   end
 
+  module(OpenCommand) do
+    parse("open", :run, fn command ->
+      command |> spaces() |> text(:text)
+    end)
+  end
+
   module(ReplyCommand) do
     parse("reply", :run, fn command ->
       command |> spaces() |> text(:text)
