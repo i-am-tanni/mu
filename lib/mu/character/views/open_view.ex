@@ -23,6 +23,6 @@ defmodule Mu.Character.OpenView do
   end
 
   def render("door-already-open", %{direction: direction}) do
-    ~i(The door #{direction} is already open.)
+    ~i(The door #{direction} is already open.\n)
   end
 end

@@ -22,7 +22,7 @@ defmodule Mu.Character.CloseEvent do
       door.closed? ->
         conn
         |> assign(:direction, text)
-        |> prompt(CloseView, "door-already-closed")
+        |> render(CloseView, "door-already-closed")
         |> prompt(CommandView, "prompt", %{})
     end
   end

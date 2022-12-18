@@ -22,13 +22,13 @@ defmodule Mu.Character.OpenEvent do
       door.closed? and door.locked? ->
         conn
         |> assign(:direction, text)
-        |> prompt(OpenView, "door-locked")
+        |> render(OpenView, "door-locked")
         |> prompt(CommandView, "prompt", %{})
 
       true ->
         conn
         |> assign(:direction, text)
-        |> prompt(OpenView, "door-already-open")
+        |> render(OpenView, "door-already-open")
         |> prompt(CommandView, "prompt", %{})
     end
   end
