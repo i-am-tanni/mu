@@ -27,6 +27,9 @@ defmodule Mu.Character.LookView do
   def render("_exits", %{room: room}) do
     exits =
       room.exits
+      |> Enum.reject(fn room_exit ->
+        room_exit.hidden? || room_exit.secret?
+      end)
       |> Enum.map(fn room_exit ->
         ~i({exit name="#{room_exit.exit_name}"}#{room_exit.exit_name}{/exit})
       end)
