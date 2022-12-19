@@ -159,7 +159,7 @@ defmodule Mu.World.Room.DoorEvent do
   def toggle_door(context, event = %{data: %{door_id: door_id}}) do
     room_exit = find_local_door(context, door_id)
 
-    case room_exit != nil do
+    case toggleable?(room_exit, event.topic) do
       true ->
         door = update_door(room_exit.door, event.topic)
         room_exit = Map.put(room_exit, :door, door)
@@ -179,6 +179,17 @@ defmodule Mu.World.Room.DoorEvent do
       (room_exit.door && room_exit.door.id == keyword) ||
         (room_exit.door && Exit.matches?(room_exit, keyword))
     end)
+  end
+
+  defp toggleable?(room_exit, _topic) when room_exit == nil, do: false
+
+  defp toggleable?(%{door: door}, topic) do
+    case topic do
+      "door/open" -> door.closed?
+      "door/close" -> door.closed? == false
+      "door/lock" -> door.locked? == false
+      "door/unlock" -> door.locked?
+    end
   end
 
   defp update_door(door, action) do
