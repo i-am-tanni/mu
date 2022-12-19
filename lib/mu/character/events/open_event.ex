@@ -3,9 +3,8 @@ defmodule Mu.Character.OpenEvent do
   alias Mu.Character.OpenView
   alias Mu.Character.CommandView
 
-  def call(conn, event = %{data: %{room_exit: room_exit}}) when room_exit != nil do
+  def call(conn, %{data: %{room_exit: room_exit}}) when room_exit != nil do
     door = room_exit.door
-    text = event.data.text
 
     cond do
       door.closed? and not door.locked? ->
@@ -21,13 +20,13 @@ defmodule Mu.Character.OpenEvent do
 
       door.closed? and door.locked? ->
         conn
-        |> assign(:direction, text)
+        |> assign(:direction, room_exit.exit_name)
         |> render(OpenView, "door-locked")
         |> prompt(CommandView, "prompt", %{})
 
       true ->
         conn
-        |> assign(:direction, text)
+        |> assign(:direction, room_exit.exit_name)
         |> render(OpenView, "door-already-open")
         |> prompt(CommandView, "prompt", %{})
     end

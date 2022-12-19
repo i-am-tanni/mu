@@ -3,9 +3,8 @@ defmodule Mu.Character.CloseEvent do
   alias Mu.Character.CloseView
   alias Mu.Character.CommandView
 
-  def call(conn, event = %{data: %{room_exit: room_exit}}) when room_exit != nil do
+  def call(conn, %{data: %{room_exit: room_exit}}) when room_exit != nil do
     door = room_exit.door
-    text = event.data.text
 
     cond do
       door.closed? == false ->
@@ -21,7 +20,7 @@ defmodule Mu.Character.CloseEvent do
 
       door.closed? ->
         conn
-        |> assign(:direction, text)
+        |> assign(:direction, room_exit.exit_name)
         |> render(CloseView, "door-already-closed")
         |> prompt(CommandView, "prompt", %{})
     end
