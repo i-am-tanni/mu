@@ -8,7 +8,7 @@ defmodule Mu.World.Item do
   @moduledoc """
   Local callbacks for `Kalevala.World.Item`
   """
-
+  defstruct [:id, :keywords, :short, :long, :description, :callback_module, meta: %{}, verbs: []]
   use Kalevala.World.Item
 end
 

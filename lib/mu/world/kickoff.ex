@@ -34,4 +34,8 @@ defmodule Mu.World.Kickoff do
         Kalevala.World.Room.update(pid, room)
     end
   end
+
+  def cache_item(item) do
+    Mu.World.Items.put(item.id, item)
+  end
 end
