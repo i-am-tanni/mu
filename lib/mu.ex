@@ -5,7 +5,6 @@ defmodule Mu do
     alias Mu.World.Kickoff
     alias Mu.World.Exit
     alias Mu.World.Exit.Door
-    alias Kalevala.World.Item.Instance
     alias Mu.World.Item
 
     exits1 = [
