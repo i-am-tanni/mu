@@ -19,6 +19,10 @@ defmodule Mu.Character.Commands do
     end)
   end
 
+  module(InventoryCommand) do
+    parse("inventory", :run, aliases: ["i"])
+  end
+
   module(LookCommand) do
     parse("look", :run, aliases: ["l"])
   end
