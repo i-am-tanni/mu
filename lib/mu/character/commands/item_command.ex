@@ -1,7 +1,6 @@
 defmodule Mu.Character.ItemCommand do
   use Kalevala.Character.Command
 
-  alias Kalevala.Verb
   alias Mu.Character.ItemView
   alias Mu.World.Items
 
