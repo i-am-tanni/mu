@@ -5,7 +5,6 @@ defmodule Mu do
     alias Mu.World.Kickoff
     alias Mu.World.Exit
     alias Mu.World.Exit.Door
-    alias Mu.World.Item
 
     exits1 = [
       %Exit{
@@ -43,15 +42,15 @@ defmodule Mu do
     south = %Room{id: 1, zone_id: zone.id, exits: exits1, name: "South Room"}
     north = %Room{id: 2, zone_id: zone.id, exits: exits2, name: "North Room"}
 
-    item = %Item{
+    item = %Mu.World.Item{
       id: "generic:potion",
       keywords: ["potion", "red"],
-      short: "a red potion",
-      long: "a lurid red flask catches your eye",
-      description: "This potion is said to have potent healing properties",
-      callback_module: Item,
+      name: "a red potion",
+      dropped_name: "A lurid red flask catches your eye.",
+      description: "This potion is said to have potent healing properties.",
+      callback_module: Mu.World.Item,
       meta: %{},
-      verbs: ["get", "drop"]
+      verbs: [:get, :drop]
     }
 
     Kickoff.start_zone(zone)

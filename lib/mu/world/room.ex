@@ -4,6 +4,7 @@ defmodule Mu.World.Room do
   alias Mu.World.Room.Events
   alias Mu.RoomChannel
   alias Mu.Communication
+  alias Mu.World.Items
 
   defstruct [
     :id,
@@ -37,6 +38,8 @@ defmodule Mu.World.Room do
       door.closed? -> {:abort, event, :door_closed}
     end
   end
+
+  def load_item(item_instance), do: Items.get!(item_instance.item_id)
 
   def event(context, event) do
     Events.call(context, event)

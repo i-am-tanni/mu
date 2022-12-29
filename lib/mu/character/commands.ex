@@ -9,6 +9,16 @@ defmodule Mu.Character.Commands do
     end)
   end
 
+  module(ItemCommand) do
+    parse("drop", :drop, fn command ->
+      command |> spaces() |> text(:item_name)
+    end)
+
+    parse("get", :get, fn command ->
+      command |> spaces() |> text(:item_name)
+    end)
+  end
+
   module(LookCommand) do
     parse("look", :run, aliases: ["l"])
   end
