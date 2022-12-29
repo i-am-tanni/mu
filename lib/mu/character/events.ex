@@ -5,6 +5,8 @@ defmodule Mu.Character.Events do
 
   alias Kalevala.Event.Movement
   alias Kalevala.Event.Message
+  alias Kalevala.Event.ItemDrop
+  alias Kalevala.Event.ItemPickUp
   alias Mu.Character.SayEvent
   alias Mu.Character.WhisperEvent
   alias Mu.Character.TellEvent
@@ -20,6 +22,14 @@ defmodule Mu.Character.Events do
 
     module(EmoteEvent) do
       event(Message, :echo, interested?: &EmoteEvent.interested?/1)
+    end
+
+    module(ItemEvent) do
+      event(ItemDrop.Abort, :drop_abort)
+      event(ItemDrop.Commit, :drop_commit)
+
+      event(ItemPickUp.Abort, :pickup_abort)
+      event(ItemPickUp.Commit, :pickup_commit)
     end
 
     module(MoveEvent) do
