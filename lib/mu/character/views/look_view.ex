@@ -65,10 +65,11 @@ defmodule Mu.Character.LookView do
   end
 
   def render("item", %{item_instance: item_instance}) do
-    [
-      [ItemView.render("name", %{item_instance: item_instance}), "\n"],
-      ~i(  #{item_instance.item.description}\n)
-    ]
+    ~E"""
+    <%= ItemView.render("name", %{item_instance: item_instance}) %>
+      <%= item_instance.item.description %>
+
+    """
   end
 
   def render("character", %{character: character}) do

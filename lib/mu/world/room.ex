@@ -162,21 +162,21 @@ defmodule Mu.World.Room.LookEvent do
         |> assign(:character, character)
         |> render(event.from_pid, LookView, "character")
         |> assign(:character, event.acting_character)
-        |> prompt(event.from_pid, CommandView, "prompt", %{})
+        |> render(event.from_pid, CommandView, "prompt")
 
       {:item, item_instance} ->
         context
         |> assign(:item_instance, item_instance)
         |> render(event.from_pid, LookView, "item")
         |> assign(:character, event.acting_character)
-        |> prompt(event.from_pid, CommandView, "prompt", %{})
+        |> render(event.from_pid, CommandView, "prompt")
 
       nil ->
         context
         |> assign(:text, text)
         |> render(event.from_pid, LookView, "unknown")
         |> assign(:character, event.acting_character)
-        |> prompt(event.from_pid, CommandView, "prompt", %{})
+        |> render(event.from_pid, CommandView, "prompt")
     end
   end
 
