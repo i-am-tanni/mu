@@ -10,6 +10,10 @@ defmodule Mu.Character.InventoryView do
     """
   end
 
+  def render("_items", %{item_instances: []}) do
+    ~i(  Nothing)
+  end
+
   def render("_items", %{item_instances: item_instances}) do
     item_instances
     |> Enum.map(&render("_item", %{item_instance: &1}))
