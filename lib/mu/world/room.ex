@@ -90,6 +90,7 @@ defmodule Mu.World.Room.Events do
   scope(Mu.World.Room) do
     module(LookEvent) do
       event("room/look", :call)
+      event("room/look-arg", :arg)
     end
 
     module(SayEvent) do
@@ -126,6 +127,8 @@ defmodule Mu.World.Room.LookEvent do
 
   alias Mu.Character.LookView
   alias Mu.World.Items
+  alias Mu.World.Item
+  alias Mu.Character.CommandView
 
   def call(context, event) do
     characters =
@@ -144,6 +147,50 @@ defmodule Mu.World.Room.LookEvent do
     |> assign(:item_instances, item_instances)
     |> render(event.from_pid, LookView, "look")
     |> render(event.from_pid, LookView, "look.extra")
+    |> assign(:character, event.acting_character)
+    |> prompt(event.from_pid, CommandView, "prompt", %{})
+  end
+
+  def arg(context, event = %{data: %{text: text}}) do
+    result =
+      find_local_character(context, text) ||
+        find_local_item(context, text)
+
+    case result do
+      {:character, character} ->
+        context
+        |> assign(:character, character)
+        |> render(event.from_pid, LookView, "character")
+        |> assign(:character, event.acting_character)
+        |> prompt(event.from_pid, CommandView, "prompt", %{})
+
+      {:item, item_instance} ->
+        context
+        |> assign(:item_instance, item_instance)
+        |> render(event.from_pid, LookView, "item")
+        |> assign(:character, event.acting_character)
+        |> prompt(event.from_pid, CommandView, "prompt", %{})
+
+      nil ->
+        context
+        |> assign(:text, text)
+        |> render(event.from_pid, LookView, "unknown")
+        |> assign(:character, event.acting_character)
+        |> prompt(event.from_pid, CommandView, "prompt", %{})
+    end
+  end
+
+  defp find_local_character(context, name) do
+    Enum.find_value(context.characters, fn character ->
+      if Kalevala.Character.matches?(character, name), do: {:character, character}
+    end)
+  end
+
+  defp find_local_item(context, keyword) do
+    Enum.find_value(context.item_instances, fn item_instance ->
+      item = Items.get!(item_instance.item_id)
+      if Item.matches?(item, keyword), do: {:item, %{item_instance | item: item}}
+    end)
   end
 end
 
@@ -179,8 +226,8 @@ defmodule Mu.World.Room.DoorEvent do
 
   defp find_local_door(context, keyword) do
     Enum.find(context.data.exits, fn room_exit ->
-      (room_exit.door && room_exit.door.id == keyword) ||
-        (room_exit.door && Exit.matches?(room_exit, keyword))
+      (!is_nil(room_exit.door) && room_exit.door.id == keyword) ||
+        (!is_nil(room_exit.door) && Exit.matches?(room_exit, keyword))
     end)
   end
 
