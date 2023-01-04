@@ -27,6 +27,8 @@ defmodule Mu.World.Room do
     end
   end
 
+  def movement_request(_context, event, nil), do: {:abort, event, :no_exit}
+
   def movement_request(_context, event, room_exit) when room_exit.door == nil do
     {:proceed, event, room_exit}
   end
