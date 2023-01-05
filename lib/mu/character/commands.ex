@@ -94,10 +94,10 @@ defmodule Mu.Character.Commands do
   end
 
   module(MoveCommand) do
-    parse("north", :north, aliases: ["n"])
-    parse("south", :south, aliases: ["s"])
-    parse("east", :east, aliases: ["e"])
-    parse("west", :west, aliases: ["w"])
+    parse("north", :run, aliases: ["n"])
+    parse("south", :run, aliases: ["s"])
+    parse("east", :run, aliases: ["e"])
+    parse("west", :run, aliases: ["w"])
     # parse("up", :up, aliases: ["u"])
     # parse("down", :down, aliases: ["d"])
     # parse("northwest", :northwest, aliases: ["nw", "nwest"])
