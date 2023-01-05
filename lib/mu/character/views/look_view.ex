@@ -58,7 +58,7 @@ defmodule Mu.Character.LookView do
   def render("_items", %{item_instances: item_instances}) do
     items =
       item_instances
-      |> Enum.map(&ItemView.render("name", %{item_instance: &1, context: :room}))
+      |> Enum.map(&ItemView.render("dropped_name", %{item_instance: &1, context: :room}))
       |> View.join(", ")
 
     View.join(["Items:", items], " ")

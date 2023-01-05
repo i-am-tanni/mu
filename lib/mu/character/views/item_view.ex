@@ -13,6 +13,10 @@ defmodule Mu.Character.ItemView do
     ]
   end
 
+  def render("dropped_name", %{item_instance: %{item: item}}) do
+    ~i({item id="#{item.id}"}#{item.dropped_name}{/item})
+  end
+
   def render("name", %{item: item}) do
     ~i({item id="#{item.id}"}#{item.name}{/item})
   end
