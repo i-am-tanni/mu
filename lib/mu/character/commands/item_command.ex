@@ -7,7 +7,6 @@ defmodule Mu.Character.ItemCommand do
   def drop(conn, %{"item_name" => item_name}) do
     item_instance =
       Enum.find(conn.character.inventory, fn item_instance ->
-        IO.inspect(item_instance)
         item = Items.get!(item_instance.item_id)
         item_instance.id == item_name || item.callback_module.matches?(item, item_name)
       end)
