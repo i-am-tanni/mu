@@ -24,7 +24,7 @@ defmodule Mu.World.Item do
   @impl true
   def matches?(item, keyword) do
     keyword = String.downcase(keyword)
-    keyword_match?(item.keywords, keyword) || String.downcase(item.short) == keyword
+    keyword_match?(item.keywords, keyword) || String.downcase(item.name) == keyword
   end
 
   defp keyword_match?(keywords, keyword) do
