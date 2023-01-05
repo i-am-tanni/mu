@@ -24,6 +24,10 @@ defmodule Mu.Character.LookView do
     end)
   end
 
+  def render("exits", %{room: room}) do
+    [render("_exits", %{room: room}), "\n"]
+  end
+
   def render("_exits", %{room: room}) do
     exits =
       room.exits
@@ -35,7 +39,7 @@ defmodule Mu.Character.LookView do
       end)
       |> View.join(", ")
 
-    ~i(Exits: [#{exits}])
+    ~i(Obvious exits: [#{exits}])
   end
 
   def render("_characters", %{characters: []}), do: nil

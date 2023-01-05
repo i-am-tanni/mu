@@ -93,6 +93,7 @@ defmodule Mu.World.Room.Events do
     module(LookEvent) do
       event("room/look", :call)
       event("room/look-arg", :arg)
+      event("room/exits", :exits)
     end
 
     module(SayEvent) do
@@ -180,6 +181,14 @@ defmodule Mu.World.Room.LookEvent do
         |> assign(:character, event.acting_character)
         |> render(event.from_pid, CommandView, "prompt")
     end
+  end
+
+  def exits(context, event) do
+    context
+    |> assign(:room, context.data)
+    |> assign(:character, event.acting_character)
+    |> render(event.from_pid, LookView, "exits")
+    |> render(event.from_pid, CommandView, "prompt")
   end
 
   defp find_local_character(context, name) do
