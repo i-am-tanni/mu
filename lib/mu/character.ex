@@ -4,10 +4,31 @@ defmodule Mu.Character do
   """
   alias Mu.Character.Pronouns
 
+  @doc """
+  Converts the gender atom to a pronoun set.
+  Pronoun strings don't live in PlayerMeta to avoid unnecessary data in event passing.
+  Therefore, they must be filled in when needed by socials, etc.
+  """
   def fill_pronouns(character) do
     meta = %{character.meta | pronouns: Pronouns.get(character.meta.pronouns)}
     Map.put(character, :meta, meta)
   end
+end
+
+defmodule Mu.Character.Vitals do
+  @moduledoc """
+  Character vital information
+  """
+  @derive Jason.Encoder
+
+  defstruct [
+    :health_points,
+    :max_health_points,
+    :skill_points,
+    :max_skill_points,
+    :endurance_points,
+    :max_endurance_points
+  ]
 end
 
 defmodule Mu.Character.PlayerMeta do
@@ -15,7 +36,7 @@ defmodule Mu.Character.PlayerMeta do
   Specific metadata for a character in Mu
   """
 
-  defstruct [:reply_to, :vitals, :pronouns]
+  defstruct [:reply_to, :pronouns, vitals: %Mu.Character.Vitals{}]
 
   defimpl Kalevala.Meta.Trim do
     def trim(meta) do
