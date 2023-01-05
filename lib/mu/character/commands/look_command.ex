@@ -33,4 +33,10 @@ defmodule Mu.Character.LookCommand do
         |> assign(:prompt, false)
     end
   end
+
+  def exits(conn, _params) do
+    conn
+    |> event("room/exits")
+    |> assign(:prompt, false)
+  end
 end
