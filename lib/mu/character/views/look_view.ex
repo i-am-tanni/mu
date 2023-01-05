@@ -63,4 +63,22 @@ defmodule Mu.Character.LookView do
 
     View.join(["Items:", items], " ")
   end
+
+  def render("item", %{item_instance: item_instance}) do
+    ~E"""
+    <%= ItemView.render("name", %{item_instance: item_instance}) %>
+      <%= item_instance.item.description %>
+
+    """
+  end
+
+  def render("character", %{character: character}) do
+    [
+      CharacterView.render("name", %{character: character})
+    ]
+  end
+
+  def render("unknown", %{text: text}) do
+    ~i(Could not find: "#{text}")
+  end
 end

@@ -24,7 +24,11 @@ defmodule Mu.Character.Commands do
   end
 
   module(LookCommand) do
-    parse("look", :run, aliases: ["l"])
+    parse("look", :room, aliases: ["l"])
+
+    parse("look", :run, fn command ->
+      command |> spaces() |> text(:text)
+    end)
   end
 
   module(DoorCommand) do
