@@ -157,6 +157,7 @@ defmodule Mu.World.Room.BuildEvent do
   end
 
   defp _dig(context, event = %{data: data}) do
+    # TODO remove String.to_integer() if you change room_ids to strings
     end_room_id = data.room_id |> String.to_integer()
     assigned? = end_room_id |> Kalevala.World.Room.global_name() |> GenServer.whereis()
     IO.inspect(assigned?)
