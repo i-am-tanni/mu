@@ -110,6 +110,12 @@ defmodule Mu.Character.Commands do
     # parse("out", :out)
   end
 
+  module(PathFindCommand) do
+    parse("track", :run, fn command ->
+      command |> spaces() |> text(:text)
+    end)
+  end
+
   module(QuitCommand) do
     parse("quit", :run, aliases: ["q"])
   end

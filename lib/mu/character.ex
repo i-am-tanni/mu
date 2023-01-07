@@ -31,6 +31,19 @@ defmodule Mu.Character.Vitals do
   ]
 end
 
+defmodule Mu.Character.PathFindData do
+  @moduledoc """
+  Tracks the list of visited room_ids and the number of leads.
+  A lead = an unvisited exit.
+
+  The search continues to propagate if:
+  - the status remains :continue
+  - there are unexplored exits (leads)
+  - The search depth >= max_depth (lives in the event data)
+  """
+  defstruct [:id, :text, :visited, :lead_count, :created_at, :status]
+end
+
 defmodule Mu.Character.PlayerMeta do
   @moduledoc """
   Specific metadata for a character in Mu
