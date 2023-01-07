@@ -18,8 +18,7 @@ defmodule Mu.Character.PathFindEvent do
   end
 
   def call(conn = %{flash: %{path_find_data: path_find_data}}, event)
-      when path_find_data.status == :continue and
-             path_find_data.id == event.data.id do
+      when path_find_data.status == :continue and path_find_data.id == event.data.id do
     conn = decrement_leads(conn)
 
     case event.data.depth + 1 < event.data.max_depth do
@@ -104,9 +103,7 @@ defmodule Mu.Character.PathFindEvent do
     events = Enum.map(room_ids, &update_steps(event, &1, room_exits))
 
     room_ids
-    |> Enum.map(fn room_id ->
-      Kalevala.World.Room.global_name(room_id)
-    end)
+    |> Enum.map(&Kalevala.World.Room.global_name/1)
     |> Enum.map(&GenServer.whereis/1)
     |> Enum.zip(events)
     |> Enum.each(fn {pid, event} ->
