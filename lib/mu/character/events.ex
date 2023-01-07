@@ -38,6 +38,10 @@ defmodule Mu.Character.Events do
       event(Movement.Notice, :notice)
     end
 
+    module(PathFindEvent) do
+      event("room/pathfind", :call)
+    end
+
     module(OpenEvent) do
       event("room/open", :call)
       event("door/open", :notice)
