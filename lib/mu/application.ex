@@ -24,6 +24,9 @@ defmodule Mu.Application do
       protocol: [
         output_processors: [
           Kalevala.Output.Tags,
+          Mu.Output.SemanticColors,
+          Mu.Output.AdminTags,
+          Kalevala.Output.Tables,
           Kalevala.Output.TagColors,
           Kalevala.Output.StripTags
         ]

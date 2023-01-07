@@ -6,7 +6,7 @@ defmodule Mu.Character.LookView do
 
   def render("look", %{room: room}) do
     ~E"""
-    <%= room.name %>
+    {room-title id="<%= to_string(room.id) %>"}<%= room.name %>{/room-title}
     """
   end
 
