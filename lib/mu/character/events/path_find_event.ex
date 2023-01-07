@@ -30,6 +30,7 @@ defmodule Mu.Character.PathFindEvent do
 
   def call(conn, _), do: conn
 
+  # Propagate to unvisited exits or test for failure
   defp try_propagate(conn, event) do
     room_exits = event.data.room_exits
     path_find_data = get_flash(conn, :path_find_data)
@@ -61,6 +62,7 @@ defmodule Mu.Character.PathFindEvent do
     end
   end
 
+  # Check if leads are exhausted
   defp test_for_failure(conn, event) do
     path_find_data = get_flash(conn, :path_find_data)
 
@@ -90,6 +92,7 @@ defmodule Mu.Character.PathFindEvent do
     put_flash(conn, :path_find_data, path_find_data)
   end
 
+  # Propagate events to the unvisited rooms and add the exit_keywords to each event's steps
   defp propagate(conn, event, room_ids, room_exits) do
     event = %Kalevala.Event{
       acting_character: character(conn),
