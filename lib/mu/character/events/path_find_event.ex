@@ -78,12 +78,13 @@ defmodule Mu.Character.PathFindEvent do
   end
 
   defp halt_pathfinding(conn) do
-    path_find_data = %{conn.flash.path_find_data | status: :abort}
+    path_find_data = %{conn.flash.path_find_data | status: :abort, visited: []}
     put_flash(conn, :path_find_data, path_find_data)
   end
 
-  # For each room visited, leads increase by one and on return, reduced by one
-  # Once all leads are exhausted, i.e. leads are zero, the failure state is achieved
+  # Unvisited exits increase the lead count
+  # Each unvisited exit that is pinged decrements the count when it reports back
+  # If there are no unvisited exits left, failure state is achieved
   defp decrement_leads(conn = %{flash: %{path_find_data: path_find_data}}) do
     path_find_data = %{path_find_data | lead_count: path_find_data.lead_count - 1}
     put_flash(conn, :path_find_data, path_find_data)
