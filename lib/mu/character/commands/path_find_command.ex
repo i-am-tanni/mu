@@ -9,7 +9,7 @@ defmodule Mu.Character.PathFindCommand do
 
     path_find_data = %PathFindData{
       id: id,
-      visited: MapSet.new() |> MapSet.put(room_id),
+      visited: MapSet.new([room_id]),
       lead_count: 1,
       status: :continue,
       created_at: DateTime.utc_now()
