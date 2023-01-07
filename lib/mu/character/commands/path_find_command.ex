@@ -1,9 +1,14 @@
 defmodule Mu.Character.PathFindCommand do
+  @moduledoc """
+  Breadth-first path finding.
+  The character retains the visited rooms as a MapSet and rooms returns exit lists.
+  PathFindEvent then determines which exits are unvisited and propagates until success or failure.
+  """
   use Kalevala.Character.Command
 
   alias Mu.Character.PathFindData
 
-  def run(conn, params) do
+  def track(conn, params) do
     room_id = conn.character.room_id
     id = Kalevala.Character.generate_id()
 

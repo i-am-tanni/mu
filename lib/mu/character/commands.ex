@@ -111,7 +111,7 @@ defmodule Mu.Character.Commands do
   end
 
   module(PathFindCommand) do
-    parse("track", :run, fn command ->
+    parse("track", :track, fn command ->
       command |> spaces() |> text(:text)
     end)
   end
