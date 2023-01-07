@@ -157,8 +157,7 @@ defmodule Mu.World.Room.BuildEvent do
   end
 
   defp _dig(context, event = %{data: data}) do
-    # TODO remove String.to_integer() if you change room_ids to strings
-    end_room_id = data.room_id |> String.to_integer()
+    end_room_id = parse(data.room_id)
     assigned? = end_room_id |> Kalevala.World.Room.global_name() |> GenServer.whereis()
     IO.inspect(assigned?)
 
@@ -187,6 +186,13 @@ defmodule Mu.World.Room.BuildEvent do
         |> render(event.from_pid, BuildView, "room-id-taken")
         |> assign(:character, event.acting_character)
         |> render(event.from_pid, CommandView, "prompt")
+    end
+  end
+
+  defp parse(room_id) do
+    case Integer.parse(room_id) do
+      {integer, _} -> integer
+      :error -> room_id
     end
   end
 end
