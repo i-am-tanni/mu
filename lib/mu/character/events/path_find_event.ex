@@ -17,9 +17,9 @@ defmodule Mu.Character.PathFindEvent do
     end
   end
 
-  def call(conn, event)
-      when conn.flash.path_find_data.status == :continue and
-             conn.flash.path_find_data.id == event.data.id do
+  def call(conn = %{flash: %{path_find_data: path_find_data}}, event)
+      when path_find_data.status == :continue and
+             path_find_data.id == event.data.id do
     conn = decrement_leads(conn)
 
     case event.data.depth + 1 < event.data.max_depth do
