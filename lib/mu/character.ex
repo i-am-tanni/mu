@@ -41,7 +41,7 @@ defmodule Mu.Character.PathFindData do
   - there are unexplored exits (leads)
   - The search depth >= max_depth (lives in the event data)
   """
-  defstruct [:id, :text, :visited, :lead_count, :created_at, :status]
+  defstruct [:id, :visited, :lead_count, :created_at, :status]
 end
 
 defmodule Mu.Character.PlayerMeta do
