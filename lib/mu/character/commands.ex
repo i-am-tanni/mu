@@ -3,6 +3,18 @@ defmodule Mu.Character.Commands do
 
   use Kalevala.Character.Command.Router, scope: Mu.Character
 
+  module(BuildCommand) do
+    parse("dig", :dig, fn command ->
+      command
+      |> spaces()
+      |> word(:start_exit_name)
+      |> spaces()
+      |> word(:end_exit_name)
+      |> spaces()
+      |> word(:new_room_id)
+    end)
+  end
+
   module(EmoteCommand) do
     parse("emote", :broadcast, fn command ->
       command |> spaces() |> text(:text)

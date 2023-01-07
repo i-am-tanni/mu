@@ -15,6 +15,10 @@ defmodule Mu.Character.Events do
   alias Mu.Character.SocialEvent
 
   scope(Mu.Character) do
+    module(BuildEvent) do
+      event("room/dig", :call)
+    end
+
     module(CloseEvent) do
       event("room/close", :call)
       event("door/close", :notice)

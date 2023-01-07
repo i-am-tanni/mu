@@ -5,6 +5,18 @@ defmodule Mu.World.Exit do
     room_exit.id == keyword || keyword_match?(room_exit.exit_name, keyword)
   end
 
+  def basic_exit(exit_name, start_room_id, end_room_id) do
+    %__MODULE__{
+      id: exit_name,
+      exit_name: exit_name,
+      start_room_id: start_room_id,
+      end_room_id: end_room_id,
+      hidden?: false,
+      secret?: false,
+      door: nil
+    }
+  end
+
   defp keyword_match?(exit_name, keyword) when is_binary(keyword) do
     exit_name = String.downcase(exit_name)
     keyword = String.downcase(keyword)
