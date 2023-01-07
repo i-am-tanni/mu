@@ -8,7 +8,7 @@ defmodule Mu.Character.PathFindEvent do
       "room/track" ->
         conn
         |> halt_pathfinding()
-        |> assign(:room_exit, List.last(data.steps))
+        |> assign(:exit_name, List.last(data.steps))
         |> render(PathFindView, "track/success")
         |> prompt(CommandView, "prompt")
 
