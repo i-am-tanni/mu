@@ -1,0 +1,32 @@
+{
+  "zone": {
+    "id": 1,
+    "name": "DefaultZone"
+  },
+  "rooms": {
+    "1": {
+      "description": "It's cold up here.",
+      "doors": {
+        "south": {
+          "id": 1
+        }
+      },
+      "exits": {
+        "south": 2
+      },
+      "name": "North Room"
+    },
+    "2": {
+      "description": "It's warmer down here.",
+      "doors": {
+        "north": {
+          "id": 1
+        }
+      },
+      "exits": {
+        "north": 1
+      },
+      "name": "South Room"
+    }
+  }
+}

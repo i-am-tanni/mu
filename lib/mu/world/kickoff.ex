@@ -1,5 +1,54 @@
 defmodule Mu.World.Kickoff do
+  use GenServer
+
   alias Kalevala.World.RoomSupervisor
+  alias Mu.World.Loader
+
+  @doc false
+  def start_link(opts) do
+    config = Keyword.take(opts, [:start])
+    otp_opts = Keyword.take(opts, [:name])
+
+    GenServer.start_link(__MODULE__, config, otp_opts)
+  end
+
+  @doc false
+  def reload() do
+    GenServer.cast(__MODULE__, :reload)
+  end
+
+  @impl true
+  def init(start: true) do
+    {:ok, %{}, {:continue, :load}}
+  end
+
+  def init(_) do
+    {:ok, %{}}
+  end
+
+  @impl true
+  def handle_cast(:reload, state) do
+    {:noreply, state, {:continue, :load}}
+  end
+
+  @impl true
+  def handle_continue(:load, state) do
+    world = Loader.load()
+    IO.inspect(world.rooms)
+
+    Enum.each(world.items, &cache_item/1)
+
+    Enum.each(world.zones, fn zone ->
+      zone
+      |> Loader.strip_zone()
+      |> start_zone()
+    end)
+
+    Enum.each(world.rooms, &start_room/1)
+    # Enum.each(world.characters, &start_character/1)
+
+    {:noreply, state}
+  end
 
   def start_zone(zone) do
     config = %{

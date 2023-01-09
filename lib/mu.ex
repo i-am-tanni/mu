@@ -1,4 +1,42 @@
 defmodule Mu do
+  def test_map() do
+    %{
+      zone: %{
+        id: 1
+      },
+      rooms: %{
+        1 => %{
+          name: "North Room",
+          description: "It's cold up here.",
+          exits: %{
+            south: 2
+          },
+          doors: %{
+            south: %{id: 1}
+          }
+        },
+        2 => %{
+          name: "South Room",
+          description: "It's warmer down here.",
+          exits: %{
+            north: 1
+          },
+          doors: %{
+            north: %{id: 1}
+          }
+        }
+      },
+      items: %{
+        "generic:potion" => %{
+          keywords: ["potion", "red", "flask"],
+          name: "a red potion",
+          dropped_name: "A lurid red flask catches your eye.",
+          description: "This potion is said to have potent healing properties."
+        }
+      }
+    }
+  end
+
   def test() do
     alias Mu.World.Room
     alias Mu.World.Zone
@@ -44,7 +82,7 @@ defmodule Mu do
 
     item = %Mu.World.Item{
       id: "generic:potion",
-      keywords: ["potion", "red"],
+      keywords: ["potion", "red", "flask"],
       name: "a red potion",
       dropped_name: "A lurid red flask catches your eye.",
       description: "This potion is said to have potent healing properties.",

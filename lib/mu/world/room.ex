@@ -11,7 +11,7 @@ defmodule Mu.World.Room do
     :zone_id,
     :name,
     :description,
-    :exits
+    exits: []
   ]
 
   @doc """
@@ -157,11 +157,9 @@ defmodule Mu.World.Room.BuildEvent do
   end
 
   defp _dig(context, event = %{data: data}) do
-    end_room_id = parse(data.room_id)
-    assigned? = end_room_id |> Kalevala.World.Room.global_name() |> GenServer.whereis()
-    IO.inspect(assigned?)
+    end_room_id = Mu.World.parse_room_id(data.room_id)
 
-    case assigned? do
+    case GenServer.whereis(Kalevala.World.Room.global_name(end_room_id)) do
       nil ->
         start_exit = Exit.basic_exit(data.start_exit_name, context.data.id, end_room_id)
         end_exit = Exit.basic_exit(data.end_exit_name, end_room_id, context.data.id)
@@ -186,13 +184,6 @@ defmodule Mu.World.Room.BuildEvent do
         |> render(event.from_pid, BuildView, "room-id-taken")
         |> assign(:character, event.acting_character)
         |> render(event.from_pid, CommandView, "prompt")
-    end
-  end
-
-  defp parse(room_id) do
-    case Integer.parse(room_id) do
-      {integer, _} -> integer
-      :error -> room_id
     end
   end
 end
@@ -376,7 +367,8 @@ defmodule Mu.World.Room.DoorEvent do
   defp pass(context, event) when context.data.id == event.data.start_room_id do
     end_room_id = event.data.end_room_id
 
-    Room.global_name(end_room_id)
+    end_room_id
+    |> Kalevala.World.Room.global_name()
     |> GenServer.whereis()
     |> send(event)
 

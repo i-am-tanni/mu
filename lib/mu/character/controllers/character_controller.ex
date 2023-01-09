@@ -48,7 +48,7 @@ defmodule Mu.Character.CharacterController do
       inventory: [
         %Kalevala.World.Item.Instance{
           id: Kalevala.World.Item.Instance.generate_id(),
-          item_id: "generic:potion",
+          item_id: "global:potion",
           created_at: DateTime.utc_now(),
           meta: %Mu.World.Item.Meta{}
         }
