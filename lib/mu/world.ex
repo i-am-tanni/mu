@@ -13,6 +13,7 @@ defmodule Mu.World do
 
     children = [
       {Mu.World.Items, [id: Mu.World.Items, name: Mu.World.Items]},
+      {Mu.World.ZoneCache, [id: Mu.World.ZoneCache, name: Mu.World.ZoneCache]},
       {Kalevala.World, [name: Mu.World]},
       {Mu.World.Kickoff, [name: Mu.World.Kickoff, start: kickoff]}
     ]
