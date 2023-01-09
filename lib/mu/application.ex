@@ -7,8 +7,6 @@ defmodule Mu.Application do
 
   @impl true
   def start(_type, _args) do
-    IO.puts("\n!!! Reminder! Initiate rooms with Mu.test() !!!\n")
-
     foreman_options = [
       supervisor_name: Mu.Character.Foreman.Supervisor,
       communication_module: Mu.Communication,
@@ -43,8 +41,6 @@ defmodule Mu.Application do
       {Kalevala.Telnet.Listener, telnet_config}
     ]
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Mu.Supervisor]
     Supervisor.start_link(children, opts)
   end

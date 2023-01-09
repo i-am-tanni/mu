@@ -1,0 +1,18 @@
+{
+    "zone": {
+        "id": 0,
+        "name": "global resources"
+    },
+    "items": {
+        "global:potion": {
+          "description": "This potion is said to have potent healing properties.",
+          "dropped_name": "A lurid red flask catches your eye.",
+          "keywords": [
+            "potion",
+            "red",
+            "flask"
+          ],
+          "name": "a red potion"
+        }
+      }
+}
