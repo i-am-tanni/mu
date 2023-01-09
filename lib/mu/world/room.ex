@@ -304,7 +304,6 @@ end
 
 defmodule Mu.World.Room.DoorEvent do
   import Kalevala.World.Room.Context
-  alias Kalevala.World.Room
   alias Mu.World.Exit
 
   def call(context, event) do
