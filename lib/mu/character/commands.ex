@@ -4,7 +4,7 @@ defmodule Mu.Character.Commands do
   use Kalevala.Character.Command.Router, scope: Mu.Character
 
   module(BuildCommand) do
-    parse("dig", :dig, fn command ->
+    parse("@dig", :dig, fn command ->
       command
       |> spaces()
       |> word(:start_exit_name)

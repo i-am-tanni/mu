@@ -27,10 +27,12 @@ defmodule Mu.World.Loader do
   Strip a zone of extra information that Kalevala doesn't care about
   """
   def strip_zone(zone) do
+    room_ids = Enum.reduce(zone.rooms, MapSet.new(), &MapSet.put(&2, &1.id))
+
     zone
     |> Map.put(:characters, [])
     |> Map.put(:items, [])
-    |> Map.put(:rooms, [])
+    |> Map.put(:rooms, room_ids)
   end
 
   defp load_folder(path, file_extension, merge_fun) do
@@ -119,8 +121,6 @@ defmodule Mu.World.Loader do
   end
 
   defp parse_item({key, item}, _context) do
-    IO.inspect({key, item})
-
     %Item{
       id: key,
       keywords: item.keywords,

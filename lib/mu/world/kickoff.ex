@@ -34,7 +34,6 @@ defmodule Mu.World.Kickoff do
   @impl true
   def handle_continue(:load, state) do
     world = Loader.load()
-    IO.inspect(world.rooms)
 
     Enum.each(world.items, &cache_item/1)
 
