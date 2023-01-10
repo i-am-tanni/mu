@@ -13,6 +13,7 @@ defmodule Mu.Character.Events do
   alias Mu.Character.ChannelEvent
   alias Mu.Character.EmoteEvent
   alias Mu.Character.SocialEvent
+  alias Mu.Character.YellEvent
 
   scope(Mu.Character) do
     module(BuildEvent) do
@@ -58,6 +59,11 @@ defmodule Mu.Character.Events do
     module(SayEvent) do
       event("say/send", :broadcast)
       event(Message, :echo, interested?: &SayEvent.interested?/1)
+    end
+
+    module(YellEvent) do
+      event("yell/send", :call)
+      event(Message, :echo, interested?: &YellEvent.interested?/1)
     end
 
     module(SocialEvent) do
