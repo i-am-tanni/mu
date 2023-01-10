@@ -74,14 +74,15 @@ defmodule Mu.World.Loader do
 
   defp parse_room({key, room}, context) do
     doors = Map.get(room, :doors, %{})
-    exit_context = %{doors: doors, room_id: key}
+    id = World.parse_id(key)
+    exit_context = %{doors: doors, room_id: id}
 
     exits =
       Map.get(room, :exits, [])
       |> Enum.map(&parse_exit(&1, exit_context))
 
     %Room{
-      id: World.parse_room_id(key),
+      id: id,
       zone_id: context.zone_id,
       name: room.name,
       description: room.description,
