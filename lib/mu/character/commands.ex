@@ -126,6 +126,10 @@ defmodule Mu.Character.Commands do
     parse("track", :track, fn command ->
       command |> spaces() |> text(:text)
     end)
+
+    parse("yell", :yell, fn command ->
+      command |> spaces() |> text(:text)
+    end)
   end
 
   module(QuitCommand) do

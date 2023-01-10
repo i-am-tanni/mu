@@ -21,7 +21,7 @@ defmodule Mu.World do
     Supervisor.init(children, strategy: :one_for_one)
   end
 
-  def parse_room_id(id) do
+  def parse_id(id) do
     case Integer.parse(id) do
       {integer, ""} -> integer
       _ -> id

@@ -30,7 +30,10 @@ defmodule Mu.RoomChannel do
         :ok
 
       false ->
-        {:error, :not_in_room}
+        case options[:type] == "yell" do
+          true -> :ok
+          false -> {:error, :not_in_room}
+        end
     end
   end
 end

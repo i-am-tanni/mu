@@ -102,6 +102,7 @@ defmodule Mu.World.Room.Events do
 
     module(PathFindEvent) do
       event("room/pathfind", :call)
+      event("yell/send", :yell)
     end
 
     module(SayEvent) do
@@ -293,6 +294,34 @@ defmodule Mu.World.Room.PathFindEvent do
         context
         |> event(event.from_pid, self(), event.topic, data)
     end
+  end
+
+  def yell(context, event) do
+    room_exits =
+      context.data.exits
+      |> Enum.map(fn room_exit ->
+        %{room_id: room_exit.end_room_id}
+      end)
+
+    exit_name = find_exit_name(context, event.data.from_id) || "nowhere"
+
+    data =
+      event.data
+      |> Map.put(:room_exits, room_exits)
+      |> Map.put(:from_id, context.data.id)
+      |> Map.put(:steps, [exit_name | event.data.steps])
+
+    context
+    |> event(event.from_pid, self(), event.topic, data)
+  end
+
+  defp find_exit_name(_context, nil), do: nil
+
+  defp find_exit_name(context, end_room_id) do
+    context.data.exits
+    |> Enum.find_value(fn room_exit ->
+      if room_exit.end_room_id == end_room_id, do: room_exit.exit_name
+    end)
   end
 
   defp find_local_character(context, name) do
