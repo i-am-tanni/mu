@@ -1,6 +1,6 @@
 defmodule Mu.World.Saver.ZoneFile do
   @derive Jason.Encoder
-  defstruct [:zone, :rooms, :items]
+  defstruct [:zone, rooms: [], items: []]
 end
 
 defmodule Mu.World.Saver do
@@ -38,6 +38,8 @@ defmodule Mu.World.Saver do
     %{file | zone: zone}
   end
 
+  defp prepare_rooms(file, zone) when zone.rooms == [], do: file
+
   defp prepare_rooms(file, zone) do
     rooms =
       zone.rooms
@@ -46,11 +48,10 @@ defmodule Mu.World.Saver do
       end)
       |> Enum.into(%{})
 
-    case rooms != %{} do
-      true -> %{file | rooms: rooms}
-      false -> file
-    end
+    %{file | rooms: rooms}
   end
+
+  defp prepare_items(file, zone) when zone.items == [], do: file
 
   defp prepare_items(file, zone) do
     items =
@@ -60,10 +61,7 @@ defmodule Mu.World.Saver do
       end)
       |> Enum.into(%{})
 
-    case items != %{} do
-      true -> %{file | items: items}
-      false -> file
-    end
+    %{file | items: items}
   end
 
   defp prepare_room(room) do
