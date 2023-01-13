@@ -13,6 +13,62 @@ defmodule Mu.Character do
     meta = %{character.meta | pronouns: Pronouns.get(character.meta.pronouns)}
     Map.put(character, :meta, meta)
   end
+
+  @doc """
+  Like Enum.find except an ordinal is provided. Only the n-th match is returned.
+  Ordinals are provided with "dot" notation e.g. `get 2.sword` for "get the second sword"
+
+  If a negative ordinal is provided, the search will be conducted bottom to top.
+  e.g. `get -2.sword` in natural language is equivalent to "get the SECOND TO LAST sword"
+
+  """
+  def find_nth([], _, _), do: nil
+  def find_nth(_, 0, _), do: nil
+  def find_nth(list, 1, fun), do: Enum.find(list, fun)
+
+  def find_nth(list, ordinal, fun) when ordinal < 0 do
+    find_nth(Enum.reverse(list), ordinal * -1, fun)
+  end
+
+  def find_nth([h | t], ordinal, fun) when ordinal > 0 do
+    case fun.(h) do
+      true -> find_nth(t, ordinal - 1, fun)
+      false -> find_nth(t, ordinal, fun)
+    end
+  end
+
+  @doc """
+  Like Enum.find except a count is provided. Returns a list of matches.
+  Count is provided with 'star' notation:
+  e.g. `drop 2*swords` in natural language is equivalent to "drop the first two swords"
+
+  If a negative count is provided, the LAST matches are returned.
+  e.g. `drop -2*swords` in natural language is equivalent to "drop the LAST two swords"
+  """
+
+  def find_many(list, count, fun) do
+    cond do
+      count > 0 -> _find_many(list, count, [], fun)
+      count < 0 -> _find_many(Enum.reverse(list), count * -1, [], fun)
+      true -> []
+    end
+  end
+
+  defp _find_many([], _, result, _), do: result
+
+  defp _find_many(list, 1, result, fun) do
+    case Enum.find(list, fun) do
+      nil -> result
+      item -> [item | result]
+    end
+  end
+
+  defp _find_many([h | t], count, result, fun) do
+    case fun.(h) do
+      true -> _find_many(t, count - 1, [h | result], fun)
+      false -> _find_many(t, count, result, fun)
+    end
+  end
 end
 
 defmodule Mu.Character.Vitals do
