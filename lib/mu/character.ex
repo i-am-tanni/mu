@@ -22,15 +22,18 @@ defmodule Mu.Character do
   e.g. `get -2.sword` in natural language is equivalent to "get the SECOND TO LAST sword"
 
   """
-  def find_nth([], _, _), do: nil
-  def find_nth(_, 0, _), do: nil
-  def find_nth(list, 1, fun), do: Enum.find(list, fun)
-
-  def find_nth(list, ordinal, fun) when ordinal < 0 do
-    find_nth(Enum.reverse(list), ordinal * -1, fun)
+  def find_nth(list, ordinal, fun) do
+    cond do
+      ordinal > 0 -> _find_nth(list, ordinal, fun)
+      ordinal < 0 -> _find_nth(Enum.reverse(list), ordinal * -1, fun)
+      true -> nil
+    end
   end
 
-  def find_nth([h | t], ordinal, fun) when ordinal > 0 do
+  defp _find_nth([], _, _), do: nil
+  defp _find_nth(list, 1, fun), do: Enum.find(list, fun)
+
+  defp _find_nth([h | t], ordinal, fun) do
     case fun.(h) do
       true -> find_nth(t, ordinal - 1, fun)
       false -> find_nth(t, ordinal, fun)
