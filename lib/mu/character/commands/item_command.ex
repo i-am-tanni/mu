@@ -2,11 +2,34 @@ defmodule Mu.Character.ItemCommand do
   use Kalevala.Character.Command
 
   alias Mu.Character.ItemView
+  alias Mu.Character
   alias Mu.World.Items
 
-  def drop(conn, %{"item_name" => item_name}) do
+  def drop(conn, params = %{"count" => count}) do
+    item_name = params["item_name"]
+
+    item_instances =
+      Character.find_many(conn.character.inventory, count, fn item_instance ->
+        item = Items.get!(item_instance.item_id)
+        item_instance.id == item_name || item.callback_module.matches?(item, item_name)
+      end)
+
+    case item_instances != [] do
+      true ->
+        Enum.reduce(item_instances, conn, &request_item_drop(&2, &1))
+        |> assign(:prompt, false)
+
+      false ->
+        render(conn, ItemView, "unknown", %{item_name: item_name})
+    end
+  end
+
+  def drop(conn, params) do
+    item_name = params["item_name"]
+    ordinal = Map.get(params, "ordinal", 1)
+
     item_instance =
-      Enum.find(conn.character.inventory, fn item_instance ->
+      Character.find_nth(conn.character.inventory, ordinal, fn item_instance ->
         item = Items.get!(item_instance.item_id)
         item_instance.id == item_name || item.callback_module.matches?(item, item_name)
       end)

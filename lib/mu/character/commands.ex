@@ -1,7 +1,47 @@
+defmodule Mu.Character.Commands.Helpers do
+  import NimbleParsec
+
+  @moduledoc """
+  Helper parsers for commands
+  """
+
+  @doc """
+  Specifies which item in the list is required
+  """
+  def dot_ordinal() do
+    number()
+    |> ignore(string("."))
+    |> unwrap_and_tag("ordinal")
+  end
+
+  @doc """
+  Specifies how many items (plural) in the list are required
+  """
+  def star_ordinal() do
+    number()
+    |> ignore(string("*"))
+    |> unwrap_and_tag("count")
+  end
+
+  def number() do
+    choice([negative_integer(), integer(3), integer(2), integer(1)])
+  end
+
+  def negative_integer() do
+    ignore(string("-"))
+    |> choice([integer(3), integer(2), integer(1)])
+    |> map({:negate, []})
+  end
+end
+
 defmodule Mu.Character.Commands do
   @moduledoc false
 
   use Kalevala.Character.Command.Router, scope: Mu.Character
+
+  alias Mu.Character.Commands.Helpers
+
+  defp negate(n), do: n * -1
 
   module(BuildCommand) do
     parse("@dig", :dig, fn command ->
@@ -23,7 +63,10 @@ defmodule Mu.Character.Commands do
 
   module(ItemCommand) do
     parse("drop", :drop, fn command ->
-      command |> spaces() |> text(:item_name)
+      command
+      |> spaces()
+      |> optional(choice([Helpers.dot_ordinal(), Helpers.star_ordinal()]))
+      |> text(:item_name)
     end)
 
     parse("get", :get, fn command ->
