@@ -23,13 +23,26 @@ defmodule Mu.Character.Commands.Helpers do
     |> unwrap_and_tag("count")
   end
 
-  def number() do
-    choice([negative_integer(), integer(3), integer(2), integer(1)])
+  def all() do
+    ignore(string("all"))
+    |> ignore(optional(string(".")))
+    |> replace(9999)
+    |> unwrap_and_tag("count")
   end
 
-  def negative_integer() do
+  def number() do
+    choice([positive_integer(), negative_integer()])
+  end
+
+  # used instead of integer() to avoid error on parser match failure
+  defp positive_integer() do
+    utf8_string([?0..?9], min: 1)
+    |> map({String, :to_integer, []})
+  end
+
+  defp negative_integer() do
     ignore(string("-"))
-    |> choice([integer(3), integer(2), integer(1)])
+    |> concat(positive_integer())
     |> map({:negate, []})
   end
 end
@@ -65,7 +78,7 @@ defmodule Mu.Character.Commands do
     parse("drop", :drop, fn command ->
       command
       |> spaces()
-      |> optional(choice([Helpers.dot_ordinal(), Helpers.star_ordinal()]))
+      |> optional(choice([Helpers.all(), Helpers.dot_ordinal(), Helpers.star_ordinal()]))
       |> text(:item_name)
     end)
 
