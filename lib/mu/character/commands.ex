@@ -23,6 +23,9 @@ defmodule Mu.Character.Commands.Helpers do
     |> unwrap_and_tag("count")
   end
 
+  @doc """
+  Equivalent to a star ordinal with the maximum count allowed
+  """
   def all() do
     ignore(string("all"))
     |> ignore(optional(choice([string("."), spaces()])))
@@ -30,11 +33,11 @@ defmodule Mu.Character.Commands.Helpers do
     |> unwrap_and_tag("count")
   end
 
-  def number() do
+  defp number() do
     choice([positive_integer(), negative_integer()])
   end
 
-  def spaces() do
+  defp spaces() do
     times(utf8_char([?\s, ?\r, ?\n, ?\t, ?\d]), 1)
   end
 
