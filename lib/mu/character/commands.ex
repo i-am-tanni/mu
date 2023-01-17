@@ -25,13 +25,17 @@ defmodule Mu.Character.Commands.Helpers do
 
   def all() do
     ignore(string("all"))
-    |> ignore(optional(string(".")))
+    |> ignore(optional(choice([string("."), spaces()])))
     |> replace(9999)
     |> unwrap_and_tag("count")
   end
 
   def number() do
     choice([positive_integer(), negative_integer()])
+  end
+
+  def spaces() do
+    times(utf8_char([?\s, ?\r, ?\n, ?\t, ?\d]), 1)
   end
 
   # used instead of integer() to avoid error on parser match failure
