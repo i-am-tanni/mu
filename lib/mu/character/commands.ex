@@ -8,19 +8,23 @@ defmodule Mu.Character.Commands.Helpers do
   @doc """
   Specifies which item in the list is required
   """
-  def dot_ordinal() do
+  def dot_ordinal(tag \\ "") do
+    tag = reference(tag, "ordinal")
+
     number()
     |> ignore(string("."))
-    |> unwrap_and_tag("ordinal")
+    |> unwrap_and_tag(tag)
   end
 
   @doc """
   Specifies how many items (plural) in the list are required
   """
-  def star_ordinal() do
+  def star_ordinal(tag \\ "") do
+    tag = reference(tag, "count")
+
     number()
     |> ignore(string("*"))
-    |> unwrap_and_tag("count")
+    |> unwrap_and_tag(tag)
   end
 
   @doc """
@@ -31,6 +35,13 @@ defmodule Mu.Character.Commands.Helpers do
     |> ignore(optional(choice([string("."), spaces()])))
     |> replace(9999)
     |> unwrap_and_tag("count")
+  end
+
+  defp reference(tag_parent, tag_child, delim \\ "/") do
+    case tag_parent == "" do
+      true -> "#{tag_parent}#{delim}#{tag_child}"
+      false -> tag_child
+    end
   end
 
   defp number() do
