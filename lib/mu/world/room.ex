@@ -325,8 +325,7 @@ defmodule Mu.World.Room.PathFindEvent do
   end
 
   defp reverse_find_local_exit(context, end_room_id) do
-    context.data.exits
-    |> Enum.find_value(fn room_exit ->
+    Enum.find_value(context.data.exits, fn room_exit ->
       room_exit.end_room_id == end_room_id
     end)
   end
