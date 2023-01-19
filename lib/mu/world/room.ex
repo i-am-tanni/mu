@@ -158,7 +158,7 @@ defmodule Mu.World.Room.BuildEvent do
   end
 
   defp _dig(context, event = %{data: data}) do
-    end_room_id = Mu.World.parse_room_id(data.room_id)
+    end_room_id = Mu.World.parse_id(data.room_id)
 
     case GenServer.whereis(Kalevala.World.Room.global_name(end_room_id)) do
       nil ->
