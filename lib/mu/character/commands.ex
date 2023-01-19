@@ -38,7 +38,7 @@ defmodule Mu.Character.Commands.Helpers do
   end
 
   defp reference(tag_parent, tag_child, delim \\ "/") do
-    case tag_parent == "" do
+    case tag_parent != "" do
       true -> "#{tag_parent}#{delim}#{tag_child}"
       false -> tag_child
     end
