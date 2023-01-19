@@ -303,7 +303,9 @@ defmodule Mu.World.Room.PathFindEvent do
         %{room_id: room_exit.end_room_id}
       end)
 
-    exit_name = find_exit_name(context, event.data.from_id) || "nowhere"
+    exit_name =
+      reverse_find_local_exit(context, event.data.from_id)
+      |> get_exit_name()
 
     data =
       event.data
@@ -315,12 +317,17 @@ defmodule Mu.World.Room.PathFindEvent do
     |> event(event.from_pid, self(), event.topic, data)
   end
 
-  defp find_exit_name(_context, nil), do: nil
+  defp get_exit_name(room_exit) do
+    case !is_nil(room_exit) do
+      true -> Map.get(room_exit, :exit_name, "nowhere")
+      false -> "nowhere"
+    end
+  end
 
-  defp find_exit_name(context, end_room_id) do
+  defp reverse_find_local_exit(context, end_room_id) do
     context.data.exits
     |> Enum.find_value(fn room_exit ->
-      if room_exit.end_room_id == end_room_id, do: room_exit.exit_name
+      room_exit.end_room_id == end_room_id
     end)
   end
 

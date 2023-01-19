@@ -96,7 +96,7 @@ defmodule Mu.Character.Commands do
     parse("drop", :drop, fn command ->
       command
       |> spaces()
-      |> optional(choice([Helpers.all(), Helpers.dot_ordinal(), Helpers.star_ordinal()]))
+      |> optional(choice([Helpers.all(), Helpers.dot_ordinal(:item), Helpers.star_ordinal()]))
       |> text(:item_name)
     end)
 
