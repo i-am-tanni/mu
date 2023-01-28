@@ -1,3 +1,7 @@
+defmodule Mu.World.Exit.Door do
+  defstruct [:id, :closed?, :locked?]
+end
+
 defmodule Mu.World.Exit do
   defstruct [:id, :exit_name, :start_room_id, :end_room_id, :door, :hidden?, :secret?]
 
@@ -34,8 +38,4 @@ defmodule Mu.World.Exit do
       _ -> false
     end
   end
-end
-
-defmodule Mu.World.Exit.Door do
-  defstruct [:id, :closed?, :locked?]
 end

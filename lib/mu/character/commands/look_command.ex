@@ -28,15 +28,26 @@ defmodule Mu.Character.LookCommand do
         |> render(LookView, "item")
 
       false ->
-        conn
-        |> event("room/look-arg", %{text: text})
-        |> assign(:prompt, false)
+        send_to_room(conn, text)
     end
   end
 
   def exits(conn, _params) do
     conn
     |> event("room/exits")
+    |> assign(:prompt, false)
+  end
+
+  defp send_to_room(conn, text) do
+    data = %{
+      text: text,
+      max_distance: 2
+    }
+
+    # max_distance: if character looks at an exit, how many rooms do they see? Default: 1
+
+    conn
+    |> event("room/look-arg", data)
     |> assign(:prompt, false)
   end
 end

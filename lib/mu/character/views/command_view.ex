@@ -10,6 +10,7 @@ defmodule Mu.Character.CommandView do
       topic: "Character.Prompt",
       data: vitals,
       text: [
+        "\n",
         "[",
         ~i({hp}#{vitals.health_points}/#{vitals.max_health_points}hp{/hp} ),
         ~i({sp}#{vitals.skill_points}/#{vitals.max_skill_points}sp{/sp} ),

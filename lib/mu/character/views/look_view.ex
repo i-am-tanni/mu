@@ -28,6 +28,26 @@ defmodule Mu.Character.LookView do
     [render("_exits", %{room: room}), "\n"]
   end
 
+  def render("peek-exit", %{rooms: rooms}) do
+    lines =
+      rooms
+      |> Enum.map(fn room ->
+        case Map.has_key?(room, :door) do
+          true ->
+            nil
+
+          false ->
+            characters = render("_characters", %{characters: room.characters})
+
+            [~i(#{room.name} #{render("_distance", %{distance: room.distance})}\n), characters]
+            |> Enum.reject(&is_nil(&1))
+        end
+      end)
+      |> View.join("\n")
+
+    [~i(You see:\n), lines]
+  end
+
   def render("_exits", %{room: room}) do
     exits =
       room.exits
@@ -82,7 +102,14 @@ defmodule Mu.Character.LookView do
     ]
   end
 
-  def render("unknown", %{text: text}) do
-    ~i(Could not find: "#{text}")
+  def render("unknown", %{}) do
+    ~i(Nothing special there\n)
+  end
+
+  def render("_distance", %{distance: distance}) do
+    case distance do
+      1 -> ""
+      _ -> ~i(- #{distance} rooms away)
+    end
   end
 end
