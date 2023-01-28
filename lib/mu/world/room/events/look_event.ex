@@ -106,7 +106,6 @@ defmodule Mu.World.Room.LookEvent do
       false ->
         context
         |> assign(:rooms, result)
-        |> assign(:exit_name, event.data.text)
         |> render(event.from_pid, LookView, "peek-exit")
         |> assign(:character, event.acting_character)
         |> render(event.from_pid, CommandView, "prompt")
