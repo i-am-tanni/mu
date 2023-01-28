@@ -30,9 +30,9 @@ defmodule Mu.World.Room.LookEvent do
 
   def arg(context, event = %{data: %{text: text}}) do
     result =
-      find_local_exit(context, text) ||
-        find_local_character(context, text) ||
-        find_local_item(context, text)
+      tag(find_local_exit(context, text), :room_exit) ||
+        tag(find_local_character(context, text), :character) ||
+        tag(find_local_item(context, text), :item)
 
     case result do
       {:room_exit, room_exit} ->
@@ -97,7 +97,6 @@ defmodule Mu.World.Room.LookEvent do
 
     case distance > 0 and !is_nil(room_exit) do
       true ->
-        {:room_exit, room_exit} = room_exit
         data = %{event.data | distance: distance, result: result}
         event = %{event | data: data}
 
@@ -138,21 +137,24 @@ defmodule Mu.World.Room.LookEvent do
   end
 
   defp find_local_exit(context, name) do
-    Enum.find_value(context.data.exits, fn room_exit ->
-      if Exit.matches?(room_exit, name), do: {:room_exit, room_exit}
-    end)
+    Enum.find(context.data.exits, &Exit.matches?(&1, name))
   end
 
   defp find_local_character(context, name) do
-    Enum.find_value(context.characters, fn character ->
-      if Kalevala.Character.matches?(character, name), do: {:character, character}
-    end)
+    Enum.find_value(context.characters, &Kalevala.Character.matches?(&1, name))
   end
 
   defp find_local_item(context, keyword) do
     Enum.find_value(context.item_instances, fn item_instance ->
       item = Items.get!(item_instance.item_id)
-      if Item.matches?(item, keyword), do: {:item, %{item_instance | item: item}}
+      Item.matches?(item, keyword)
     end)
+  end
+
+  defp tag(data, tag) do
+    case !is_nil(data) do
+      true -> {tag, data}
+      false -> nil
+    end
   end
 end
