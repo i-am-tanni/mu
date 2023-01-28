@@ -94,6 +94,14 @@ defmodule Mu.World.Room.Events do
       event("room/dig", :dig)
     end
 
+    module(ChannelEvent) do
+      event("say/send", :say)
+      event("social/send", :social)
+      event("tell/send", :tell)
+      event("whisper/send", :whisper)
+      event("yell/send", :yell)
+    end
+
     module(LookEvent) do
       event("room/look", :call)
       event("room/look-arg", :arg)
@@ -103,19 +111,6 @@ defmodule Mu.World.Room.Events do
 
     module(PathFindEvent) do
       event("room/pathfind", :call)
-      event("yell/send", :yell)
-    end
-
-    module(SayEvent) do
-      event("say/send", :call)
-    end
-
-    module(SocialEvent) do
-      event("social/send", :call)
-    end
-
-    module(TellEvent) do
-      event("tell/send", :call)
     end
 
     module(DoorEvent) do
@@ -127,10 +122,6 @@ defmodule Mu.World.Room.Events do
 
     module(RandomExitEvent) do
       event("room/wander", :call)
-    end
-
-    module(WhisperEvent) do
-      event("whisper/send", :call)
     end
   end
 end
