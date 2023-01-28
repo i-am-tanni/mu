@@ -61,7 +61,7 @@ defmodule Mu.World.Room.ChannelEvent do
   end
 
   defp reverse_find_local_exit(context, end_room_id) do
-    Enum.find_value(context.data.exits, fn room_exit ->
+    Enum.find(context.data.exits, fn room_exit ->
       room_exit.end_room_id == end_room_id
     end)
   end
