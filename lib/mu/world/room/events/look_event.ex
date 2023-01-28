@@ -79,7 +79,7 @@ defmodule Mu.World.Room.LookEvent do
 
   @doc """
   Event topic "peek/room"
-  Look event proagated from another room. Peeks into neighboring rooms.
+  Look event propagated from another room. Peeks into neighboring rooms.
   Either continues propagation or returns result back to the acting_character.
   """
   def peek_room(context, event) do
