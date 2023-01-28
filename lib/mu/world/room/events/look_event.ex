@@ -141,11 +141,11 @@ defmodule Mu.World.Room.LookEvent do
   end
 
   defp find_local_character(context, name) do
-    Enum.find_value(context.characters, &Kalevala.Character.matches?(&1, name))
+    Enum.find(context.characters, &Kalevala.Character.matches?(&1, name))
   end
 
   defp find_local_item(context, keyword) do
-    Enum.find_value(context.item_instances, fn item_instance ->
+    Enum.find(context.item_instances, fn item_instance ->
       item = Items.get!(item_instance.item_id)
       Item.matches?(item, keyword)
     end)
