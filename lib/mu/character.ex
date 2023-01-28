@@ -43,10 +43,10 @@ defmodule Mu.Character do
   @doc """
   Like Enum.find except a count is provided. Returns a list of matches.
   Count is provided with 'star' notation:
-  e.g. `drop 2*swords` in natural language is equivalent to "drop the first two swords"
+  e.g. `drop 2*sword` in natural language is equivalent to "drop the first two swords"
 
   If a negative count is provided, the LAST matches are returned.
-  e.g. `drop -2*swords` in natural language is equivalent to "drop the LAST two swords"
+  e.g. `drop -2*sword` in natural language is equivalent to "drop the LAST two swords"
   """
 
   def find_many(list, count, fun) do
