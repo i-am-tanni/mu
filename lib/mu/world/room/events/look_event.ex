@@ -137,11 +137,15 @@ defmodule Mu.World.Room.LookEvent do
   end
 
   defp find_local_exit(context, name) do
-    Enum.find(context.data.exits, &Exit.matches?(&1, name))
+    Enum.find(context.data.exits, fn room_exit ->
+      Exit.matches?(room_exit, name)
+    end)
   end
 
   defp find_local_character(context, name) do
-    Enum.find(context.characters, &Kalevala.Character.matches?(&1, name))
+    Enum.find(context.characters, fn character ->
+      Kalevala.Character.matches?(character, name)
+    end)
   end
 
   defp find_local_item(context, keyword) do
