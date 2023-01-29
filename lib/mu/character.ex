@@ -72,6 +72,31 @@ defmodule Mu.Character do
       false -> _find_many(t, count, result, fun)
     end
   end
+
+  @doc """
+  Enum.find_value() is to find_nth_value as Enum.find() is to find_nth().
+  Like Enum.find_value(), except an ordinal is provided.
+  Only the n-th value that is neither nil nor false returned by the function is the result.
+  """
+  def find_nth_value(list, ordinal, fun) do
+    cond do
+      ordinal > 0 -> _find_nth_value(list, ordinal, fun)
+      ordinal < 0 -> _find_nth_value(Enum.reverse(list), ordinal * -1, fun)
+      true -> nil
+    end
+  end
+
+  defp _find_nth_value([], _, _), do: nil
+  defp _find_nth_value(list, 1, fun), do: Enum.find_value(list, fun)
+
+  defp _find_nth_value([h | t], ordinal, fun) do
+    result = fun.(h)
+
+    case !is_nil(result) and result != false do
+      true -> find_nth_value(t, ordinal - 1, fun)
+      false -> find_nth_value(t, ordinal, fun)
+    end
+  end
 end
 
 defmodule Mu.Character.Vitals do
@@ -108,7 +133,7 @@ defmodule Mu.Character.PlayerMeta do
   Specific metadata for a character in Mu
   """
 
-  defstruct [:reply_to, :pronouns, vitals: %Mu.Character.Vitals{}]
+  defstruct [:reply_to, :pronouns, :equipment, vitals: %Mu.Character.Vitals{}]
 
   defimpl Kalevala.Meta.Trim do
     def trim(meta) do
