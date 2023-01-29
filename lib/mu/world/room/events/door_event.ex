@@ -1,5 +1,6 @@
 defmodule Mu.World.Room.DoorEvent do
   import Kalevala.World.Room.Context
+  require Logger
   alias Mu.World.Exit
 
   def call(context, event) do
@@ -60,12 +61,15 @@ defmodule Mu.World.Room.DoorEvent do
   end
 
   defp pass(context, event) when context.data.id == event.data.start_room_id do
-    end_room_id = event.data.end_room_id
+    end_room_pid =
+      event.data.end_room_id
+      |> Kalevala.World.Room.global_name()
+      |> GenServer.whereis()
 
-    end_room_id
-    |> Kalevala.World.Room.global_name()
-    |> GenServer.whereis()
-    |> send(event)
+    case !is_nil(end_room_pid) do
+      true -> send(end_room_pid, event)
+      false -> Logger.error("Room #{event.data.end_room_id} doesn't exist to receive DoorEvent.")
+    end
 
     context
   end
