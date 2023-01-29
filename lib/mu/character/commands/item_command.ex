@@ -29,7 +29,7 @@ defmodule Mu.Character.ItemCommand do
     ordinal = Map.get(params, "ordinal", 1)
 
     item_instance =
-      Character.find_nth(conn.character.inventory, ordinal, fn item_instance ->
+      Character.find(conn.character.inventory, ordinal, fn item_instance ->
         item = Items.get!(item_instance.item_id)
         item_instance.id == item_name || item.callback_module.matches?(item, item_name)
       end)

@@ -22,21 +22,21 @@ defmodule Mu.Character do
   e.g. `get -2.sword` in natural language is equivalent to "get the SECOND TO LAST sword"
 
   """
-  def find_nth(list, ordinal, fun) do
+  def find(list, ordinal, fun) do
     cond do
-      ordinal > 0 -> _find_nth(list, ordinal, fun)
-      ordinal < 0 -> _find_nth(Enum.reverse(list), ordinal * -1, fun)
+      ordinal > 0 -> _find(list, ordinal, fun)
+      ordinal < 0 -> _find(Enum.reverse(list), ordinal * -1, fun)
       true -> nil
     end
   end
 
-  defp _find_nth([], _, _), do: nil
-  defp _find_nth(list, 1, fun), do: Enum.find(list, fun)
+  defp _find([], _, _), do: nil
+  defp _find(list, 1, fun), do: Enum.find(list, fun)
 
-  defp _find_nth([h | t], ordinal, fun) do
+  defp _find([h | t], ordinal, fun) do
     case fun.(h) do
-      true -> find_nth(t, ordinal - 1, fun)
-      false -> find_nth(t, ordinal, fun)
+      true -> find(t, ordinal - 1, fun)
+      false -> find(t, ordinal, fun)
     end
   end
 
@@ -74,27 +74,26 @@ defmodule Mu.Character do
   end
 
   @doc """
-  Enum.find_value() is to find_nth_value as Enum.find() is to find_nth().
   Like Enum.find_value(), except an ordinal is provided.
   Only the n-th value that is neither nil nor false returned by the function is the result.
   """
-  def find_nth_value(list, ordinal, fun) do
+  def find_value(list, ordinal, fun) do
     cond do
-      ordinal > 0 -> _find_nth_value(list, ordinal, fun)
-      ordinal < 0 -> _find_nth_value(Enum.reverse(list), ordinal * -1, fun)
+      ordinal > 0 -> _find_value(list, ordinal, fun)
+      ordinal < 0 -> _find_value(Enum.reverse(list), ordinal * -1, fun)
       true -> nil
     end
   end
 
-  defp _find_nth_value([], _, _), do: nil
-  defp _find_nth_value(list, 1, fun), do: Enum.find_value(list, fun)
+  defp _find_value([], _, _), do: nil
+  defp _find_value(list, 1, fun), do: Enum.find_value(list, fun)
 
-  defp _find_nth_value([h | t], ordinal, fun) do
+  defp _find_value([h | t], ordinal, fun) do
     result = fun.(h)
 
     case !is_nil(result) and result != false do
-      true -> find_nth_value(t, ordinal - 1, fun)
-      false -> find_nth_value(t, ordinal, fun)
+      true -> find_value(t, ordinal - 1, fun)
+      false -> find_value(t, ordinal, fun)
     end
   end
 end
