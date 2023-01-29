@@ -11,7 +11,7 @@ defmodule Mu.Character do
   """
   def fill_pronouns(character) do
     meta = %{character.meta | pronouns: Pronouns.get(character.meta.pronouns)}
-    Map.put(character, :meta, meta)
+    %{character | meta: meta}
   end
 
   @doc """
