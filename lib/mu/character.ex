@@ -13,6 +13,61 @@ defmodule Mu.Character do
     meta = %{character.meta | pronouns: Pronouns.get(character.meta.pronouns)}
     Map.put(character, :meta, meta)
   end
+end
+
+defmodule Mu.Character.Vitals do
+  @moduledoc """
+  Character vital information
+  """
+  @derive Jason.Encoder
+
+  defstruct [
+    :health_points,
+    :max_health_points,
+    :skill_points,
+    :max_skill_points,
+    :endurance_points,
+    :max_endurance_points
+  ]
+end
+
+defmodule Mu.Character.PathFindData do
+  @moduledoc """
+  Tracks the list of visited room_ids and the number of leads.
+  A lead = an unvisited exit.
+
+  The search continues to propagate if:
+  - the status remains :continue
+  - there are unexplored exits (leads)
+  - The search depth >= max_depth (lives in the event data)
+  """
+  defstruct [:id, :visited, :lead_count, :created_at, :status]
+end
+
+defmodule Mu.Character.PlayerMeta do
+  @moduledoc """
+  Specific metadata for a character in Mu
+  """
+
+  defstruct [:reply_to, :pronouns, :equipment, vitals: %Mu.Character.Vitals{}]
+
+  defimpl Kalevala.Meta.Trim do
+    def trim(meta) do
+      Map.take(meta, [:vitals, :pronouns])
+    end
+  end
+
+  defimpl Kalevala.Meta.Access do
+    def get(meta, key), do: Map.get(meta, key)
+
+    def put(meta, key, value), do: Map.put(meta, key, value)
+  end
+end
+
+defmodule Mu.Character.MuEnum do
+  @moduledoc """
+  Set of algorithms built on top of Elixir.Enum
+  """
 
   @doc """
   Like Enum.find except an ordinal is provided. Only the n-th match is returned.
@@ -23,6 +78,8 @@ defmodule Mu.Character do
 
   """
   def find(list, ordinal, fun) do
+    list = to_enumerable(list)
+
     cond do
       ordinal > 0 -> _find(list, ordinal, fun)
       ordinal < 0 -> _find(Enum.reverse(list), ordinal * -1, fun)
@@ -78,6 +135,8 @@ defmodule Mu.Character do
   Only the n-th value that is neither nil nor false returned by the function is the result.
   """
   def find_value(list, ordinal, fun) do
+    list = to_enumerable(list)
+
     cond do
       ordinal > 0 -> _find_value(list, ordinal, fun)
       ordinal < 0 -> _find_value(Enum.reverse(list), ordinal * -1, fun)
@@ -96,53 +155,11 @@ defmodule Mu.Character do
       false -> find_value(t, ordinal, fun)
     end
   end
-end
 
-defmodule Mu.Character.Vitals do
-  @moduledoc """
-  Character vital information
-  """
-  @derive Jason.Encoder
-
-  defstruct [
-    :health_points,
-    :max_health_points,
-    :skill_points,
-    :max_skill_points,
-    :endurance_points,
-    :max_endurance_points
-  ]
-end
-
-defmodule Mu.Character.PathFindData do
-  @moduledoc """
-  Tracks the list of visited room_ids and the number of leads.
-  A lead = an unvisited exit.
-
-  The search continues to propagate if:
-  - the status remains :continue
-  - there are unexplored exits (leads)
-  - The search depth >= max_depth (lives in the event data)
-  """
-  defstruct [:id, :visited, :lead_count, :created_at, :status]
-end
-
-defmodule Mu.Character.PlayerMeta do
-  @moduledoc """
-  Specific metadata for a character in Mu
-  """
-
-  defstruct [:reply_to, :pronouns, :equipment, vitals: %Mu.Character.Vitals{}]
-
-  defimpl Kalevala.Meta.Trim do
-    def trim(meta) do
-      Map.take(meta, [:vitals, :pronouns])
+  defp to_enumerable(list) do
+    cond do
+      is_map(list) -> Map.to_list(%{})
+      true -> list
     end
-  end
-
-  defimpl Kalevala.Meta.Access do
-    def get(meta, key), do: Map.get(meta, key)
-
-    def put(meta, key, value), do: Map.put(meta, key, value)
   end
 end
