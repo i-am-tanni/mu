@@ -1,7 +1,7 @@
 defmodule Mu.Character.CommandController.PreParser do
   @moduledoc """
   Command parsing works in two phases. This is phase one.
-  Substitutes command aliases and general rule downcases input
+  Substitutes command aliases and downcases most input
   """
 
   import NimbleParsec
@@ -18,7 +18,7 @@ defmodule Mu.Character.CommandController.PreParser do
     |> unwrap_and_tag(:command)
 
   text =
-    utf8_string([not: ?\n, not: ?\r, not: ?\d], min: 1)
+    utf8_string([not: ?\n, not: ?\r], min: 1)
     |> unwrap_and_tag(:text)
 
   pre_parser =
