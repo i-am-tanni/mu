@@ -4,13 +4,13 @@ defmodule Mu.Character.YellView do
   alias Mu.Character.CharacterView
 
   def render("echo", %{text: text}) do
-    ~i(You yell at the top of your lungs, '#{text}!'\n)
+    ~i(You yell at the top of your lungs, '#{text}'\n)
   end
 
   def render("listen", %{text: text, rooms_away: 0, acting_character: character}) do
     [
       CharacterView.render("name", %{character: character}),
-      ~i( yells, '#{text}!'\n)
+      ~i( yells, '#{text}'\n)
     ]
   end
 
@@ -18,7 +18,7 @@ defmodule Mu.Character.YellView do
     [
       "From #{direction(direction)} you hear ",
       CharacterView.render("name", %{character: character}),
-      ~i( yell, '#{text}!'\n)
+      ~i( yell, '#{text}'\n)
     ]
   end
 

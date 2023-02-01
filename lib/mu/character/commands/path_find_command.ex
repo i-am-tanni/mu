@@ -40,6 +40,9 @@ defmodule Mu.Character.PathFindCommand do
   def yell(conn, params) do
     room_id = conn.character.room_id
     id = Kalevala.Character.generate_id()
+    text = params["text"]
+    text = String.upcase(text)
+    text = if String.ends_with?(text, "!"), do: text, else: [text, ?!]
 
     path_find_data = %PathFindData{
       id: id,
@@ -50,7 +53,7 @@ defmodule Mu.Character.PathFindCommand do
 
     params = %{
       id: id,
-      text: params["text"],
+      text: text,
       depth: 0,
       max_depth: 10,
       steps: [],
