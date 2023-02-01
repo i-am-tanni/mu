@@ -1,3 +1,63 @@
+defmodule Mu.Character.CommandController.PreParser do
+  @moduledoc """
+  Command parsing works in two phases. This is phase one.
+  Substitutes command aliases and general rule downcases input
+  """
+
+  import NimbleParsec
+  @downcase_exceptions ["say", "tell", "whisper", "emote", "ooc", "yell"]
+
+  word = utf8_string([not: ?\s, not: ?\r, not: ?\n, not: ?\t, not: ?\d], min: 1)
+  ignore_white_space = ignore(repeat(utf8_char([?\s, ?\r, ?\n, ?\t, ?\d])))
+
+  command =
+    optional(ignore_white_space)
+    |> concat(word)
+    |> map({String, :downcase, []})
+    |> map({:substitute_alias, []})
+    |> unwrap_and_tag(:command)
+
+  text =
+    utf8_string([not: ?\n, not: ?\r, not: ?\d], min: 1)
+    |> unwrap_and_tag(:text)
+
+  pre_parser =
+    command
+    |> optional(text)
+    |> wrap()
+    |> map({Enum, :into, [%{}]})
+    |> map({:to_binary_and_downcase, []})
+
+  defparsec(:parse, pre_parser)
+
+  def run(data) do
+    {:ok, [result], _, _, _, _} = parse(data)
+    result
+  end
+
+  defp substitute_alias(verb) do
+    case verb do
+      "=" -> "ooc"
+      "dr" -> "drop"
+      "g" -> "get"
+      _ -> verb
+    end
+  end
+
+  defp to_binary_and_downcase(term) do
+    case term do
+      %{command: command, text: text} ->
+        case command not in @downcase_exceptions do
+          true -> command <> String.downcase(text)
+          false -> command <> text
+        end
+
+      %{command: command} ->
+        command
+    end
+  end
+end
+
 defmodule Mu.Character.CommandController do
   use Kalevala.Character.Controller
 
@@ -6,6 +66,7 @@ defmodule Mu.Character.CommandController do
   alias Mu.Character.Commands
   alias Mu.Character.Events
   alias Mu.Character.IncomingEvents
+  alias Mu.Character.CommandController.PreParser
 
   @impl true
   def init(conn) do
@@ -20,6 +81,7 @@ defmodule Mu.Character.CommandController do
     Logger.info("Received - #{inspect(data)}")
 
     data = Tags.escape(data)
+    data = PreParser.run(data)
 
     case Commands.call(conn, data) do
       {:error, :unknown} ->
