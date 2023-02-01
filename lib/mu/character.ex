@@ -13,6 +13,13 @@ defmodule Mu.Character do
     meta = %{character.meta | pronouns: Pronouns.get(character.meta.pronouns)}
     Map.put(character, :meta, meta)
   end
+
+  def put_equipment(character, wear_slot, item_instance) do
+    equipment = %{character.meta.equipment | wear_slot => item_instance}
+    %{character | meta: Map.put(character.meta, :equipment, equipment)}
+  end
+
+  def get_equipment(character), do: Map.values(character.meta.equipment)
 end
 
 defmodule Mu.Character.Vitals do
@@ -29,6 +36,27 @@ defmodule Mu.Character.Vitals do
     :endurance_points,
     :max_endurance_points
   ]
+end
+
+defmodule Mu.Character.Equipment.EmptySlot do
+  @moduledoc """
+  An empty struct for equipment slots to include by default
+  """
+  defstruct []
+end
+
+defmodule Mu.Character.Equipment do
+  defstruct []
+
+  def new(template, args \\ []) do
+    apply(__MODULE__, template, args)
+    |> Enum.map(fn key -> {key, %__MODULE__.EmptySlot{}} end)
+    |> Enum.into(%{})
+  end
+
+  def basic() do
+    [:head, :body]
+  end
 end
 
 defmodule Mu.Character.PathFindData do
@@ -49,7 +77,12 @@ defmodule Mu.Character.PlayerMeta do
   Specific metadata for a character in Mu
   """
 
-  defstruct [:reply_to, :pronouns, :equipment, vitals: %Mu.Character.Vitals{}]
+  defstruct [
+    :reply_to,
+    :pronouns,
+    equipment: Mu.Character.Equipment.new(:basic),
+    vitals: %Mu.Character.Vitals{}
+  ]
 
   defimpl Kalevala.Meta.Trim do
     def trim(meta) do

@@ -17,6 +17,7 @@ defmodule Mu.World.Item do
     :dropped_name,
     :description,
     :callback_module,
+    :wear_slot,
     meta: %{},
     verbs: []
   ]
