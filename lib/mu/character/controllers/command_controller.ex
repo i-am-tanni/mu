@@ -80,8 +80,10 @@ defmodule Mu.Character.CommandController do
   def recv(conn, data) do
     Logger.info("Received - #{inspect(data)}")
 
-    data = Tags.escape(data)
-    data = PreParser.run(data)
+    data =
+      data
+      |> Tags.escape()
+      |> PreParser.run()
 
     case Commands.call(conn, data) do
       {:error, :unknown} ->
