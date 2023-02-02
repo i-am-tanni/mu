@@ -94,7 +94,7 @@ defmodule Mu.World.Room.Events do
       event("room/dig", :dig)
     end
 
-    module(ChannelEvent) do
+    module(CommunicationEvent) do
       event("say/send", :say)
       event("social/send", :social)
       event("tell/send", :tell)
