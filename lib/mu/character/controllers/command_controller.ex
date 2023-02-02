@@ -5,7 +5,7 @@ defmodule Mu.Character.CommandController.PreParser do
   """
 
   import NimbleParsec
-  @downcase_exceptions ["say", "tell", "whisper", "emote", "ooc", "yell"]
+  @downcase_exceptions ~w(say tell whisper emote ooc yell)
 
   word = utf8_string([not: ?\s, not: ?\r, not: ?\n, not: ?\t, not: ?\d], min: 1)
   ignore_white_space = ignore(repeat(utf8_char([?\s, ?\r, ?\n, ?\t, ?\d])))

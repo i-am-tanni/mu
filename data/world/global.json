@@ -13,6 +13,15 @@
             "flask"
           ],
           "name": "a red potion"
+        },
+        "global:helm": {
+          "description": "Provides strong protection against head injury.",
+          "dropped_name": "A helm is discarded here.",
+          "keywords": [
+            "helm"
+          ],
+          "name": "helm",
+          "wear_slot": "head"
         }
       }
 }
