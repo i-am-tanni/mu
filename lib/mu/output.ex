@@ -230,3 +230,25 @@ defmodule Mu.Output.Commands do
     Map.put(context, :data, context.data ++ [datum])
   end
 end
+
+defmodule Mu.Output.EscapeSequences do
+  import NimbleParsec
+
+  text = utf8_string([not: ?\e], min: 1)
+
+  color_code =
+    string("\e[")
+    |> utf8_string([not: ?m], min: 1)
+    |> string("m")
+
+  escape_sequence = choice([color_code, utf8_char([?\e])])
+
+  parser = times(choice([ignore(escape_sequence), text]), min: 1)
+
+  defparsec(:parse, parser)
+
+  def remove(text) do
+    {:ok, result, _, _, _, _} = parse(text)
+    Enum.join(result)
+  end
+end
