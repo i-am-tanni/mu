@@ -1,4 +1,4 @@
-defmodule Mu.World.Room.ChannelEvent do
+defmodule Mu.World.Room.CommunicationEvent do
   @moduledoc """
   Room events dealing with communication
   """
