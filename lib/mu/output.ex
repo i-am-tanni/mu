@@ -232,6 +232,12 @@ defmodule Mu.Output.Commands do
 end
 
 defmodule Mu.Output.EscapeSequences do
+  @moduledoc """
+  Escape sequences should not be sendable from players to other players as a form of code injection.
+  Escape sequences should only be sent by the server after negotiations so the client
+    doesn't receive options they didn't negotiate.
+  Otherwise client might hang or result in errors.
+  """
   import NimbleParsec
 
   text = utf8_string([not: ?\e], min: 1)
@@ -243,12 +249,14 @@ defmodule Mu.Output.EscapeSequences do
 
   escape_sequence = choice([color_code, utf8_char([?\e])])
 
-  parser = times(choice([ignore(escape_sequence), text]), min: 1)
+  parser =
+    repeat(choice([ignore(escape_sequence), text]))
+    |> reduce({List, :to_string, []})
 
   defparsec(:parse, parser)
 
   def remove(text) do
-    {:ok, result, _, _, _, _} = parse(text)
-    Enum.join(result)
+    {:ok, [result], _, _, _, _} = parse(text)
+    result
   end
 end

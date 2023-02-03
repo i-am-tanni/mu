@@ -8,17 +8,15 @@ defmodule Mu.Character.CommandController.PreParser do
   @downcase_exceptions ~w(say tell whisper emote ooc yell)
 
   word = utf8_string([not: ?\s, not: ?\r, not: ?\n, not: ?\t, not: ?\d], min: 1)
-  ignore_white_space = ignore(repeat(utf8_char([?\s, ?\r, ?\n, ?\t, ?\d])))
 
   command =
-    optional(ignore_white_space)
-    |> concat(word)
+    word
     |> map({String, :downcase, []})
     |> map({:substitute_alias, []})
     |> unwrap_and_tag(:command)
 
   text =
-    utf8_string([not: ?\n, not: ?\r], min: 1)
+    utf8_string([], min: 1)
     |> unwrap_and_tag(:text)
 
   pre_parser =
@@ -67,6 +65,7 @@ defmodule Mu.Character.CommandController do
   alias Mu.Character.Events
   alias Mu.Character.IncomingEvents
   alias Mu.Character.CommandController.PreParser
+  alias Mu.Output.EscapeSequences
 
   @impl true
   def init(conn) do
@@ -83,6 +82,8 @@ defmodule Mu.Character.CommandController do
     data =
       data
       |> Tags.escape()
+      |> EscapeSequences.remove()
+      |> String.trim()
       |> PreParser.run()
 
     case Commands.call(conn, data) do
