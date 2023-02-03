@@ -234,8 +234,8 @@ end
 defmodule Mu.Output.EscapeSequences do
   @moduledoc """
   Escape sequences should not be sendable from players to other players as a form of code injection.
-  Escape sequences should only be sent by the server after negotiations so the client
-    doesn't receive options they didn't negotiate.
+  Escape sequences should only be sent by the server after negotiations.
+  Client should never receive options they didn't negotiate from other players.
   Otherwise client might hang or result in errors.
   """
   import NimbleParsec
