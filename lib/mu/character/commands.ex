@@ -70,7 +70,7 @@ defmodule Mu.Character.Commands do
 
   use Kalevala.Character.Command.Router, scope: Mu.Character
 
-  alias Mu.Character.Commands.Helpers
+  import Mu.Character.Commands.Helpers
 
   defp negate(n), do: n * -1
 
@@ -96,17 +96,26 @@ defmodule Mu.Character.Commands do
     parse("drop", :drop, fn command ->
       command
       |> spaces()
-      |> optional(choice([Helpers.all(), Helpers.dot_ordinal(:item), Helpers.star_ordinal()]))
+      |> optional(choice([all(), dot_ordinal(), star_ordinal()]))
       |> text(:item_name)
     end)
 
     parse("get", :get, fn command ->
       command |> spaces() |> text(:item_name)
     end)
+
+    parse("wear", :wear, fn command ->
+      command |> spaces() |> optional(dot_ordinal()) |> text(:item_name)
+    end)
+
+    parse("remove", :remove, fn command ->
+      command |> spaces() |> optional(dot_ordinal()) |> text(:item_name)
+    end)
   end
 
   module(InventoryCommand) do
     parse("inventory", :run, aliases: ["i"])
+    parse("equipment", :equipment, aliases: ["eq"])
   end
 
   module(LookCommand) do

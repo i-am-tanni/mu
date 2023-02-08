@@ -114,9 +114,10 @@ defmodule Mu.Output.SemanticColors do
   color("item", foreground: "cyan")
   color("text", foreground: "green")
   color("room-title", foreground: "blue", underline: true)
-  color("hp", foreground: "red")
-  color("sp", foreground: "blue")
-  color("ep", foreground: "169,114,218")
+  color("hp", foreground: "256:160")
+  color("sp", foreground: "256:27")
+  color("ep", foreground: "256:70")
+  color("emphasize", foreground: "256:227")
 
   @impl true
   def parse(datum, context) do

@@ -128,6 +128,7 @@ defmodule Mu.World.Loader do
       name: item.name,
       dropped_name: item.dropped_name,
       description: item.description,
+      wear_slot: item[:wear_slot],
       callback_module: Item,
       meta: %{},
       verbs: [:get, :drop]

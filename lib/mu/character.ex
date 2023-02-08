@@ -1,8 +1,45 @@
+defmodule Mu.Character.Equipment.EmptySlot do
+  @moduledoc """
+  An empty struct for equipment slots to include by default
+  """
+  defstruct []
+end
+
+defmodule Mu.Character.Equipment.Private do
+  defstruct [:sort_order]
+end
+
+defmodule Mu.Character.Equipment do
+  defstruct [:data, private: %__MODULE__.Private{}]
+
+  def new(template, args \\ []) do
+    keys = apply(__MODULE__, template, args)
+
+    data = Enum.into(keys, %{}, &{&1, %__MODULE__.EmptySlot{}})
+
+    private = %__MODULE__.Private{sort_order: keys}
+
+    %__MODULE__{data: data, private: private}
+  end
+
+  def put(equipment, wear_slot, item) do
+    %{equipment | data: Map.put(equipment.data, wear_slot, item)}
+  end
+
+  def get(equipment), do: equipment.data
+  def sort_order(equipment), do: equipment.private.sort_order
+
+  def basic() do
+    ["head", "body"]
+  end
+end
+
 defmodule Mu.Character do
   @moduledoc """
   Character callbacks for Kalevala
   """
   alias Mu.Character.Pronouns
+  alias Mu.Character.Equipment
 
   @doc """
   Converts the gender atom to a pronoun set.
@@ -14,62 +51,18 @@ defmodule Mu.Character do
     %{character | meta: meta}
   end
 
-  @doc """
-  Like Enum.find except an ordinal is provided. Only the n-th match is returned.
-  Ordinals are provided with "dot" notation e.g. `get 2.sword` for "get the second sword"
-
-  If a negative ordinal is provided, the search will be conducted bottom to top.
-  e.g. `get -2.sword` in natural language is equivalent to "get the SECOND TO LAST sword"
-
-  """
-  def find_nth(list, ordinal, fun) do
-    cond do
-      ordinal > 0 -> _find_nth(list, ordinal, fun)
-      ordinal < 0 -> _find_nth(Enum.reverse(list), ordinal * -1, fun)
-      true -> nil
-    end
+  def put_equipment(character, wear_slot, item_instance) do
+    equipment = Equipment.put(character.meta.equipment, wear_slot, item_instance)
+    %{character | meta: Map.put(character.meta, :equipment, equipment)}
   end
 
-  defp _find_nth([], _, _), do: nil
-  defp _find_nth(list, 1, fun), do: Enum.find(list, fun)
+  def get_equipment(character, opts \\ []) do
+    equipment = character.meta.equipment
 
-  defp _find_nth([h | t], ordinal, fun) do
-    case fun.(h) do
-      true -> find_nth(t, ordinal - 1, fun)
-      false -> find_nth(t, ordinal, fun)
-    end
-  end
-
-  @doc """
-  Like Enum.find except a count is provided. Returns a list of matches.
-  Count is provided with 'star' notation:
-  e.g. `drop 2*sword` in natural language is equivalent to "drop the first two swords"
-
-  If a negative count is provided, the LAST matches are returned.
-  e.g. `drop -2*sword` in natural language is equivalent to "drop the LAST two swords"
-  """
-
-  def find_many(list, count, fun) do
-    cond do
-      count > 0 -> _find_many(list, count, [], fun)
-      count < 0 -> _find_many(Enum.reverse(list), count * -1, [], fun)
-      true -> []
-    end
-  end
-
-  defp _find_many([], _, result, _), do: result
-
-  defp _find_many(list, 1, result, fun) do
-    case Enum.find(list, fun) do
-      nil -> result
-      item -> [item | result]
-    end
-  end
-
-  defp _find_many([h | t], count, result, fun) do
-    case fun.(h) do
-      true -> _find_many(t, count - 1, [h | result], fun)
-      false -> _find_many(t, count, result, fun)
+    case opts[:only] do
+      "items" -> Map.values(Equipment.get(equipment))
+      "sort_order" -> Equipment.sort_order(equipment)
+      _ -> Equipment.get(equipment)
     end
   end
 end
@@ -108,7 +101,12 @@ defmodule Mu.Character.PlayerMeta do
   Specific metadata for a character in Mu
   """
 
-  defstruct [:reply_to, :pronouns, vitals: %Mu.Character.Vitals{}]
+  defstruct [
+    :reply_to,
+    :pronouns,
+    equipment: Mu.Character.Equipment.new(:basic),
+    vitals: %Mu.Character.Vitals{}
+  ]
 
   defimpl Kalevala.Meta.Trim do
     def trim(meta) do
@@ -120,5 +118,107 @@ defmodule Mu.Character.PlayerMeta do
     def get(meta, key), do: Map.get(meta, key)
 
     def put(meta, key, value), do: Map.put(meta, key, value)
+  end
+end
+
+defmodule Mu.Character.MuEnum do
+  @moduledoc """
+  Set of algorithms built on top of Elixir.Enum
+  """
+
+  @doc """
+  Like Enum.find except an ordinal is provided. Only the n-th match is returned.
+  Ordinals are provided with "dot" notation e.g. `get 2.sword` for "get the second sword"
+
+  If a negative ordinal is provided, the search will be conducted bottom to top.
+  e.g. `get -2.sword` in natural language is equivalent to "get the SECOND TO LAST sword"
+
+  """
+  def find(list, ordinal, fun) do
+    list = to_enumerable(list)
+
+    cond do
+      ordinal > 0 -> _find(list, ordinal, fun)
+      ordinal < 0 -> _find(Enum.reverse(list), ordinal * -1, fun)
+      true -> nil
+    end
+  end
+
+  defp _find([], _, _), do: nil
+  defp _find(list, 1, fun), do: Enum.find(list, fun)
+
+  defp _find([h | t], ordinal, fun) do
+    case fun.(h) do
+      true -> find(t, ordinal - 1, fun)
+      false -> find(t, ordinal, fun)
+    end
+  end
+
+  @doc """
+  Like Enum.find except a count is provided. Returns a list of matches.
+  Count is provided with 'star' notation:
+  e.g. `drop 2*sword` in natural language is equivalent to "drop the first two swords"
+
+  If a negative count is provided, the LAST matches are returned.
+  e.g. `drop -2*sword` in natural language is equivalent to "drop the LAST two swords"
+  """
+
+  def find_many(list, count, fun) do
+    list = to_enumerable(list)
+
+    cond do
+      count > 0 -> _find_many(list, count, [], fun)
+      count < 0 -> _find_many(Enum.reverse(list), count * -1, [], fun)
+      true -> []
+    end
+  end
+
+  defp _find_many([], _, result, _), do: result
+
+  defp _find_many(list, 1, result, fun) do
+    case Enum.find(list, fun) do
+      nil -> result
+      item -> [item | result]
+    end
+  end
+
+  defp _find_many([h | t], count, result, fun) do
+    case fun.(h) do
+      true -> _find_many(t, count - 1, [h | result], fun)
+      false -> _find_many(t, count, result, fun)
+    end
+  end
+
+  @doc """
+  Like Enum.find_value(), except an ordinal is provided.
+  Only the n-th value that is neither nil nor false returned by the function is the result.
+  """
+  def find_value(list, ordinal, fun) do
+    list = to_enumerable(list)
+
+    cond do
+      ordinal > 0 -> _find_value(list, ordinal, fun)
+      ordinal < 0 -> _find_value(Enum.reverse(list), ordinal * -1, fun)
+      true -> nil
+    end
+  end
+
+  defp _find_value([], _, _), do: nil
+  defp _find_value(list, 1, fun), do: Enum.find_value(list, fun)
+
+  defp _find_value([h | t], ordinal, fun) do
+    result = fun.(h)
+
+    case !is_nil(result) and result != false do
+      true -> find_value(t, ordinal - 1, fun)
+      false -> find_value(t, ordinal, fun)
+    end
+  end
+
+  defp to_enumerable(list) do
+    cond do
+      is_map(list) -> Map.to_list(list)
+      true -> list
+    end
   end
 end
