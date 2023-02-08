@@ -47,12 +47,27 @@ defmodule Mu.Character.ItemView do
     to_string(wear_slot)
   end
 
+  def render("remove", %{item_instance: item_instance}) do
+    ~i(You remove #{render("name", %{item_instance: item_instance})}.\n)
+  end
+
+  def render("unequip-to-drop", %{item_instance: item_instance}) do
+    ~i(You are wearing #{render("name", %{item_instance: item_instance})}. You must {emphasize}remove{/emphasize} to drop.\n)
+  end
+
   def render("cannot-wear", %{item_instance: item_instance}) do
     item_name = render("name", %{item_instance: item_instance})
     ~i(#{item_name} cannot be equipped.\n)
   end
 
   def render("unknown", %{item_name: item_name}) do
-    ~i(There is no item {color foreground="white"}"#{item_name}"{/color}.\n)
+    ~i(Cannot find item {color foreground="white"}"#{item_name}"{/color}.\n)
+  end
+
+  def render("unknown-inventory", %{item_name: item_name}) do
+    [
+      ~i(Cannot find item {color foreground="white"}"#{item_name}"{/color} in inventory. ),
+      ~i(Item must be in inventory to be equipped.\n)
+    ]
   end
 end

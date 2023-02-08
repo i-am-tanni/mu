@@ -51,6 +51,12 @@ defmodule Mu.Character.CharacterController do
           item_id: "global:potion",
           created_at: DateTime.utc_now(),
           meta: %Mu.World.Item.Meta{}
+        },
+        %Kalevala.World.Item.Instance{
+          id: Kalevala.World.Item.Instance.generate_id(),
+          item_id: "global:helm",
+          created_at: DateTime.utc_now(),
+          meta: %Mu.World.Item.Meta{}
         }
       ],
       meta: %Mu.Character.PlayerMeta{
@@ -62,7 +68,8 @@ defmodule Mu.Character.CharacterController do
           endurance_points: 30,
           max_endurance_points: 30
         },
-        pronouns: :male
+        pronouns: :male,
+        equipment: Mu.Character.Equipment.new(:basic)
       }
     }
   end

@@ -1,8 +1,45 @@
+defmodule Mu.Character.Equipment.EmptySlot do
+  @moduledoc """
+  An empty struct for equipment slots to include by default
+  """
+  defstruct []
+end
+
+defmodule Mu.Character.Equipment.Private do
+  defstruct [:sort_order]
+end
+
+defmodule Mu.Character.Equipment do
+  defstruct [:data, private: %__MODULE__.Private{}]
+
+  def new(template, args \\ []) do
+    keys = apply(__MODULE__, template, args)
+
+    data = Enum.into(keys, %{}, &{&1, %__MODULE__.EmptySlot{}})
+
+    private = %__MODULE__.Private{sort_order: keys}
+
+    %__MODULE__{data: data, private: private}
+  end
+
+  def put(equipment, wear_slot, item) do
+    %{equipment | data: Map.put(equipment.data, wear_slot, item)}
+  end
+
+  def get(equipment), do: equipment.data
+  def sort_order(equipment), do: equipment.private.sort_order
+
+  def basic() do
+    ["head", "body"]
+  end
+end
+
 defmodule Mu.Character do
   @moduledoc """
   Character callbacks for Kalevala
   """
   alias Mu.Character.Pronouns
+  alias Mu.Character.Equipment
 
   @doc """
   Converts the gender atom to a pronoun set.
@@ -15,11 +52,19 @@ defmodule Mu.Character do
   end
 
   def put_equipment(character, wear_slot, item_instance) do
-    equipment = %{character.meta.equipment | wear_slot => item_instance}
+    equipment = Equipment.put(character.meta.equipment, wear_slot, item_instance)
     %{character | meta: Map.put(character.meta, :equipment, equipment)}
   end
 
-  def get_equipment(character), do: Map.values(character.meta.equipment)
+  def get_equipment(character, opts \\ []) do
+    equipment = character.meta.equipment
+
+    case opts[:only] do
+      "items" -> Map.values(Equipment.get(equipment))
+      "sort_order" -> Equipment.sort_order(equipment)
+      _ -> Equipment.get(equipment)
+    end
+  end
 end
 
 defmodule Mu.Character.Vitals do
@@ -36,27 +81,6 @@ defmodule Mu.Character.Vitals do
     :endurance_points,
     :max_endurance_points
   ]
-end
-
-defmodule Mu.Character.Equipment.EmptySlot do
-  @moduledoc """
-  An empty struct for equipment slots to include by default
-  """
-  defstruct []
-end
-
-defmodule Mu.Character.Equipment do
-  defstruct []
-
-  def new(template, args \\ []) do
-    apply(__MODULE__, template, args)
-    |> Enum.map(fn key -> {key, %__MODULE__.EmptySlot{}} end)
-    |> Enum.into(%{})
-  end
-
-  def basic() do
-    [:head, :body]
-  end
 end
 
 defmodule Mu.Character.PathFindData do
@@ -140,6 +164,8 @@ defmodule Mu.Character.MuEnum do
   """
 
   def find_many(list, count, fun) do
+    list = to_enumerable(list)
+
     cond do
       count > 0 -> _find_many(list, count, [], fun)
       count < 0 -> _find_many(Enum.reverse(list), count * -1, [], fun)
@@ -191,7 +217,7 @@ defmodule Mu.Character.MuEnum do
 
   defp to_enumerable(list) do
     cond do
-      is_map(list) -> Map.to_list(%{})
+      is_map(list) -> Map.to_list(list)
       true -> list
     end
   end

@@ -44,14 +44,15 @@ defmodule Mu.Character.ItemCommand do
 
     case !is_nil(item_instance) do
       true ->
-        case item_instance not in conn.character.meta.equipment do
+        case item_instance not in Character.get_equipment(conn.character, only: "items") do
           true ->
             conn
             |> request_item_drop(item_instance)
             |> assign(:prompt, false)
 
           false ->
-            render(conn, ItemView, "unequip-to-remove", %{item_instance: item_instance})
+            item_instance = %{item_instance | item: Items.get!(item_instance.item_id)}
+            render(conn, ItemView, "unequip-to-drop", %{item_instance: item_instance})
         end
 
       false ->
@@ -66,7 +67,7 @@ defmodule Mu.Character.ItemCommand do
   end
 
   def wear(conn, params) do
-    item_name = params["text"]
+    item_name = params["item_name"]
     ordinal = Map.get(params, "ordinal", 1)
 
     item_instance = find_item(conn.character.inventory, item_name, ordinal)
@@ -93,18 +94,22 @@ defmodule Mu.Character.ItemCommand do
 
       false ->
         conn
-        |> render(ItemView, "unknown")
+        |> assign(:item_name, item_name)
+        |> render(ItemView, "unknown-inventory")
     end
   end
 
   def remove(conn, params) do
-    item_name = params["text"]
+    item_name = params["item_name"]
     ordinal = Map.get(params, "ordinal", 1)
 
     result =
-      conn.character.meta.equipment
+      Character.get_equipment(conn.character)
+      |> Enum.reject(fn {_, item_instance} ->
+        item_instance == %Character.Equipment.EmptySlot{}
+      end)
       |> MuEnum.find_value(ordinal, fn {wear_slot, item_instance} ->
-        item = Items.get!(item_instance)
+        item = Items.get!(item_instance.item_id)
 
         if item_instance.id == item_name || item.callback_module.matches?(item, item_name) ||
              to_string(wear_slot) == item_name,
@@ -114,22 +119,24 @@ defmodule Mu.Character.ItemCommand do
     case result do
       {wear_slot, item_instance} ->
         character =
-          Character.put_equipment(character(conn), wear_slot, %Character.Equipment.EmptySlot{})
+          Character.put_equipment(conn.character, wear_slot, %Character.Equipment.EmptySlot{})
 
-        item = Items.get!(item_instance)
+        item = Items.get!(item_instance.item_id)
 
         conn
         |> put_character(character)
-        |> assign(:item, item)
+        |> assign(:item_instance, %{item_instance | item: item})
+        |> render(ItemView, "remove")
 
       nil ->
         conn
+        |> assign(:item_name, item_name)
         |> render(ItemView, "unknown")
     end
   end
 
   defp reject_equipment(item_instances, %{character: character}) do
-    equipment_item_instances = Character.get_equipment(character)
+    equipment_item_instances = Character.get_equipment(character, only: "items")
 
     Enum.reject(item_instances, fn item_instance ->
       item_instance in equipment_item_instances
