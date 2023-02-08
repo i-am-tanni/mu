@@ -19,10 +19,9 @@ defmodule Mu.Character.SayAction do
   defp meta(params) do
     params
     |> Map.take(["adverb", "at_character"])
-    |> Enum.map(fn {key, value} ->
+    |> Enum.into(%{}, fn {key, value} ->
       {String.to_atom(key), value}
     end)
-    |> Enum.into(%{})
   end
 
   def publish_error(conn, _error), do: conn
