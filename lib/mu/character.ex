@@ -15,7 +15,10 @@ defmodule Mu.Character.Equipment do
   def new(template, args \\ []) do
     keys = apply(__MODULE__, template, args)
 
-    data = Enum.into(keys, %{}, &{&1, %__MODULE__.EmptySlot{}})
+    data =
+      Enum.into(keys, %{}, fn key ->
+        {key, %__MODULE__.EmptySlot{}}
+      end)
 
     private = %__MODULE__.Private{sort_order: keys}
 

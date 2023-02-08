@@ -55,11 +55,9 @@ defmodule Mu.World.Saver do
 
   defp prepare_items(file, zone) do
     items =
-      zone.items
-      |> Enum.map(fn item ->
+      Enum.into(zone.items, %{}, fn item ->
         {to_string(item.id), prepare_item(item)}
       end)
-      |> Enum.into(%{})
 
     %{file | items: items}
   end
