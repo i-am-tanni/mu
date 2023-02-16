@@ -100,13 +100,17 @@ defmodule Mu.World.Loader do
         }
 
       to_room ->
+        door = parse_door(door)
+        type = if is_nil(door), do: :normal, else: :door
+
         %Exit{
+          type: type,
           exit_name: key,
           start_room_id: context.room_id,
           end_room_id: to_room,
           hidden?: false,
           secret?: false,
-          door: parse_door(door)
+          door: door
         }
     end
   end

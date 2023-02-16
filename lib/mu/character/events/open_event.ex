@@ -3,7 +3,7 @@ defmodule Mu.Character.OpenEvent do
   alias Mu.Character.OpenView
   alias Mu.Character.CommandView
 
-  def call(conn, %{data: %{room_exit: room_exit}}) when room_exit != nil do
+  def call(conn, %{data: %{room_exit: room_exit}}) when room_exit.type == :door do
     door = room_exit.door
 
     cond do

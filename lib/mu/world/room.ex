@@ -29,15 +29,23 @@ defmodule Mu.World.Room do
 
   def movement_request(_context, event, nil), do: {:abort, event, :no_exit}
 
-  def movement_request(_context, event, room_exit) when room_exit.door == nil do
+  def movement_request(_context, event, room_exit) when room_exit.type == :normal do
     {:proceed, event, room_exit}
   end
 
-  def movement_request(_context, event, room_exit = %{door: door}) do
-    cond do
-      door.closed? == false -> {:proceed, event, room_exit}
-      door.locked? -> {:abort, event, :door_locked}
-      door.closed? -> {:abort, event, :door_closed}
+  def movement_request(_context, event, room_exit = %{type: :door, door: door}) do
+    case !is_nil(door) do
+      true ->
+        cond do
+          door.closed? == false -> {:proceed, event, room_exit}
+          door.locked? -> {:abort, event, :door_locked}
+          door.closed? -> {:abort, event, :door_closed}
+        end
+
+      false ->
+        exit_info = "#{room_exit.start_room_id}/#{room_exit.id}.#{room_exit.exit_name}"
+        Logger.warn("Room_exit #{exit_info} type is :door but door data is nil.")
+        {:proceed, event, room_exit}
     end
   end
 

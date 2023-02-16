@@ -30,8 +30,8 @@ defmodule Mu.World.Room.DoorEvent do
 
   defp find_local_door(context, keyword) do
     Enum.find(context.data.exits, fn room_exit ->
-      (!is_nil(room_exit.door) && room_exit.door.id == keyword) ||
-        (!is_nil(room_exit.door) && Exit.matches?(room_exit, keyword))
+      if room_exit.type == :door,
+        do: room_exit.door.id == keyword or Exit.matches?(room_exit, keyword)
     end)
   end
 
