@@ -12,7 +12,7 @@ end
 defmodule Mu.Character.Equipment do
   defstruct [:data, private: %__MODULE__.Private{}]
 
-  def new(template, args \\ []) do
+  def wear_slots(template, args \\ []) do
     keys = apply(__MODULE__, template, args)
 
     data =
@@ -107,7 +107,7 @@ defmodule Mu.Character.PlayerMeta do
   defstruct [
     :reply_to,
     :pronouns,
-    equipment: Mu.Character.Equipment.new(:basic),
+    equipment: Mu.Character.Equipment.wear_slots(:basic),
     vitals: %Mu.Character.Vitals{}
   ]
 
