@@ -1,40 +1,8 @@
-defmodule Mu.Character.Equipment.EmptySlot do
+defmodule Mu.Character.Instance do
   @moduledoc """
-  An empty struct for equipment slots to include by default
+  Used for spawners to keep data about instances of characters they create
   """
-  defstruct []
-end
-
-defmodule Mu.Character.Equipment.Private do
-  defstruct [:sort_order]
-end
-
-defmodule Mu.Character.Equipment do
-  defstruct [:data, private: %__MODULE__.Private{}]
-
-  def wear_slots(template, args \\ []) do
-    keys = apply(__MODULE__, template, args)
-
-    data =
-      Enum.into(keys, %{}, fn key ->
-        {key, %__MODULE__.EmptySlot{}}
-      end)
-
-    private = %__MODULE__.Private{sort_order: keys}
-
-    %__MODULE__{data: data, private: private}
-  end
-
-  def put(equipment, wear_slot, item) do
-    %{equipment | data: Map.put(equipment.data, wear_slot, item)}
-  end
-
-  def get(equipment), do: equipment.data
-  def sort_order(equipment), do: equipment.private.sort_order
-
-  def basic() do
-    ["head", "body"]
-  end
+  defstruct [:id, :character_id, :pid, :created_at]
 end
 
 defmodule Mu.Character do
@@ -115,6 +83,55 @@ defmodule Mu.Character.PlayerMeta do
     def trim(meta) do
       Map.take(meta, [:vitals, :pronouns])
     end
+  end
+
+  defimpl Kalevala.Meta.Access do
+    def get(meta, key), do: Map.get(meta, key)
+
+    def put(meta, key, value), do: Map.put(meta, key, value)
+  end
+end
+
+defmodule Mu.Character.NonPlayerMeta do
+  @moduledoc """
+  Specific metadata for a world character in Kantele
+  """
+
+  defstruct [:initial_events, :vitals, :zone_id, :spawner_pid]
+
+  defimpl Kalevala.Meta.Trim do
+    def trim(meta) do
+      Map.take(meta, [:vitals])
+    end
+  end
+
+  defimpl Kalevala.Meta.Access do
+    def get(meta, key), do: Map.get(meta, key)
+
+    def put(meta, key, value), do: Map.put(meta, key, value)
+  end
+end
+
+defmodule Mu.Character.Spawner.Rules do
+  @moduledoc """
+  Rules for spawns:
+  - Spawn count cannot exceed maximum.
+  - Above the minimum_count, spawns occur at a frequency of minimum_delay to random_delay
+  - room_ids is a list of rooms in which a spawn can occur, chosen at random
+  - Automatic spawning is only triggered if minimum count > 0
+  """
+  defstruct [:minimum_count, :maximum_count, :minimum_delay, :random_delay, room_ids: []]
+end
+
+defmodule Mu.Character.Spawner.SpawnData do
+  defstruct count: 0, instances: []
+end
+
+defmodule Mu.Character.SpawnerMeta do
+  defstruct [:zone_id, :type, prototype_ids: [], spawns: %{}, rules: %{}]
+
+  defimpl Kalevala.Meta.Trim do
+    def trim(_meta), do: %{}
   end
 
   defimpl Kalevala.Meta.Access do

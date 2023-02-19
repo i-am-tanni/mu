@@ -5,6 +5,7 @@ defmodule Mu.World.Loader do
   alias Mu.World.Exit.Door
   alias Mu.World.Item
   alias Mu.World
+  alias Kalevala.Character
 
   @paths %{
     world_path: "data/world"
@@ -136,6 +137,17 @@ defmodule Mu.World.Loader do
       callback_module: Item,
       meta: %{},
       verbs: [:get, :drop]
+    }
+  end
+
+  defp parse_character(zone, key, character_data) do
+    %Character{
+      id: "#{zone.id}:#{key}",
+      name: character_data.name,
+      description: character_data.description,
+      meta: %Mu.Character.NonPlayerMeta{
+        zone_id: character_data.zone_id
+      }
     }
   end
 
