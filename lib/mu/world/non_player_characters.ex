@@ -1,4 +1,4 @@
-defmodule Mu.World.NonPlayerCharacters do
+defmodule Mu.World.Characters do
   @moduledoc false
 
   use Kalevala.Cache
