@@ -2,7 +2,7 @@ defmodule Mu.Character.Instance do
   @moduledoc """
   Used for spawners to keep data about instances of characters they create
   """
-  defstruct [:id, :character_id, :pid, :created_at]
+  defstruct [:id, :character_id, :pid, :created_at, :expires_at]
 end
 
 defmodule Mu.Character do
@@ -97,11 +97,11 @@ defmodule Mu.Character.NonPlayerMeta do
   Specific metadata for a world character in Kantele
   """
 
-  defstruct [:initial_events, :vitals, :zone_id, :spawner_pid]
+  defstruct [:initial_events, :vitals, :zone_id, :spawn_rules]
 
   defimpl Kalevala.Meta.Trim do
     def trim(meta) do
-      Map.take(meta, [:vitals])
+      Map.take(meta, [:zone_id, :vitals])
     end
   end
 

@@ -14,6 +14,19 @@ defmodule Mu.World.Room do
     exits: []
   ]
 
+  def whereis(room_id) do
+    pid = GenServer.whereis(Kalevala.World.Room.global_name(room_id))
+
+    case !is_nil(pid) do
+      true ->
+        pid
+
+      false ->
+        Logger.error("Requested pid for room_id '#{room_id}' where none is available")
+        nil
+    end
+  end
+
   @doc """
   Called after a room is initialized, used in the Callbacks protocol
   """

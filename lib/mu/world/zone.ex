@@ -1,3 +1,24 @@
+defmodule Mu.World.Zone.Spawner.SpawnRules do
+  defstruct [
+    :prototype_id,
+    :type,
+    :minimum_count,
+    :maximum_count,
+    :minimum_delay,
+    :random_delay,
+    :expires_in,
+    :room_ids
+  ]
+end
+
+defmodule Mu.World.Zone.Spawner.InstanceTracking do
+  defstruct instances: [], count: 0
+end
+
+defmodule Mu.World.Zone.Spawner do
+  defstruct prototype_ids: [], instance_tracking: %{}, rules: %{}
+end
+
 defmodule Mu.World.Zone do
   alias Mu.World.Zone.Events
 
@@ -16,26 +37,6 @@ defmodule Mu.World.Zone do
 
     @impl true
     def event(_zone, context, event), do: Zone.event(context, event)
-  end
-end
-
-defmodule Mu.World.Zone.SpawnEvent do
-  import Kalevala.World.Zone.Context
-
-  alias Mu.World.Zone.Spawner
-
-  def spawn_character(context, event) do
-    data = event.data
-    loadout = Map.get(data, :loadout, [])
-
-    {result, spawner} =
-      Spawner.spawn_character(context.spawner, data.character_id, data.room_id, loadout)
-
-    topic = if match?(:ok, result), do: "spawn/success", else: "spawn/failure"
-
-    context
-    |> put_data(:spawner, spawner)
-    |> event(event.from_pid, self(), topic, event.data)
   end
 end
 

@@ -6,6 +6,7 @@ defmodule Mu.World.Loader do
   alias Mu.World.Item
   alias Mu.World
   alias Kalevala.Character
+  alias Mu.World.Zone.Spawner.SpawnRules
 
   @paths %{
     world_path: "data/world"
@@ -70,7 +71,35 @@ defmodule Mu.World.Loader do
       |> Enum.map(&keys_to_atoms/1)
       |> Enum.map(&parse_item(&1, context))
 
+    spawn_rules =
+      Map.get(zone.data, "spawners", [])
+      |> Enum.map(&keys_to_atoms/1)
+      |> Enum.map(&parse_spawn_rules(&1, context))
+      |> Enum.into(%{})
+
+    context = Map.merge(%{spawners: spawn_rules}, context)
+
+    characters =
+      Map.get(zone.data, "characters", [])
+      |> Enum.map(&keys_to_atoms/1)
+      |> Enum.map(&parse_character(&1, context))
+
     %{zone | id: id, name: name, rooms: rooms, items: items}
+  end
+
+  defp parse_spawn_rules(rules, _context) do
+    rules = %SpawnRules{
+      prototype_id: rules.prototype_id,
+      type: rules.type,
+      minimum_count: rules.minimum_count,
+      maximum_count: rules.maximum_count,
+      minimum_delay: rules.minimum_delay,
+      random_delay: rules.maximum_delay,
+      expires_in: Map.get(rules, :expires_in),
+      room_ids: rules.room_ids
+    }
+
+    {rules.prototype_id, rules}
   end
 
   defp parse_room({key, room}, context) do
@@ -140,13 +169,15 @@ defmodule Mu.World.Loader do
     }
   end
 
-  defp parse_character(zone, key, character_data) do
+  defp parse_character({key, character}, context) do
     %Character{
-      id: "#{zone.id}:#{key}",
-      name: character_data.name,
-      description: character_data.description,
+      id: "#{context.zone_id}:#{key}",
+      name: character.name,
+      description: character.description,
       meta: %Mu.Character.NonPlayerMeta{
-        zone_id: character_data.zone_id
+        zone_id: context.zone_id,
+        initial_events: Map.get(character, :initial_events, []),
+        spawn_rules: Map.get(context.spawn_rules, key)
       }
     }
   end
