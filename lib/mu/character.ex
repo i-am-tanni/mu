@@ -2,7 +2,7 @@ defmodule Mu.Character.Instance do
   @moduledoc """
   Used for spawners to keep data about instances of characters they create
   """
-  defstruct [:id, :character_id, :pid, :created_at, :expires_at]
+  defstruct [:id, :character_id, :created_at, :expires_at]
 end
 
 defmodule Mu.Character do
@@ -97,7 +97,7 @@ defmodule Mu.Character.NonPlayerMeta do
   Specific metadata for a world character in Kantele
   """
 
-  defstruct [:initial_events, :vitals, :zone_id, :spawn_rules]
+  defstruct [:initial_events, :vitals, :zone_id]
 
   defimpl Kalevala.Meta.Trim do
     def trim(meta) do
@@ -239,6 +239,26 @@ defmodule Mu.Character.MuEnum do
     cond do
       is_map(list) -> Map.to_list(list)
       true -> list
+    end
+  end
+end
+
+defmodule Mu.Character.NonPlayerEvents do
+  @moduledoc false
+
+  use Kalevala.Event.Router
+
+  alias Kalevala.Event.Movement
+
+  scope(Mu.Character) do
+    module(MoveEvent) do
+      event(Movement.Commit, :commit)
+      event(Movement.Abort, :abort)
+      event(Movement.Notice, :notice)
+    end
+
+    module(WanderEvent) do
+      event("room/wander", :run)
     end
   end
 end

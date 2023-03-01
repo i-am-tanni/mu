@@ -15,15 +15,14 @@ defmodule Mu.World.Room do
   ]
 
   def whereis(room_id) do
-    pid = GenServer.whereis(Kalevala.World.Room.global_name(room_id))
+    pid =
+      room_id
+      |> Kalevala.World.Room.global_name()
+      |> GenServer.whereis()
 
-    case !is_nil(pid) do
-      true ->
-        pid
-
-      false ->
-        Logger.error("Requested pid for room_id '#{room_id}' where none is available")
-        nil
+    with nil <- pid do
+      Logger.error("Requested pid for room_id '#{room_id}' where none is available")
+      nil
     end
   end
 
@@ -38,6 +37,8 @@ defmodule Mu.World.Room do
 
       :ok
     end
+
+    room
   end
 
   def movement_request(_context, event, nil), do: {:abort, event, :no_exit}

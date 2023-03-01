@@ -3,6 +3,20 @@
     "id": 1,
     "name": "DefaultZone"
   },
+  "characters": {
+    "guard": {
+      "name": "A guard",
+      "description": "On patrol, this guard is suited in a coat of shining steel.",
+      "spawn_rules": {
+        "active?": true,
+        "minimum_count": 1,
+        "maximum_count": 1,
+        "minimum_delay": 30000,
+        "random_delay": 300000,
+        "room_ids": 1
+      }
+    }
+  },
   "rooms": {
     "1": {
       "description": "It's cold up here.",

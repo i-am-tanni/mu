@@ -36,6 +36,7 @@ defmodule Mu.World.Kickoff do
     world = Loader.load()
 
     Enum.each(world.items, &cache_item/1)
+    Enum.each(world.characters, &cache_character/1)
 
     world.zones
     |> Enum.map(&Loader.strip_zone/1)
@@ -47,9 +48,28 @@ defmodule Mu.World.Kickoff do
     end)
 
     Enum.each(world.rooms, &start_room/1)
-    # Enum.each(world.characters, &start_character/1)
+    Enum.each(world.zones, &start_spawners/1)
 
     {:noreply, state}
+  end
+
+  def start_spawners(zone) do
+    zone_pid = GenServer.whereis(Kalevala.World.Zone.global_name(zone))
+
+    characters_init = %Kalevala.Event{
+      topic: "init/characters",
+      from_pid: self(),
+      data: %{}
+    }
+
+    items_init = %Kalevala.Event{
+      topic: "init/items",
+      from_pid: self(),
+      data: %{}
+    }
+
+    send(zone_pid, characters_init)
+    send(zone_pid, items_init)
   end
 
   def start_zone(zone) do
@@ -88,5 +108,9 @@ defmodule Mu.World.Kickoff do
 
   def cache_item(item) do
     Mu.World.Items.put(item.id, item)
+  end
+
+  def cache_character(character) do
+    Mu.World.Characters.put(character.id, character)
   end
 end

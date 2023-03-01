@@ -1,5 +1,5 @@
 defmodule Mu.World do
-  defstruct [:zones, :items, :rooms]
+  defstruct [:zones, :items, :rooms, :characters]
   use Supervisor
 
   def start_link(opts) do
@@ -13,6 +13,7 @@ defmodule Mu.World do
 
     children = [
       {Mu.World.Items, [id: Mu.World.Items, name: Mu.World.Items]},
+      {Mu.World.Characters, [id: Mu.World.Characters, name: Mu.World.Characters]},
       {Mu.World.ZoneCache, [id: Mu.World.ZoneCache, name: Mu.World.ZoneCache]},
       {Kalevala.World, [name: Mu.World]},
       {Mu.World.Kickoff, [name: Mu.World.Kickoff, start: kickoff]}

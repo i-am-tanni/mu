@@ -7,6 +7,7 @@ defmodule Mu.World.Loader do
   alias Mu.World
   alias Kalevala.Character
   alias Mu.World.Zone.Spawner.SpawnRules
+  alias Mu.World.Zone.Spawner
 
   @paths %{
     world_path: "data/world"
@@ -71,35 +72,33 @@ defmodule Mu.World.Loader do
       |> Enum.map(&keys_to_atoms/1)
       |> Enum.map(&parse_item(&1, context))
 
-    spawn_rules =
-      Map.get(zone.data, "spawners", [])
+    character_spawners =
+      Map.get(zone_data, "characters", [])
+      |> Enum.filter(fn {_key, val} ->
+        Map.has_key?(val, "spawn_rules")
+      end)
+      |> Enum.map(fn {key, val} ->
+        {key, Map.fetch!(val, "spawn_rules")}
+      end)
       |> Enum.map(&keys_to_atoms/1)
-      |> Enum.map(&parse_spawn_rules(&1, context))
+      |> Enum.map(&parse_spawner(&1, Map.put(context, :type, :character)))
       |> Enum.into(%{})
 
-    context = Map.merge(%{spawners: spawn_rules}, context)
-
     characters =
-      Map.get(zone.data, "characters", [])
+      Map.get(zone_data, "characters", [])
       |> Enum.map(&keys_to_atoms/1)
       |> Enum.map(&parse_character(&1, context))
 
-    %{zone | id: id, name: name, rooms: rooms, items: items}
-  end
-
-  defp parse_spawn_rules(rules, _context) do
-    rules = %SpawnRules{
-      prototype_id: rules.prototype_id,
-      type: rules.type,
-      minimum_count: rules.minimum_count,
-      maximum_count: rules.maximum_count,
-      minimum_delay: rules.minimum_delay,
-      random_delay: rules.maximum_delay,
-      expires_in: Map.get(rules, :expires_in),
-      room_ids: rules.room_ids
+    %{
+      zone
+      | id: id,
+        name: name,
+        rooms: rooms,
+        items: items,
+        characters: characters,
+        character_spawner: character_spawners,
+        item_spawner: %{}
     }
-
-    {rules.prototype_id, rules}
   end
 
   defp parse_room({key, room}, context) do
@@ -169,6 +168,38 @@ defmodule Mu.World.Loader do
     }
   end
 
+  defp parse_spawner({key, spawner}, context) do
+    id = "#{context.zone_id}:#{key}"
+
+    spawner = %Spawner{
+      prototype_id: id,
+      active?: spawner.active?,
+      type: context.type,
+      rules: parse_spawn_rules(spawner, context)
+    }
+
+    {id, spawner}
+  end
+
+  defp parse_spawn_rules(rules, _context) do
+    room_ids = rules.room_ids
+
+    room_ids =
+      case is_list(room_ids) do
+        true -> room_ids
+        false -> List.wrap(room_ids)
+      end
+
+    %SpawnRules{
+      minimum_count: rules.minimum_count,
+      maximum_count: rules.maximum_count,
+      minimum_delay: rules.minimum_delay,
+      random_delay: rules.random_delay,
+      expires_in: Map.get(rules, :expires_in),
+      room_ids: room_ids
+    }
+  end
+
   defp parse_character({key, character}, context) do
     %Character{
       id: "#{context.zone_id}:#{key}",
@@ -176,8 +207,7 @@ defmodule Mu.World.Loader do
       description: character.description,
       meta: %Mu.Character.NonPlayerMeta{
         zone_id: context.zone_id,
-        initial_events: Map.get(character, :initial_events, []),
-        spawn_rules: Map.get(context.spawn_rules, key)
+        initial_events: Map.get(character, :initial_events, [])
       }
     }
   end
@@ -186,6 +216,7 @@ defmodule Mu.World.Loader do
     %World{zones: zones}
     |> split_out_rooms()
     |> split_out_items
+    |> split_out_characters
   end
 
   defp split_out_rooms(world) do
@@ -204,6 +235,15 @@ defmodule Mu.World.Loader do
       end)
 
     %{world | items: items}
+  end
+
+  defp split_out_characters(world) do
+    characters =
+      Enum.flat_map(world.zones, fn zone ->
+        Map.get(zone, :characters, [])
+      end)
+
+    %{world | characters: characters}
   end
 
   defp keys_to_atoms({key, map = %{}}) do
