@@ -1,3 +1,271 @@
+defmodule Mu.Brain.Parser.Helpers do
+  @moduledoc false
+  @doc """
+  define a parser combinator and variable with same name
+  """
+  defmacro defcv(name, expr) do
+    quote do
+      defcombinatorp(unquote(name), unquote(expr))
+      Kernel.var!(unquote({name, [], nil})) = parsec(unquote(name))
+      _ = Kernel.var!(unquote({name, [], nil}))
+    end
+  end
+end
+
+defmodule Mu.Brain.Parser do
+  import NimbleParsec
+  import Mu.Brain.Parser.Helpers
+
+  defcv(:skip, ascii_char([?\s, ?\n]) |> repeat() |> ignore())
+  defcv(:lbrace, string("{") |> concat(skip) |> ignore())
+  defcv(:rbrace, string("}") |> concat(skip) |> ignore())
+  defcv(:lparen, string("(") |> concat(skip) |> ignore())
+  defcv(:rparen, string(")") |> concat(skip) |> ignore())
+  defcv(:colon, string(":") |> concat(skip) |> ignore())
+  defcv(:comma, string(",") |> concat(skip) |> ignore())
+  defcv(:int, integer(min: 1))
+
+  defcv(
+    :stringliteral,
+    ignore(string(~s(")))
+    |> utf8_string([not: ?"], min: 1)
+    |> ignore(string(~s(")))
+    |> concat(skip)
+  )
+
+  defcv(
+    :quoted_word,
+    ignore(string(~s(")))
+    |> utf8_string([not: ?", not: ?\n, not: ?\s], min: 1)
+    |> ignore(string(~s(")))
+    |> concat(skip)
+  )
+
+  defcv(
+    :boolean,
+    choice([string("true") |> replace(true), string("false") |> replace(false)])
+  )
+
+  defcv(
+    :key,
+    utf8_string([not: ?:, not: ?=, not: ?\n, not: ?\s], min: 1)
+    |> concat(colon)
+  )
+
+  defcv(
+    :val,
+    choice([stringliteral, boolean, int, parsec(:hashmap)])
+    |> optional(comma)
+  )
+
+  defcv(
+    :key_val,
+    key
+    |> concat(val)
+    |> choice([skip, comma])
+    |> wrap()
+    |> map({List, :to_tuple, []})
+  )
+
+  defcv(
+    :hashmap,
+    lbrace
+    |> repeat(key_val)
+    |> concat(rbrace)
+    |> wrap()
+    |> map({Enum, :into, [%{}]})
+    |> label("hash map: expected { followed by key_vals followed by }")
+  )
+
+  defcv(
+    :struct,
+    utf8_string([not: ?{, not: ?\n, not: ?\s], min: 1)
+    |> unwrap_and_tag(:node)
+    |> concat(hashmap)
+    |> wrap()
+    |> map({:merge, []})
+  )
+
+  defcv(
+    :selector,
+    utf8_string([not: ?(, not: ?\n, not: ?\s], min: 1)
+    |> unwrap_and_tag(:node)
+    |> concat(lparen)
+    |> repeat(parsec(:node))
+    |> concat(rparen)
+    |> wrap()
+    |> map({:package_selector, []})
+  )
+
+  defcv(
+    :node,
+    choice([struct, selector])
+    |> optional(comma)
+  )
+
+  defcv(
+    :brain,
+    skip
+    |> ignore(string("brain"))
+    |> concat(lparen)
+    |> concat(quoted_word)
+    |> concat(rparen)
+    |> concat(lbrace)
+    |> repeat(node)
+    |> concat(rbrace)
+    |> wrap()
+    |> map({List, :to_tuple, []})
+  )
+
+  defparsec(
+    :parse,
+    repeat(brain)
+  )
+
+  defp merge([{key, val}, map = %{}]), do: Map.put(map, key, val)
+
+  defp package_selector([{key, val} | t]), do: %{key => val, nodes: t}
+
+  def test_data() do
+    """
+    brain("test"){
+      FirstSelector(
+      )
+    }
+
+    brain("message/react") {
+      FirstSelector(
+        ConditionalSelector(
+          MessageMatch{
+            text: "\\bhi\\b"
+            channel: "say"
+          },
+          RandomSelector(
+            Action{
+              type: "say"
+              delay: 500
+              data: {
+                channel_name: "$channel_name",
+                text: "Hello $character_name!"
+              }
+            },
+
+          )
+        )
+      )
+    }
+    """
+  end
+
+  def test_data2() do
+    """
+    brain("generic_hello"){
+      ConditionalSelector(
+        MessageMatch{
+          text: "\bhi\b"
+          channel: "say"
+        },
+        Sequence(
+          Action{
+            type: "say",
+            delay: 500,
+            data: {
+              channel_name: "${channel_name}"
+              text: "Hello, ${character.name}!"
+            }
+          },
+          Action{
+            type: "say",
+            delay: 750,
+            data: {
+              channel_name: "${channel_name}"
+              text: "How are you?"
+            }
+          }
+        )
+      )
+    }
+
+    brain("villager"){
+      FirstSelector(
+        Node{
+          ref: "generic_hello"
+        },
+        ConditionalSelector(
+          EventMatch{
+            topic: "room-enter"
+          },
+          Action{
+            type: "say"
+            delay: 500
+            data: {
+              channel_name: "rooms:${room_id}",
+              text: "Welcome $character_name!"
+            }
+          }
+        )
+      )
+    }
+
+    brain("wandering_villager"){
+      FirstSelector(
+        Node{
+          ref: "generic_hello"
+        },
+        ConditionalSelector(
+          EventMatch{
+            topic: "room-enter"
+          },
+          Action{
+            type: "say"
+            delay: 500
+            data: {
+              channel_name: "rooms:${room_id}",
+              text: "Welcome $character_name!"
+            }
+          }
+        ),
+        ConditionalSelector(
+          EventMatch{
+            topic: "characters/move"
+            data: {
+              id: "wander"
+            }
+          },
+          Action{
+            type: "wander"
+          },
+          Action{
+            type: "delay-event",
+            data: {
+              minimum_delay: 18000
+              random_delay: 18000
+              topic: "characters/move"
+              data: {
+                id: "${id}"
+              }
+            }
+          }
+        )
+      )
+    }
+    """
+  end
+
+  def run(data) do
+    {:ok, result, remainder, _, _, _} = parse(data)
+    result = Enum.into(result, %{})
+
+    case remainder == "" do
+      true ->
+        result
+
+      false ->
+        raise "Brain parsing failed! Error found in input: #{inspect(remainder)}"
+    end
+  end
+end
+
 defmodule Mu.Brain do
   @moduledoc """
   Load and parse brain data into behavior tree structs
@@ -10,31 +278,9 @@ defmodule Mu.Brain do
 
   Defaults to `#{@brains_path}`
   """
-  def load_all(path \\ @brains_path) do
-    File.ls!(path)
-    |> Enum.filter(fn file ->
-      String.ends_with?(file, ".ucl")
-    end)
-    |> Enum.map(fn file ->
-      File.read!(Path.join(path, file))
-    end)
-    |> Enum.map(&Elias.parse/1)
-    |> Enum.flat_map(&merge_data/1)
-    |> Enum.into(%{})
-  end
 
-  def read(string) do
-    string
-    |> Elias.parse()
-    |> merge_data()
-    |> List.wrap()
-    |> Enum.into(%{})
-  end
-
-  defp merge_data(brain_data) do
-    Enum.map(brain_data.brains, fn {key, value} ->
-      {to_string(key), value}
-    end)
+  def read(data) do
+    Mu.Brain.Parser.run(data)
   end
 
   def process_all(brains) do
@@ -55,83 +301,125 @@ defmodule Mu.Brain do
     }
   end
 
-  # This is `brain = brains.town_crier`
-  defp parse_node("brains." <> key_path, brains) do
-    parse_node(brains[key_path], brains)
+  # References to other trees
+
+  defp parse_node(node, brains), do: parse_node(node.node, node, brains)
+
+  defp parse_node("Node", %{"ref" => ref}, brains) do
+    parse_node(brains[ref], brains)
   end
 
-  # A ref `{ ref = brains.town_crier }`
-  defp parse_node(%{ref: "brains." <> key_path}, brains) do
-    parse_node(brains[key_path], brains)
-  end
+  # Selectors
 
-  # Sequences
-
-  defp parse_node(%{type: "sequence", nodes: nodes}, brains) do
-    %Kalevala.Brain.Sequence{
-      nodes: Enum.map(nodes, &parse_node(&1, brains))
-    }
-  end
-
-  defp parse_node(%{type: "first", nodes: nodes}, brains) do
+  defp parse_node("FirstSelector", %{nodes: nodes}, brains) do
     %Kalevala.Brain.FirstSelector{
       nodes: Enum.map(nodes, &parse_node(&1, brains))
     }
   end
 
-  defp parse_node(%{type: "conditional", nodes: nodes}, brains) do
+  defp parse_node("ConditionalSelector", %{nodes: nodes}, brains) do
     %Kalevala.Brain.ConditionalSelector{
       nodes: Enum.map(nodes, &parse_node(&1, brains))
     }
   end
 
-  defp parse_node(condition = %{type: "conditions/" <> type}, brains),
-    do: parse_condition(type, condition, brains)
+  defp parse_node("Sequence", %{nodes: nodes}, brains) do
+    %Kalevala.Brain.Sequence{
+      nodes: Enum.map(nodes, &parse_node(&1, brains))
+    }
+  end
 
-  defp parse_node(action = %{type: "actions/" <> type}, brains),
-    do: parse_action(type, action, brains)
+  defp parse_node("RandomSelector", %{nodes: nodes}, brains) do
+    %Kalevala.Brain.RandomSelector{
+      nodes: Enum.map(nodes, &parse_node(&1, brains))
+    }
+  end
 
-  @doc """
-  Process a condition
-  """
-  def parse_condition("message-match", %{data: data}, _brains) do
-    {:ok, regex} = Regex.compile(data.text, "i")
+  # Conditions and Actions
+
+  defp parse_node("MessageMatch", node, _brains) do
+    %{"text" => text, "channel" => channel} = node
+    {:ok, regex} = Regex.compile(text, "i")
 
     %Kalevala.Brain.Condition{
       type: Kalevala.Brain.Conditions.MessageMatch,
       data: %{
-        interested?: &Mu.Character.SayEvent.interested?/1,
-        self_trigger: data.self_trigger == "true",
-        text: regex
+        interested?: channel_to_interested(channel),
+        text: regex,
+        self_trigger: node["self_trigger"] == true
       }
     }
   end
 
-  def parse_condition("tell-match", %{data: data}, _brains) do
-    {:ok, regex} = Regex.compile(data.text, "i")
+  defp parse_node("EventMatch", node, _brains) do
+    data = Map.get(node, "data", %{})
+    topic = Map.fetch!(node, "topic")
 
-    %Kalevala.Brain.Condition{
-      type: Kalevala.Brain.Conditions.MessageMatch,
-      data: %{
-        interested?: &Mu.Character.TellEvent.interested?/1,
-        self_trigger: data.self_trigger == "true",
-        text: regex
+    with nil <- parse_condition(topic, data) do
+      %Kalevala.Brain.Condition{
+        type: Kalevala.Brain.Conditions.EventMatch,
+        data: %{
+          topic: topic,
+          self_trigger: node["self_trigger"] == true,
+          data: keys_to_atoms(data)
+        }
       }
-    }
+    end
   end
 
-  def parse_condition("state-match", %{data: data}, _brains) do
+  defp parse_node("StateMatch", %{"match" => match}, _brains) do
+    match = process_match(match)
+
     %Kalevala.Brain.Condition{
       type: Kalevala.Brain.Conditions.StateMatch,
-      data: data
+      data: %{
+        key: match.key,
+        value: match.value,
+        match: match.operator
+      }
     }
   end
 
-  def parse_condition("room-enter", %{data: data}, _brains) do
+  defp parse_node("StateSet", node, _brains) do
+    %Kalevala.Brain.StateSet{
+      data: %{
+        key: Map.fetch!(node, "key"),
+        value: Map.fetch!(node, "value"),
+        ttl: Map.get(node, "ttl", 300)
+      }
+    }
+  end
+
+  defp parse_node("Action", node = %{minimum_delay: _}, brains) do
+    parse_action("delay-event", node, brains)
+  end
+
+  defp parse_node("Action", node, brains) do
+    with nil <- parse_action(node["type"], node, brains) do
+      data = Map.get(node, "data", %{})
+      type = Map.fetch!(node, "type")
+
+      %Kalevala.Brain.Action{
+        type: to_module(type),
+        delay: Map.get(node, "delay", 0),
+        data: keys_to_atoms(data)
+      }
+    end
+  end
+
+  defp keys_to_atoms(map = %{}) do
+    Enum.into(map, %{}, fn {key, val} ->
+      {String.to_atom(key), val}
+    end)
+  end
+
+  # canned conditions
+
+  defp parse_condition("room-enter", data) do
     %Kalevala.Brain.Condition{
       type: Kalevala.Brain.Conditions.EventMatch,
       data: %{
-        self_trigger: data.self_trigger == "true",
+        self_trigger: data["self_trigger"] == "true",
         topic: Kalevala.Event.Movement.Notice,
         data: %{
           direction: :to
@@ -140,63 +428,54 @@ defmodule Mu.Brain do
     }
   end
 
-  def parse_condition("event-match", %{data: data}, _brains) do
-    %Kalevala.Brain.Condition{
-      type: Kalevala.Brain.Conditions.EventMatch,
+  defp parse_condition(_, _), do: nil
+
+  # canned actions
+
+  defp parse_action("delay-event", node, _brians) do
+    data = Map.get(node, "data", %{})
+
+    %Kalevala.Brain.Action{
+      type: Mu.Character.DelayEventAction,
       data: %{
-        self_trigger: Map.get(data, :self_trigger, "false") == "true",
-        topic: data.topic,
-        data: Map.get(data, :data, %{})
+        topic: Map.fetch!(node, "type"),
+        minimum_delay: Map.fetch!(node, "minimum_delay"),
+        random_delay: Map.fetch!(node, "random_delay"),
+        data: keys_to_atoms(data)
       }
     }
   end
 
-  @doc """
-  Process actions
-  """
-  def parse_action("state-set", action, _brains) do
-    %Kalevala.Brain.StateSet{
-      data: action.data
-    }
+  defp parse_action(_, _, _), do: nil
+
+  # conversion functions
+
+  defp channel_to_interested(channel) do
+    case channel do
+      "say" -> &Mu.Character.SayEvent.interested?/1
+    end
   end
 
-  def parse_action("say", action, _brains) do
-    %Kalevala.Brain.Action{
-      type: Mu.Character.SayAction,
-      data: action.data,
-      delay: Map.get(action, :delay, 0)
-    }
+  defp process_match(match) do
+    [key, operator, value] = String.split(match)
+
+    operator =
+      case operator do
+        "==" -> "equality"
+        "!=" -> "inequality"
+        _ -> raise("Invalid operator '#{operator}'!")
+      end
+
+    %{key: key, operator: operator, value: value}
   end
 
-  def parse_action("emote", action, _brains) do
-    %Kalevala.Brain.Action{
-      type: Mu.Character.EmoteAction,
-      data: action.data,
-      delay: Map.get(action, :delay, 0)
-    }
-  end
-
-  def parse_action("flee", action, _brains) do
-    %Kalevala.Brain.Action{
-      type: Mu.Character.FleeAction,
-      data: %{},
-      delay: Map.get(action, :delay, 0)
-    }
-  end
-
-  def parse_action("wander", action, _brains) do
-    %Kalevala.Brain.Action{
-      type: Mu.Character.WanderAction,
-      data: %{},
-      delay: Map.get(action, :delay, 0)
-    }
-  end
-
-  def parse_action("delay-event", action, _brains) do
-    %Kalevala.Brain.Action{
-      type: Mu.Character.DelayEventAction,
-      data: action.data,
-      delay: Map.get(action, :delay, 0)
-    }
+  defp to_module(string) do
+    case string do
+      "say" -> Mu.Character.SayAction
+      "social" -> Mu.Character.SocialAction
+      "wander" -> Mu.Character.WanderAction
+      "delay-event" -> Mu.Character.DelayEventAction
+      _ -> raise "Error! Module '#{string}' not recognized"
+    end
   end
 end

@@ -35,6 +35,7 @@ defmodule Mu.World.Zone do
     @impl true
     def init(zone), do: zone
 
+    @impl true
     def initialized(zone), do: zone
 
     @impl true

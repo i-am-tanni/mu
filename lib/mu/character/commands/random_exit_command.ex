@@ -1,9 +1,8 @@
 defmodule Mu.Character.RandomExitCommand do
   use Kalevala.Character.Command
+  alias Mu.Character.WanderAction
 
   def wander(conn, params) do
-    conn
-    |> event("room/wander", params)
-    |> assign(:prompt, false)
+    WanderAction.run(conn, params)
   end
 end

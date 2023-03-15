@@ -10,9 +10,9 @@
       "spawn_rules": {
         "active?": true,
         "minimum_count": 1,
-        "maximum_count": 1,
-        "minimum_delay": 30000,
-        "random_delay": 300000,
+        "maximum_count": 3,
+        "minimum_delay": 3000,
+        "random_delay": 3000,
         "room_ids": 1
       }
     }
