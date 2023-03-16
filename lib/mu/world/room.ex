@@ -20,9 +20,13 @@ defmodule Mu.World.Room do
       |> Kalevala.World.Room.global_name()
       |> GenServer.whereis()
 
-    with nil <- pid do
-      Logger.error("Requested pid for room_id '#{room_id}' where none is available")
-      nil
+    case !is_nil(pid) do
+      true ->
+        pid
+
+      false ->
+        Logger.error("Requested pid for room_id '#{room_id}' where none is available")
+        nil
     end
   end
 
