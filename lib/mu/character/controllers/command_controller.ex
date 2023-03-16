@@ -28,6 +28,8 @@ defmodule Mu.Character.CommandController.PreParser do
 
   defparsec(:parse, pre_parser)
 
+  def run(""), do: ""
+
   def run(data) do
     {:ok, [result], _, _, _, _} = parse(data)
     result
