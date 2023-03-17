@@ -53,7 +53,7 @@ defmodule Mu.Character.SocialCommand do
       case Socials.get(parsed_term[:command]) do
         {:ok, social} ->
           {:dynamic, :run, social.command,
-           %{"social" => social, "character" => parsed_term[:character]}}
+           %{"social" => social, "at_character" => parsed_term[:character]}}
 
         {:error, :not_found} ->
           :skip

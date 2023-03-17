@@ -1,6 +1,26 @@
 defmodule Mu.Character.SocialView do
   use Kalevala.Character.View
 
+  @moduledoc """
+  Render for socials. There are three main types.
+  - No arg
+  - Auto (i.e. the acting character's argument is themself)
+  - Vict (i.e. the acting character's argument has a target that was found)
+
+  No Arg views:
+  - "char_no_arg"
+  - "others_no_arg"
+
+  Auto views:
+  - "char_auto"
+  - "others_auto"
+
+  Vict views:
+  - "char_found"
+  - "others_found"
+  - "vict_found"
+  """
+
   def render("char-no-arg", %{text: social, acting_character: acting_character}) do
     text = EEx.eval_string(social.char_no_arg, acting_character: acting_character)
     ~i(#{text}\n)
@@ -24,12 +44,12 @@ defmodule Mu.Character.SocialView do
   def render("char-found", %{
         text: social,
         acting_character: acting_character,
-        character: character
+        at_character: at_character
       }) do
     text =
       EEx.eval_string(social.char_found,
         acting_character: acting_character,
-        character: character
+        at_character: at_character
       )
 
     ~i(#{text}\n)
@@ -38,12 +58,12 @@ defmodule Mu.Character.SocialView do
   def render("others-found", %{
         text: social,
         acting_character: acting_character,
-        character: character
+        at_character: at_character
       }) do
     text =
       EEx.eval_string(social.others_found,
         acting_character: acting_character,
-        character: character
+        at_character: at_character
       )
 
     ~i(#{text}\n)
@@ -52,10 +72,13 @@ defmodule Mu.Character.SocialView do
   def render("vict-found", %{
         text: social,
         acting_character: acting_character,
-        character: character
+        at_character: at_character
       }) do
     text =
-      EEx.eval_string(social.vict_found, acting_character: acting_character, character: character)
+      EEx.eval_string(social.vict_found,
+        acting_character: acting_character,
+        at_character: at_character
+      )
 
     ~i(#{text}\n)
   end

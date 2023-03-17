@@ -31,12 +31,15 @@ defmodule Mu.Character.SocialEvent do
   end
 
   def echo(conn, event) do
+    at_character = if !is_nil(event.data.meta.at), do: Character.fill_pronouns(event.data.meta.at)
+
     conn
     |> assign(:acting_character, Character.fill_pronouns(event.acting_character))
-    |> assign(:character, Character.fill_pronouns(event.data.meta.at))
+    |> assign(:at_character, at_character)
     |> assign(:id, event.data.id)
     |> assign(:text, event.data.text)
     |> render(SocialView, social_view(conn, event))
+    |> assign(:character, conn.character)
     |> prompt(CommandView, "prompt", %{})
   end
 

@@ -61,22 +61,24 @@ defmodule Mu.Character.SocialsEEx do
 
   def victim_name() do
     ignore(string("$N"))
-    |> replace("<%= Mu.Character.CharacterView.render(\\\"name\\\", %{character: character}) %>")
+    |> replace(
+      "<%= Mu.Character.CharacterView.render(\\\"name\\\", %{character: at_character}) %>"
+    )
   end
 
   def victim_reflexive() do
     ignore(string("$Mself"))
-    |> replace("<%= character.meta.pronouns.reflexive %>")
+    |> replace("<%= at_character.meta.pronouns.reflexive %>")
   end
 
   def victim_him() do
     ignore(string("$M"))
-    |> replace("<%= character.meta.pronouns.object %>")
+    |> replace("<%= at_character.meta.pronouns.object %>")
   end
 
   def victim_his() do
     ignore(string("$S"))
-    |> replace("<%= character.meta.pronouns.possessive %>")
+    |> replace("<%= at_character.meta.pronouns.possessive %>")
   end
 
   defp text(), do: utf8_string([not: ?$], min: 1)
