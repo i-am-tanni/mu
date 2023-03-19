@@ -5,34 +5,34 @@ defmodule Mu.BrainTest do
 
   test "hello" do
     brain = """
-    brain("generic_hello"){
-      FirstSelector(
-        ConditionalSelector(
-          MessageMatch{
-            text: "\\bhi\\b",
-            channel: "say"
-          },
-          Sequence(
-            Action{
-              type: "say",
-              delay: 500,
-              data: {
-                channel_name: "${channel_name}"
-                text: "Hello, ${character.name}!"
-              }
+      brain("generic_hello"){
+        FirstSelector(
+          ConditionalSelector(
+            MessageMatch{
+              text: "\\bhi\\b",
+              channel: "say"
             },
-            Action{
-              type: "say",
-              delay: 750,
-              data: {
-                channel_name: "${channel_name}"
-                text: "How are you?"
+            Sequence(
+              Action{
+                type: "say",
+                delay: 500,
+                data: {
+                  channel_name: "${channel_name}"
+                  text: "Hello, ${character.name}!"
+                }
+              },
+              Action{
+                type: "say",
+                delay: 750,
+                data: {
+                  channel_name: "${channel_name}"
+                  text: "How are you?"
+                }
               }
-            }
+            )
           )
         )
-      )
-    }
+      }
     """
 
     brain = brain |> Mu.Brain.read() |> Mu.Brain.process_all()
