@@ -16,7 +16,7 @@ defmodule Mu.Utility.MuEnum do
 
     cond do
       ordinal > 0 -> _find(list, ordinal, fun)
-      ordinal < 0 -> _find(Enum.reverse(list), ordinal * -1, fun)
+      ordinal < 0 -> _find(Enum.reverse(list), abs(ordinal), fun)
       true -> nil
     end
   end
@@ -45,7 +45,7 @@ defmodule Mu.Utility.MuEnum do
 
     cond do
       count > 0 -> _find_many(list, count, [], fun)
-      count < 0 -> _find_many(Enum.reverse(list), count * -1, [], fun)
+      count < 0 -> _find_many(Enum.reverse(list), abs(count), [], fun)
       true -> []
     end
   end
@@ -75,7 +75,7 @@ defmodule Mu.Utility.MuEnum do
 
     cond do
       ordinal > 0 -> _find_value(list, ordinal, fun)
-      ordinal < 0 -> _find_value(Enum.reverse(list), ordinal * -1, fun)
+      ordinal < 0 -> _find_value(Enum.reverse(list), abs(ordinal), fun)
       true -> nil
     end
   end
