@@ -31,8 +31,15 @@ defmodule Mu.Brain.ParserTest do
     }
     """
 
-    result = Mu.Brain.Parser.run(data)
-    assert match?(result, %{})
+    expected_keys = MapSet.new(~w(test message/react))
+
+    keys =
+      data
+      |> Mu.Brain.Parser.run()
+      |> Map.keys()
+      |> MapSet.new()
+
+    assert MapSet.equal?(keys, expected_keys)
   end
 
   test "complex case" do
