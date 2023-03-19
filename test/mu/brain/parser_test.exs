@@ -129,7 +129,14 @@ defmodule Mu.Brain.ParserTest do
     }
     """
 
-    result = Mu.Brain.Parser.run(data)
-    assert match?(result, %{})
+    expected_keys = MapSet.new(~w(generic_hello villager wandering_villager))
+
+    keys =
+      data
+      |> Mu.Brain.Parser.run()
+      |> Map.keys()
+      |> MapSet.new()
+
+    assert MapSet.equal?(keys, expected_keys)
   end
 end
