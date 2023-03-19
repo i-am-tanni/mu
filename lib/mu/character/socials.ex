@@ -1,4 +1,18 @@
 defmodule Mu.Character.Social do
+  @moduledoc """
+  Socials are emotes that account for different perspectives depending on the witness
+
+  E.g.:
+    - "command": "smile",
+    - "char_no_arg": "You smile.",
+    - "others_no_arg": "$n beams a warm smile.",
+    - "char_found": "You smile at $N.",
+    - "others_found": "$n smiles warmly at $N.",
+    - "vict_found": "$n smiles warmly at you."
+    - "char_auto": "You smile knowingly.",
+    - "others_auto": "$n smiles knowingly to $mself.",
+  """
+
   defstruct [
     :command,
     :char_no_arg,
@@ -85,20 +99,6 @@ defmodule Mu.Character.SocialsEEx do
 end
 
 defmodule Mu.Character.Socials do
-  @moduledoc """
-  Socials are emotes that account for different perspectives depending on the witness
-
-  E.g.:
-    - "command": "smile",
-    - "char_no_arg": "You smile.",
-    - "others_no_arg": "$n beams a warm smile.",
-    - "char_found": "You smile at $N.",
-    - "others_found": "$n smiles warmly at $N.",
-    - "vict_found": "$n smiles warmly at you."
-    - "char_auto": "You smile knowingly.",
-    - "others_auto": "$n smiles knowingly to $mself.",
-  """
-
   use Kalevala.Cache
   import NimbleParsec, only: [defparsec: 2]
 
