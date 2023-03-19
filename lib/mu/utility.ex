@@ -1,4 +1,4 @@
-defmodule Mu.MuEnum do
+defmodule Mu.Utility.MuEnum do
   @moduledoc """
   Set of algorithms built on top of Elixir.Enum
   """
