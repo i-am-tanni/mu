@@ -3,7 +3,7 @@ defmodule Mu.Character.ItemCommand do
 
   alias Mu.World.Items
   alias Mu.Character
-  alias Mu.Character.MuEnum
+  alias Mu.MuEnum
   alias Mu.Character.ItemView
 
   # drop all
