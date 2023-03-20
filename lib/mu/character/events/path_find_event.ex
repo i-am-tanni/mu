@@ -103,8 +103,7 @@ defmodule Mu.Character.PathFindEvent do
     events = Enum.map(room_ids, &update_steps(event, &1, room_exits))
 
     room_ids
-    |> Enum.map(&Kalevala.World.Room.global_name/1)
-    |> Enum.map(&GenServer.whereis/1)
+    |> Enum.map(&Mu.World.Room.whereis/1)
     |> Enum.zip(events)
     |> Enum.each(fn {pid, event} ->
       send(pid, event)

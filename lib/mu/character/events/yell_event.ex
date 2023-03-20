@@ -93,8 +93,7 @@ defmodule Mu.Character.YellEvent do
     }
 
     room_ids
-    |> Enum.map(&Kalevala.World.Room.global_name/1)
-    |> Enum.map(&GenServer.whereis/1)
+    |> Enum.map(&Mu.World.Room.whereis/1)
     |> Enum.each(&send(&1, event))
 
     conn
