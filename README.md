@@ -10,7 +10,7 @@ iex -S mix
 ```
 
 # Login
-Login with any MUD client, such as Mudlet, TinTin++, or Blightmud. 
+Login with any MUD client such as Mudlet, TinTin++, or Blightmud. 
 
 Host: `127.0.0.1`
 Port: `4444`
