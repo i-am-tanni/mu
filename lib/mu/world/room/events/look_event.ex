@@ -128,7 +128,8 @@ defmodule Mu.World.Room.LookEvent do
 
   defp pass(context, room_exit, event) do
     room_exit.end_room_id
-    |> Mu.World.Room.whereis()
+    |> Kalevala.World.Room.global_name()
+    |> GenServer.whereis()
     |> send(event)
 
     context
