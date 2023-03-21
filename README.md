@@ -1,21 +1,16 @@
 # Mu
 
-**TODO: Add description**
+Mu is a work in process text-based MMORPG server written in elixir and built on the Kalevala MUD framework.
 
-## Installation
+# Setup
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `mu` to your list of dependencies in `mix.exs`:
-
-```elixir
-def deps do
-  [
-    {:mu, "~> 0.1.0"}
-  ]
-end
+```
+mix deps.get
+iex -S mix
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/mu>.
+# Login
+Login with any MUD client, such as Mudlet, TinTin++, or Blightmud. 
 
+Host: `127.0.0.1`
+Port: `4444`
