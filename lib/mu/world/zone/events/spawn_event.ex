@@ -18,7 +18,7 @@ defmodule Mu.World.Zone.SpawnEvent do
   require Logger
 
   alias Kalevala.World.CharacterSupervisor
-  alias Mu.World.Characters
+  alias Mu.World.NonPlayers
 
   def call(context, event = %{topic: "init" <> _}) do
     get_spawners(context, event)
@@ -174,7 +174,7 @@ defmodule Mu.World.Zone.SpawnEvent do
   end
 
   defp prepare_character(character_id, room_id, loadout) do
-    character = Characters.get!(character_id)
+    character = NonPlayers.get!(character_id)
     instance_id = "#{character_id}:#{Kalevala.Character.generate_id()}"
     loadout = loadout(character.inventory, loadout)
     %{character | id: instance_id, room_id: room_id, inventory: loadout}
