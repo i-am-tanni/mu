@@ -1,4 +1,4 @@
-defmodule Mu.World.Characters do
+defmodule Mu.World.NonPlayers do
   @moduledoc """
   Cache for non-player character prototypes
   """

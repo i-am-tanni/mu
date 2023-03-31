@@ -111,6 +111,6 @@ defmodule Mu.World.Kickoff do
   end
 
   def cache_character(character) do
-    Mu.World.Characters.put(character.id, character)
+    Mu.World.NonPlayers.put(character.id, character)
   end
 end
