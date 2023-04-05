@@ -53,7 +53,7 @@ defmodule Mu.Character.Events do
     end
 
     module(RandomExitEvent) do
-      event("room/wander", :run)
+      event("room/wander", :call)
     end
 
     module(SayEvent) do

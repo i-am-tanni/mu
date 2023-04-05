@@ -19,9 +19,8 @@ defmodule Mu.Character.SpawnController do
         delay_event(conn, initial_event.delay, initial_event.topic, initial_event.data)
       end)
 
-    conn = if is_nil(conn.character.meta.vitals), do: add_vitals(conn), else: conn
-
     conn
+    |> add_vitals()
     |> move(:to, character.room_id, SpawnView, "spawn", %{})
     |> subscribe("rooms:#{character.room_id}", [], &MoveEvent.subscribe_error/2)
     |> register_and_subscribe_character_channel(character)
@@ -29,27 +28,31 @@ defmodule Mu.Character.SpawnController do
   end
 
   def add_vitals(conn) do
-    vitals = %Mu.Character.Vitals{
-      health_points: 25,
-      max_health_points: 25,
-      skill_points: 17,
-      max_skill_points: 17,
-      endurance_points: 30,
-      max_endurance_points: 30
-    }
+    case is_nil(conn.character.meta.vitals) do
+      true ->
+        vitals = %Mu.Character.Vitals{
+          health_points: 25,
+          max_health_points: 25,
+          skill_points: 0,
+          max_skill_points: 0,
+          endurance_points: 0,
+          max_endurance_points: 0
+        }
 
-    put_meta(conn, :vitals, vitals)
+        put_meta(conn, :vitals, vitals)
+
+      false ->
+        conn
+    end
   end
 
   @impl true
   def event(conn, event) do
-    IO.inspect(event)
+    IO.inspect(event.topic, label: "event")
 
     # conn.character.brain
     # |> Brain.run(conn, event)
-    # |> NonPlayerEvents.call(event)
-
-    conn
+    NonPlayerEvents.call(conn, event)
   end
 
   @impl true

@@ -201,15 +201,57 @@ defmodule Mu.World.Loader do
   end
 
   defp parse_character({key, character}, context) do
+    initial_events = get_initial_events(character)
+
+    mode =
+      case Map.get(character, :sentinal?) != true do
+        true -> :wander
+        false -> :stay
+      end
+
     %Character{
       id: "#{context.zone_id}:#{key}",
       name: character.name,
       description: character.description,
       meta: %Mu.Character.NonPlayerMeta{
+        move_delay: Map.get(character, :move_delay, 2000),
+        mode: mode,
         zone_id: context.zone_id,
-        initial_events: Map.get(character, :initial_events, [])
+        initial_events: parse_initial_events(initial_events, context)
       }
     }
+  end
+
+  defp get_initial_events(character) do
+    initial_events = Map.get(character, :initial_events, [])
+
+    case Map.get(character, :sentinal?) != true do
+      true ->
+        wander_event = %{
+          "delay" => Map.get(character, :move_delay, 60000),
+          "topic" => "npc/wander",
+          "data" => %{}
+        }
+
+        initial_events ++ [wander_event]
+
+      false ->
+        initial_events
+    end
+  end
+
+  defp parse_initial_events(initial_events, _context) do
+    initial_events
+    |> Enum.map(&keys_to_atoms/1)
+    |> Enum.map(fn event_data ->
+      data = Map.get(event_data, :data, %{})
+
+      %Mu.Character.InitialEvent{
+        delay: Map.get(event_data, :delay, 0),
+        topic: event_data.topic,
+        data: keys_to_atoms(data)
+      }
+    end)
   end
 
   defp parse_world(zones) do
@@ -244,6 +286,12 @@ defmodule Mu.World.Loader do
       end)
 
     %{world | characters: characters}
+  end
+
+  defp keys_to_atoms(map = %{}) do
+    Enum.into(map, %{}, fn {key, value} ->
+      {String.to_atom(key), value}
+    end)
   end
 
   defp keys_to_atoms({key, map = %{}}) do

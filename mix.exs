@@ -23,11 +23,9 @@ defmodule Mu.MixProject do
   defp deps do
     [
       {:kalevala, git: "https://github.com/i-am-tanni/kalevala"},
+      # {:kalevala, path: "~/Documents/Elixir/kalevala_fork2/kalevala"}, # for testing
       {:ranch, "~> 1.7"},
-      {:elias, "~> 0.2"},
       {:jason, "~> 1.4"}
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]
   end
 end

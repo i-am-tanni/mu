@@ -128,6 +128,10 @@ defmodule Mu.World.Room.Events do
       event("yell/send", :yell)
     end
 
+    module(ForwardEvent) do
+      event("npc/wander", :call)
+    end
+
     module(LookEvent) do
       event("room/look", :call)
       event("room/look-arg", :arg)

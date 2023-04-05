@@ -5,6 +5,14 @@ defmodule Mu.Character.Instance do
   defstruct [:id, :character_id, :created_at, :expires_at]
 end
 
+defmodule Mu.Character.InitialEvent do
+  @moduledoc """
+  Initial events to kick off when a character starts
+  """
+
+  defstruct [:data, :delay, :topic]
+end
+
 defmodule Mu.Character do
   @moduledoc """
   Character callbacks for Kalevala
@@ -97,7 +105,7 @@ defmodule Mu.Character.NonPlayerMeta do
   Specific metadata for a world character in Kantele
   """
 
-  defstruct [:initial_events, :vitals, :zone_id]
+  defstruct [:initial_events, :vitals, :zone_id, :mode, :move_delay]
 
   defimpl Kalevala.Meta.Trim do
     def trim(meta) do
@@ -123,11 +131,30 @@ defmodule Mu.Character.NonPlayerEvents do
     module(MoveEvent) do
       event(Movement.Commit, :commit)
       event(Movement.Abort, :abort)
-      event(Movement.Notice, :notice)
     end
 
-    module(WanderEvent) do
-      event("room/wander", :run)
+    module(RandomExitEvent) do
+      event("room/wander", :call)
+    end
+
+    module(NonPlayerEvent) do
+      event("npc/wander", :wander)
+    end
+  end
+end
+
+defmodule Mu.Character.NonPlayerEvent do
+  use Kalevala.Character.Event
+
+  def wander(conn, _event) do
+    case get_meta(conn, :mode) == :wander do
+      true ->
+        conn
+        |> delay_event(get_meta(conn, :move_delay), "npc/wander", %{})
+        |> Mu.Character.WanderAction.run(%{})
+
+      false ->
+        conn
     end
   end
 end
