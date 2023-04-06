@@ -44,6 +44,14 @@ defmodule Mu.Character do
       _ -> Equipment.get(equipment)
     end
   end
+
+  def matches?(character, keyword) do
+    keyword = String.downcase(keyword)
+
+    character.id == keyword or
+      String.downcase(character.name) == keyword or
+      Enum.any?(character.meta.keywords, &(&1 == keyword))
+  end
 end
 
 defmodule Mu.Character.Vitals do
@@ -84,12 +92,13 @@ defmodule Mu.Character.PlayerMeta do
     :reply_to,
     :pronouns,
     equipment: Mu.Character.Equipment.wear_slots(:basic),
-    vitals: %Mu.Character.Vitals{}
+    vitals: %Mu.Character.Vitals{},
+    keywords: []
   ]
 
   defimpl Kalevala.Meta.Trim do
     def trim(meta) do
-      Map.take(meta, [:vitals, :pronouns])
+      Map.take(meta, [:vitals, :pronouns, :keywords])
     end
   end
 
@@ -105,11 +114,11 @@ defmodule Mu.Character.NonPlayerMeta do
   Specific metadata for a world character in Kantele
   """
 
-  defstruct [:initial_events, :vitals, :zone_id, :mode, :move_delay]
+  defstruct [:initial_events, :vitals, :zone_id, :mode, :move_delay, :keywords]
 
   defimpl Kalevala.Meta.Trim do
     def trim(meta) do
-      Map.take(meta, [:zone_id, :vitals])
+      Map.take(meta, [:zone_id, :vitals, :keywords])
     end
   end
 
@@ -117,44 +126,5 @@ defmodule Mu.Character.NonPlayerMeta do
     def get(meta, key), do: Map.get(meta, key)
 
     def put(meta, key, value), do: Map.put(meta, key, value)
-  end
-end
-
-defmodule Mu.Character.NonPlayerEvents do
-  @moduledoc false
-
-  use Kalevala.Event.Router
-
-  alias Kalevala.Event.Movement
-
-  scope(Mu.Character) do
-    module(MoveEvent) do
-      event(Movement.Commit, :commit)
-      event(Movement.Abort, :abort)
-    end
-
-    module(RandomExitEvent) do
-      event("room/wander", :call)
-    end
-
-    module(NonPlayerEvent) do
-      event("npc/wander", :wander)
-    end
-  end
-end
-
-defmodule Mu.Character.NonPlayerEvent do
-  use Kalevala.Character.Event
-
-  def wander(conn, _event) do
-    case get_meta(conn, :mode) == :wander do
-      true ->
-        conn
-        |> delay_event(get_meta(conn, :move_delay), "npc/wander", %{})
-        |> Mu.Character.WanderAction.run(%{})
-
-      false ->
-        conn
-    end
   end
 end

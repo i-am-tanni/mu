@@ -6,6 +6,7 @@
   "characters": {
     "guard": {
       "name": "A guard",
+      "keywords": ["guard"],
       "description": "On patrol, this guard is suited in a coat of shining steel.",
       "spawn_rules": {
         "active?": true,

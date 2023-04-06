@@ -215,6 +215,7 @@ defmodule Mu.World.Loader do
       description: character.description,
       meta: %Mu.Character.NonPlayerMeta{
         move_delay: Map.get(character, :move_delay, 60000),
+        keywords: character.keywords,
         mode: mode,
         zone_id: context.zone_id,
         initial_events: parse_initial_events(initial_events, context)

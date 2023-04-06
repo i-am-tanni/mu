@@ -143,7 +143,7 @@ defmodule Mu.World.Room.LookEvent do
 
   defp find_local_character(context, name) do
     Enum.find(context.characters, fn character ->
-      Kalevala.Character.matches?(character, name)
+      Mu.Character.matches?(character, name)
     end)
   end
 
