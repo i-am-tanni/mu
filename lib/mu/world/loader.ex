@@ -194,7 +194,6 @@ defmodule Mu.World.Loader do
       meta: %{},
       verbs: item_verbs
     }
-    |> tap(fn x -> IO.inspect(x) end)
   end
 
   defp get_verbs(type) do
