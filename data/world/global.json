@@ -5,16 +5,18 @@
     },
     "items": {
         "global:potion": {
+          "type": "potion",
           "description": "This potion is said to have potent healing properties.",
           "dropped_name": "A lurid red flask catches your eye.",
           "keywords": [
-            "potion",
+            "lurid",
             "red",
             "flask"
           ],
           "name": "a red potion"
         },
         "global:helm": {
+          "type": "equipment",
           "description": "Provides strong protection against head injury.",
           "dropped_name": "A helm is discarded here.",
           "keywords": [

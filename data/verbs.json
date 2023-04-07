@@ -1,0 +1,38 @@
+{
+    "drop": {
+        "text": "Drop",
+        "conditions": {
+            "location": [
+              "inventory/self"
+            ]
+          }
+    },
+    "get": {
+        "text": "Get",
+        "conditions": {
+            "location": [
+                "room"
+            ]
+        }
+    },
+    "look": {
+        "text": "Look",
+        "conditions": {}
+    },
+    "equip": {
+        "text": "Equip",
+        "conditions": {
+            "location": [
+                "inventory/self"
+            ]
+        }
+    },
+    "remove": {
+        "text": "Remove",
+        "conditions": {
+            "location": [
+                "character/mine"
+            ]
+        }
+    }
+}

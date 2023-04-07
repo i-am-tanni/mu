@@ -10,7 +10,8 @@ defmodule Mu.World.Loader do
   alias Mu.World.Zone.Spawner
 
   @paths %{
-    world_path: "data/world"
+    world_path: "data/world",
+    verbs_path: "data/verbs.json"
   }
 
   @doc """
@@ -21,7 +22,11 @@ defmodule Mu.World.Loader do
 
     world_data = load_folder(paths.world_path, ".json", &merge_world_data/1)
 
-    zones = Enum.map(world_data, &parse_zone/1)
+    context = %{
+      verbs: parse_verbs(Jason.decode!(File.read!(paths.verbs_path)))
+    }
+
+    zones = Enum.map(world_data, &parse_zone(&1, context))
 
     parse_world(zones)
   end
@@ -56,7 +61,7 @@ defmodule Mu.World.Loader do
     [{id, zone_data}]
   end
 
-  defp parse_zone({key, zone_data}, context \\ %{}) do
+  defp parse_zone({key, zone_data}, context) do
     zone = %Zone{}
     id = key
     context = Map.merge(context, %{zone_id: key})
@@ -154,7 +159,30 @@ defmodule Mu.World.Loader do
     end
   end
 
-  defp parse_item({key, item}, _context) do
+  defp parse_verbs(verbs) do
+    verbs
+    |> Enum.map(&keys_to_atoms/1)
+    |> Enum.map(fn {key, verb} ->
+      {key, Map.put(verb, :key, key)}
+    end)
+    |> Enum.map(fn {key, verb} ->
+      conditions = keys_to_atoms(verb.conditions)
+      conditions = struct(Kalevala.Verb.Conditions, conditions)
+      {key, Map.put(verb, :conditions, conditions)}
+    end)
+    |> Enum.map(fn {key, verb} ->
+      {key, struct(Kalevala.Verb, verb)}
+    end)
+    |> Enum.into(%{})
+  end
+
+  defp parse_item({key, item}, context) do
+    item_verbs =
+      get_verbs(item.type)
+      |> Enum.map(fn verb ->
+        Map.get(context.verbs, verb)
+      end)
+
     %Item{
       id: key,
       keywords: item.keywords,
@@ -164,8 +192,16 @@ defmodule Mu.World.Loader do
       wear_slot: item[:wear_slot],
       callback_module: Item,
       meta: %{},
-      verbs: [:get, :drop]
+      verbs: item_verbs
     }
+    |> tap(fn x -> IO.inspect(x) end)
+  end
+
+  defp get_verbs(type) do
+    case type do
+      "potion" -> ~w(get drop)
+      "equipment" -> ~w(get drop equip remove)
+    end
   end
 
   defp parse_spawner({key, spawner}, context) do
