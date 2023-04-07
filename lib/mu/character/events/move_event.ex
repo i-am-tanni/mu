@@ -28,6 +28,7 @@ defmodule Mu.Character.MoveEvent do
     |> assign(:direction, event.direction)
     |> assign(:reason, event.reason)
     |> render(MoveView, "notice")
+    |> assign(:character, conn.character)
     |> prompt(CommandView, "prompt")
   end
 
