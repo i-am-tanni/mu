@@ -89,10 +89,16 @@ defmodule Mu.Character.LookView do
   end
 
   def render("item", %{item_instance: item_instance}) do
+    item_verbs =
+      Enum.map(item_instance.item.verbs, fn verb ->
+        verb.key
+      end)
+
     ~E"""
     <%= ItemView.render("name", %{item_instance: item_instance}) %>
       <%= item_instance.item.description %>
 
+    Obvious Verbs: [<%= View.join(item_verbs, ", ") %>]
     """
   end
 

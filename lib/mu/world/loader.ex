@@ -198,8 +198,10 @@ defmodule Mu.World.Loader do
   end
 
   defp get_verbs(type) do
-    case type do
-      "potion" -> ~w(get drop)
+    parent_type = String.split(type, "/") |> List.first()
+
+    case parent_type do
+      "consumable" -> ~w(get drop)
       "equipment" -> ~w(get drop equip remove)
     end
   end
