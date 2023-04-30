@@ -19,7 +19,9 @@ defmodule Mu.Character.SocialAction do
   end
 
   def run(conn, params = %{"at_character" => at_character, "social" => social}) do
-    self? = matches?(at_character, "self") or matches?(at_character, conn.character.name)
+    self? =
+      matches?(String.downcase(at_character), "self") or
+        Mu.Character.matches?(conn.character, at_character)
 
     cond do
       self? and has_auto_views?(social) ->

@@ -201,7 +201,7 @@ defmodule Mu.World.Loader do
 
     case parent_type do
       "consumable" -> ~w(get drop)
-      "equipment" -> ~w(get drop equip remove)
+      "equipment" -> ~w(get drop wear remove)
     end
   end
 
