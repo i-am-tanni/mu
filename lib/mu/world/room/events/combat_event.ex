@@ -261,18 +261,7 @@ defmodule Mu.World.Room.ArenaTurnEvent do
   end
 
   defp _request(context, event) do
-    victim =
-      case event.data.victim do
-        :random ->
-          attacker_id = event.acting_character.id
-
-          context.characters
-          |> Enum.reject(&(&1.id == attacker_id))
-          |> Enum.random()
-
-        text ->
-          find_local_character(context, text)
-      end
+    victim = find_victim(context, event)
 
     case !is_nil(victim) do
       true ->
@@ -375,6 +364,20 @@ defmodule Mu.World.Room.ArenaTurnEvent do
 
     new_timers = Map.get(event.data, :timer_adds, [])
     put_arena_data(context, :timers, new_timers ++ timers)
+  end
+
+  defp find_victim(context, event) do
+    case event.data.victim do
+      :random ->
+        attacker_id = event.acting_character.id
+
+        context.characters
+        |> Enum.reject(&(&1.id == attacker_id))
+        |> Enum.random()
+
+      text ->
+        find_local_character(context, text)
+    end
   end
 
   defp find_local_character(context, name) do
