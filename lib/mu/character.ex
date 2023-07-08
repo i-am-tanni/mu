@@ -1,3 +1,26 @@
+defmodule Mu.Character.CombatFlash do
+  @moduledoc """
+  Temporary combat data that lives on the character in combat
+  """
+  defstruct in_combat?: true,
+            turn_requested?: false,
+            on_turn?: false,
+            turn_queue: [],
+            threat_table: %{}
+
+  def put_combat_flash(conn, key, val) do
+    combat_data = Map.get(conn.flash, :combat_data, %__MODULE__{})
+    combat_data = %{combat_data | key => val}
+    %{conn | flash: Map.put(conn.flash, :combat_data, combat_data)}
+  end
+
+  def get_combat_flash(conn, key) do
+    conn.flash
+    |> Map.get(:combat_data, %__MODULE__{})
+    |> Map.get(key)
+  end
+end
+
 defmodule Mu.Character.Instance do
   @moduledoc """
   Used for spawners to keep data about instances of characters they create
@@ -25,6 +48,7 @@ defmodule Mu.Character do
   Pronoun strings don't live in PlayerMeta to avoid unnecessary data in event passing.
   Therefore, they must be filled in when needed by socials, etc.
   """
+
   def fill_pronouns(character) do
     meta = %{character.meta | pronouns: Pronouns.get(character.meta.pronouns)}
     %{character | meta: meta}
@@ -114,7 +138,7 @@ defmodule Mu.Character.NonPlayerMeta do
   Specific metadata for a world character in Kantele
   """
 
-  defstruct [:initial_events, :vitals, :zone_id, :mode, :move_delay, :keywords]
+  defstruct [:initial_events, :vitals, :zone_id, :mode, :aggressive?, :move_delay, :keywords]
 
   defimpl Kalevala.Meta.Trim do
     def trim(meta) do

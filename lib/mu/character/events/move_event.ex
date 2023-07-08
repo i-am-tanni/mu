@@ -22,6 +22,10 @@ defmodule Mu.Character.MoveEvent do
     |> prompt(CommandView, "prompt")
   end
 
+  def notice(conn, %{data: event}) when event.reason == [] do
+    conn
+  end
+
   def notice(conn, %{data: event}) do
     conn
     |> assign(:character, event.character)

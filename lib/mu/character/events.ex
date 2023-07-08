@@ -37,6 +37,20 @@ defmodule Mu.Character.Events do
       event(ItemPickUp.Commit, :pickup_commit)
     end
 
+    module(ArenaEvent) do
+      event("turn/notify", :notify)
+      event("turn/request", :request)
+      event("turn/commit", :commit)
+      event("turn/abort", :abort)
+      event("flee", :flee)
+    end
+
+    module(CombatEvent) do
+      event("combat/request", :request)
+      event("combat/commit", :commit)
+      event("combat/abort", :abort)
+    end
+
     module(MoveEvent) do
       event(Movement.Commit, :commit)
       event(Movement.Abort, :abort)
@@ -84,6 +98,10 @@ defmodule Mu.Character.Events do
     module(ChannelEvent) do
       event(Message, :echo, interested?: &ChannelEvent.interested?/1)
     end
+
+    module(ForwardEvent) do
+      event("room/look", :call)
+    end
   end
 end
 
@@ -110,6 +128,17 @@ defmodule Mu.Character.NonPlayerEvents do
     module(MoveEvent) do
       event(Movement.Commit, :commit)
       event(Movement.Abort, :abort)
+    end
+
+    module(ArenaEvent) do
+      event("turn/notify", :npc_autoattack)
+      event("turn/request", :request)
+      event("turn/commit", :commit)
+    end
+
+    module(CombatEvent) do
+      event("combat/request", :request)
+      event("combat/commit", :commit)
     end
 
     module(RandomExitEvent) do

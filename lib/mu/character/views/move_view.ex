@@ -3,6 +3,8 @@ defmodule Mu.Character.MoveView do
 
   alias Mu.Character.CharacterView
 
+  def render(:suppress, _assigns), do: []
+
   def render("enter", %{character: character}) do
     ~i(#{CharacterView.render("name", %{character: character})} enters.)
   end

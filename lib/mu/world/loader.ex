@@ -120,7 +120,10 @@ defmodule Mu.World.Loader do
       zone_id: context.zone_id,
       name: room.name,
       description: room.description,
-      exits: exits
+      exits: exits,
+      arena?: false,
+      peaceful?: Map.get(room, :peaceful?, false),
+      arena_data: nil
     }
   end
 
@@ -254,6 +257,7 @@ defmodule Mu.World.Loader do
         move_delay: Map.get(character, :move_delay, 60000),
         keywords: character.keywords,
         mode: mode,
+        aggressive?: Map.get(character, :aggressive?, false),
         zone_id: context.zone_id,
         initial_events: parse_initial_events(initial_events, context)
       }

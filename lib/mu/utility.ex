@@ -99,3 +99,12 @@ defmodule Mu.Utility.MuEnum do
     end
   end
 end
+
+defmodule Mu.Utility do
+  @doc """
+  Maps value with function if condition is true
+  """
+  def then_if(val, condition, fun) do
+    if condition, do: fun.(val), else: val
+  end
+end

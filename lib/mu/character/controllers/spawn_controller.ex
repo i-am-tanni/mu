@@ -48,7 +48,7 @@ defmodule Mu.Character.SpawnController do
 
   @impl true
   def event(conn, event) do
-    IO.inspect(event.topic, label: "event")
+    IO.inspect(event.topic, label: "event #{conn.character.id}")
 
     # conn.character.brain
     # |> Brain.run(conn, event)

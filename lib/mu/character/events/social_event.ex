@@ -31,7 +31,7 @@ defmodule Mu.Character.SocialEvent do
   end
 
   def echo(conn, event) do
-    at_character = if !is_nil(event.data.meta.at), do: Character.fill_pronouns(event.data.meta.at)
+    at_character = event.data.meta.at && Character.fill_pronouns(event.data.meta.at)
 
     conn
     |> assign(:acting_character, Character.fill_pronouns(event.acting_character))

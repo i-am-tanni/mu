@@ -11,23 +11,16 @@ defmodule Mu.World.Room do
     :zone_id,
     :name,
     :description,
+    :arena?,
+    :peaceful?,
+    :arena_data,
     exits: []
   ]
 
   def whereis(room_id) do
-    pid =
-      room_id
-      |> Kalevala.World.Room.global_name()
-      |> GenServer.whereis()
-
-    case !is_nil(pid) do
-      true ->
-        pid
-
-      false ->
-        Logger.error("Requested pid for room_id '#{room_id}' where none is available")
-        nil
-    end
+    room_id
+    |> Kalevala.World.Room.global_name()
+    |> GenServer.whereis()
   end
 
   @doc """
@@ -116,8 +109,24 @@ defmodule Mu.World.Room.Events do
   use Kalevala.Event.Router
 
   scope(Mu.World.Room) do
+    module(ArenaJoinEvent) do
+      event("arena/join/commit", :commit)
+    end
+
+    module(ArenaTurnEvent) do
+      event("turn/request", :request)
+      event("turn/commit", :commit)
+      event("turn/complete", :next)
+    end
+
     module(BuildEvent) do
       event("room/dig", :dig)
+    end
+
+    module(CombatEvent) do
+      event("combat/request", :request)
+      event("combat/commit", :commit)
+      event("combat/abort", :refuse)
     end
 
     module(CommunicationEvent) do
@@ -130,6 +139,10 @@ defmodule Mu.World.Room.Events do
 
     module(ForwardEvent) do
       event("npc/wander", :call)
+    end
+
+    module(MoveEvent) do
+      event(Kalevala.Event.Movement.Notice, :call)
     end
 
     module(LookEvent) do
@@ -152,6 +165,14 @@ defmodule Mu.World.Room.Events do
 
     module(RandomExitEvent) do
       event("room/wander", :call)
+    end
+
+    module(NotifyEvent) do
+      event("combat/refuse", :call)
+    end
+
+    module(TerminateEvent) do
+      event("room/terminate", :call)
     end
   end
 end
