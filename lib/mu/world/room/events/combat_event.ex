@@ -290,7 +290,7 @@ defmodule Mu.World.Room.ArenaTurnEvent do
     case active_character.id == event.data.attacker.id do
       true ->
         context
-        |> record_temporal_effects(event)
+        |> update_turn_data(event)
         |> update_timers(event)
         |> broadcast(event, "turn/commit")
 
@@ -331,7 +331,7 @@ defmodule Mu.World.Room.ArenaTurnEvent do
     event(context, event.data.victim.pid, self(), "turn/request", event.data)
   end
 
-  defp record_temporal_effects(context, event) do
+  defp update_turn_data(context, event) do
     turn_list = get_arena_data(context, :turn_list)
     attacker_id = event.data.attacker.id
     victim_id = event.data.victim.id
