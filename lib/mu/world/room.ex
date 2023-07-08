@@ -116,7 +116,6 @@ defmodule Mu.World.Room.Events do
     module(ArenaTurnEvent) do
       event("turn/request", :request)
       event("turn/commit", :commit)
-      event("turn/complete", :next)
     end
 
     module(BuildEvent) do

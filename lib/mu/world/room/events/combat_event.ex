@@ -282,17 +282,11 @@ defmodule Mu.World.Room.ArenaTurnEvent do
         |> update_turn_data(event)
         |> update_timers(event)
         |> broadcast(event, "turn/commit")
+        |> Turn.next()
 
       false ->
         event(context, event.acting_character.pid, self(), "turn/wait", %{})
     end
-  end
-
-  # Commit separated from next so that victim can consider last turn in decision making
-  # Otherwise they will receive "turn/notify" before the turn is completed
-  # and thus not factor the last turn in their next combat action
-  def next(context, _event) do
-    Turn.next(context)
   end
 
   defp review(context, event) do

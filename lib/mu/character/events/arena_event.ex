@@ -119,7 +119,6 @@ defmodule Mu.Character.ArenaEvent do
   defp update_victim(conn, event) do
     conn
     |> update_threat(event)
-    |> event("turn/complete", %{})
   end
 
   defp update_threat(conn, event) do
