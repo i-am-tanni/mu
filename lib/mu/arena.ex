@@ -45,8 +45,6 @@ defmodule Mu.World.Arena.Turn do
       |> Enum.filter(fn x -> x.ap >= x.turn_threshold end)
       |> Enum.sort(&(&1.ap >= &2.ap))
 
-    IO.inspect(Enum.map(on_turn_characters, & &1.id), label: "on_turn: ")
-
     timers = get_arena_data(context, :timers)
     timers = tic(timers, tic_count)
 
@@ -79,8 +77,6 @@ defmodule Mu.World.Arena.Turn do
 
   defp activate_character(context, on_turn_characters) do
     [active_character | on_turn_characters] = on_turn_characters
-
-    IO.inspect(active_character.id, label: "!active character:")
 
     merge_data = %{
       active_character: active_character,
