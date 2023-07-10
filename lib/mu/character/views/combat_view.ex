@@ -129,4 +129,12 @@ defmodule Mu.Character.CombatView do
   def render("error", %{reason: "pvp"}) do
     ~i(Player vs player combat is disallowed.\n)
   end
+
+  def render("error/arena", _) do
+    ~i(You are already fighting!\n)
+  end
+
+  def render("error/peaceful", _) do
+    ~i(That command is not allowed here.\n)
+  end
 end

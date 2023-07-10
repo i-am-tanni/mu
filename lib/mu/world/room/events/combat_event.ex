@@ -15,11 +15,15 @@ defmodule Mu.World.Room.CombatEvent do
   alias Mu.Character.CommandView
 
   def request(context, event) when context.data.arena? do
-    render(context, event.from_pid, CombatView, "error/arena")
+    context
+    |> render(event.from_pid, CombatView, "error/arena")
+    |> render_prompt(event)
   end
 
   def request(context, event) when context.data.peaceful? do
-    render(context, event.from_pid, CombatView, "error/peaceful")
+    context
+    |> render(event.from_pid, CombatView, "error/peaceful")
+    |> render_prompt(event)
   end
 
   def request(context, event) do
@@ -36,8 +40,7 @@ defmodule Mu.World.Room.CombatEvent do
         context
         |> assign(:text, text)
         |> render(event.from_pid, LookView, "unknown")
-        |> assign(:character, event.acting_character)
-        |> render(event.from_pid, CommandView, "prompt")
+        |> render_prompt(event)
     end
   end
 
@@ -171,6 +174,12 @@ defmodule Mu.World.Room.CombatEvent do
     Enum.find(context.characters, fn character ->
       Mu.Character.matches?(character, name)
     end)
+  end
+
+  defp render_prompt(context, event) do
+    context
+    |> assign(:character, event.acting_character)
+    |> render(event.from_pid, CommandView, "prompt")
   end
 end
 
