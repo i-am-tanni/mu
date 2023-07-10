@@ -14,35 +14,30 @@ defmodule Mu.World.Room.CombatEvent do
   alias Mu.Character.LookView
   alias Mu.Character.CommandView
 
+  def request(context, event) when context.data.arena? do
+    render(context, event.from_pid, CombatView, "error/arena")
+  end
+
+  def request(context, event) when context.data.peaceful? do
+    render(context, event.from_pid, CombatView, "error/peaceful")
+  end
+
   def request(context, event) do
     text = event.data.text
+    target = find_local_character(context, text)
 
-    case !context.data.arena? and !context.data.peaceful? do
+    case !is_nil(target) do
       true ->
-        target = find_local_character(context, text)
+        data = %{attacker: event.acting_character}
 
-        case !is_nil(target) do
-          true ->
-            data = %{attacker: event.acting_character}
-
-            event(context, target.pid, self(), "combat/request", data)
-
-          false ->
-            context
-            |> assign(:text, text)
-            |> render(event.from_pid, LookView, "unknown")
-            |> assign(:character, event.acting_character)
-            |> render(event.from_pid, CommandView, "prompt")
-        end
+        event(context, target.pid, self(), "combat/request", data)
 
       false ->
-        error =
-          cond do
-            context.data.arena? -> "room/arena"
-            context.data.peaceful? -> "room/peaceful"
-          end
-
-        event(context, event.acting_character.pid, self(), error, %{})
+        context
+        |> assign(:text, text)
+        |> render(event.from_pid, LookView, "unknown")
+        |> assign(:character, event.acting_character)
+        |> render(event.from_pid, CommandView, "prompt")
     end
   end
 
