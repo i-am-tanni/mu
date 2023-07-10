@@ -83,7 +83,7 @@ defmodule Mu.Character.CombatEvent do
           |> render(CombatView, "abort/attacker")
           |> move(:from, event.data.from, MoveView, :suppress, %{})
           |> move(:to, event.data.to, CombatView, "abort/witness", %{})
-          |> put_flash(:combat_data, struct(CombatFlash, in_combat?: false))
+          |> put_meta(:mode, :wander)
 
         false ->
           conn
@@ -111,6 +111,7 @@ defmodule Mu.Character.CombatEvent do
         |> put_character(%{conn.character | room_id: event.data.to})
         |> unsubscribe("rooms:#{event.data.from}", [], &unsubscribe_error/2)
         |> subscribe("rooms:#{event.data.to}", [], &subscribe_error/2)
+        |> put_meta(:mode, :combat)
         |> put_flash(:combat_data, %CombatFlash{})
 
       false ->

@@ -2,8 +2,7 @@ defmodule Mu.Character.CombatFlash do
   @moduledoc """
   Temporary combat data that lives on the character in combat
   """
-  defstruct in_combat?: true,
-            turn_requested?: false,
+  defstruct turn_requested?: false,
             on_turn?: false,
             turn_queue: [],
             threat_table: %{}
@@ -115,6 +114,7 @@ defmodule Mu.Character.PlayerMeta do
   defstruct [
     :reply_to,
     :pronouns,
+    :mode,
     equipment: Mu.Character.Equipment.wear_slots(:basic),
     vitals: %Mu.Character.Vitals{},
     keywords: []

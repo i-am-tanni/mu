@@ -17,7 +17,7 @@ defmodule Mu.Character.CombatCommand do
   end
 
   def attack(conn, params) do
-    case get_combat_flash(conn, :in_combat?) do
+    case _in_combat? = get_meta(conn, :mode) == :combat do
       true ->
         turn = build_attack(conn, params)
         turn_queue = get_combat_flash(conn, :turn_queue)
