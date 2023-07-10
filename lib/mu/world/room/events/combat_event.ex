@@ -285,7 +285,7 @@ defmodule Mu.World.Room.ArenaTurnEvent do
         |> Turn.next()
 
       false ->
-        event(context, event.acting_character.pid, self(), "turn/wait", event.data)
+        event(context, event.acting_character.pid, self(), "turn/wait", %{})
     end
   end
 
