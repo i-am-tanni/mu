@@ -63,10 +63,7 @@ defmodule Mu.Character.ArenaEvent do
       |> assign(:attacker, event.data.attacker)
       |> assign(:victim, event.data.victim)
 
-    conn =
-      Enum.reduce(event.data.effects, conn, fn effect, acc ->
-        render_effect(acc, effect, event)
-      end)
+    conn = Enum.reduce(event.data.effects, conn, &render_effect(&2, &1, event))
 
     conn
     |> update_character(event)
