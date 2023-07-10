@@ -135,6 +135,6 @@ defmodule Mu.Character.CombatView do
   end
 
   def render("error/peaceful", _) do
-    ~i(That command is not allowed here.\n)
+    ~i(Violence is not allowed here.\n)
   end
 end
