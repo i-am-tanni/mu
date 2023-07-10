@@ -3,7 +3,6 @@ defmodule Mu.Character.CombatEvent do
   Events for initiating combat
   """
   use Kalevala.Character.Event
-  import Mu.Utility, only: [then_if: 3]
 
   alias Mu.World.Room
 
