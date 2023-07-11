@@ -18,14 +18,17 @@ defmodule Mu.World.Item do
     :description,
     :callback_module,
     :wear_slot,
+    :container?,
+    :contains,
     meta: %{},
     verbs: []
   ]
 
   @impl true
   def matches?(item, keyword) do
-    keyword = String.downcase(keyword)
-    keyword_match?(item.keywords, keyword) || String.downcase(item.name) == keyword
+    item.id == keyword or
+      keyword_match?(item.keywords, keyword = String.downcase(keyword)) or
+      String.downcase(item.name) == keyword
   end
 
   defp keyword_match?(keywords, keyword) do
