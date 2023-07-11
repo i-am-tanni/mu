@@ -34,5 +34,31 @@
                 "character/mine"
             ]
         }
-    }
+    },
+    "put_in": {
+        "text": "Put In",
+        "conditions": {
+            "location": [
+                "room",
+                "inventory/self"
+            ]
+        }        
+    },
+    "get_from": {
+        "text": "Get From",
+        "conditions": {
+            "location": [
+                "room",
+                "inventory/self"
+            ]
+        }        
+    },
+    "loot": {
+        "text": "Loot",
+        "conditions": {
+            "location": [
+                "room"
+            ]
+        }        
+    }            
 }
