@@ -31,6 +31,18 @@ defmodule Mu.World.Item do
       String.downcase(item.name) == keyword
   end
 
+  defp load(item_instance) do
+    %{item_instance | item: Items.get!(container_instance.item_id)}
+  end
+
+  defp put(item_instance, key, val) do
+    %{item | item: Map.put(item_instance.item, key, val)}
+  end
+
+  defp get(item_instance, key) do
+    Map.get(item_instance.item, key, val)
+  end
+
   defp keyword_match?(keywords, keyword) do
     keywords
     |> Enum.map(&String.downcase/1)
