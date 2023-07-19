@@ -10,6 +10,8 @@ defmodule Mu.World.Item do
   """
   use Kalevala.World.Item
 
+  alias Mu.World.Items
+
   defstruct [
     :id,
     :keywords,
@@ -18,37 +20,35 @@ defmodule Mu.World.Item do
     :description,
     :callback_module,
     :wear_slot,
-    :container?,
-    :contains,
     meta: %{},
     verbs: []
   ]
 
   @impl true
   def matches?(item, keyword) do
-    item.id == keyword or
-      keyword_match?(item.keywords, keyword = String.downcase(keyword)) or
-      String.downcase(item.name) == keyword
+    item.id == keyword or _matches?(item, keyword)
   end
 
-  defp load(item_instance) do
-    %{item_instance | item: Items.get!(container_instance.item_id)}
+  defp _matches?(item, keyword) do
+    keyword = String.downcase(keyword)
+
+    keyword_match? =
+      item.keywords
+      |> Enum.map(&String.downcase/1)
+      |> Enum.any?(fn item_keyword ->
+        item_keyword == keyword
+      end)
+
+    keyword_match? or String.downcase(item.name) == keyword
   end
 
-  defp put(item_instance, key, val) do
-    %{item | item: Map.put(item_instance.item, key, val)}
+  def put_meta(item_instance, key, val) do
+    meta = Map.put(item_instance.meta, key, val)
+    %{item_instance | meta: meta}
   end
 
-  defp get(item_instance, key) do
-    Map.get(item_instance.item, key, val)
-  end
-
-  defp keyword_match?(keywords, keyword) do
-    keywords
-    |> Enum.map(&String.downcase/1)
-    |> Enum.any?(fn item_keyword ->
-      item_keyword == keyword
-    end)
+  def load(item_instance) do
+    %{item_instance | item: Items.get!(item_instance.item_id)}
   end
 end
 
@@ -57,7 +57,7 @@ defmodule Mu.World.Item.Meta do
   Item metadata, implements `Kalevala.Meta`
   """
 
-  defstruct []
+  defstruct [:container?, :contents]
 
   defimpl Kalevala.Meta.Trim do
     def trim(_meta), do: %{}

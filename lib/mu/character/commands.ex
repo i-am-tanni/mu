@@ -5,6 +5,17 @@ defmodule Mu.Character.Commands.Helpers do
   Helper parsers for commands
   """
 
+  def text_not(stop, tag) do
+    repeat(
+      lookahead_not(stop)
+      |> utf8_char([])
+    )
+    |> optional(ignore(stop))
+    |> reduce({List, :to_string, []})
+    |> post_traverse({Kalevala.Character.Command.RouterHelpers, :trim, []})
+    |> unwrap_and_tag(tag)
+  end
+
   @doc """
   Specifies which item in the list is required
   """
@@ -101,7 +112,31 @@ defmodule Mu.Character.Commands do
     end)
 
     parse("get", :get, fn command ->
-      command |> spaces() |> text(:item_name)
+      command
+      |> spaces()
+      |> optional(dot_ordinal("item"))
+      |> concat(
+        text_not(
+          choice([
+            string(" in "),
+            string(" from ")
+          ]),
+          :item
+        )
+      )
+      |> optional(
+        optional(dot_ordinal("container"))
+        |> text(:container_name)
+      )
+    end)
+
+    parse("put", :put, fn command ->
+      command
+      |> spaces()
+      |> optional(dot_ordinal("item"))
+      |> concat(text_not(string(" in "), :item))
+      |> optional(dot_ordinal("container"))
+      |> text(:container)
     end)
 
     parse("wear", :wear, fn command ->
