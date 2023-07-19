@@ -43,7 +43,7 @@ defmodule Mu.Character.ItemCommand do
 
     case fetch_item(conn.character.inventory, item_name, ordinal) do
       {:ok, item_instance} ->
-        case item_instance not in Character.get_equipment(conn, only: "items") do
+        case item_instance.id not in Character.get_equipment(conn, only: "item_ids") do
           true ->
             conn
             |> request_item_drop(item_instance)
@@ -157,8 +157,11 @@ defmodule Mu.Character.ItemCommand do
     with {:ok, container_instance} <- fetch_container(inventory, container, container_count),
          {:ok, item_instance} <- fetch_item(inventory, item, item_count) do
       item_id = item_instance.id
-      contents = container_instance.meta.contents
-      contents = Enum.reject(contents, &(&1 == item_id))
+
+      contents =
+        container_instance.meta.contents
+        |> Enum.reject(&(&1 == item_id))
+
       container_instance = Item.put_meta(container_instance, :contents, contents)
       container_id = container_instance.id
 
@@ -197,7 +200,7 @@ defmodule Mu.Character.ItemCommand do
     |> MuEnum.find(ordinal, fn {wear_slot, item_instance} ->
       item = Items.get!(item_instance.item_id)
 
-      item_instance.id == item_name or item.callback_module.matches?(item, item_name) or
+      item.callback_module.matches?(item, item_name) or
         to_string(wear_slot) == String.downcase(item_name)
     end)
   end
