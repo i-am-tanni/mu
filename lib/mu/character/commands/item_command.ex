@@ -185,7 +185,7 @@ defmodule Mu.Character.ItemCommand do
   end
 
   defp reject_equipment(item_instances, conn) do
-    equipment_item_instances = Character.get_equipment(conn, only: "items")
+    equipment_item_instances = Character.get_equipment(conn, only: "items", trim: true)
 
     Enum.reject(item_instances, fn item_instance ->
       item_instance in equipment_item_instances
@@ -193,10 +193,7 @@ defmodule Mu.Character.ItemCommand do
   end
 
   defp find_equipment(conn, item_name, ordinal) do
-    Character.get_equipment(conn)
-    |> Enum.reject(fn {_, item_instance} ->
-      item_instance == %Character.Equipment.EmptySlot{}
-    end)
+    Character.get_equipment(conn, trim: true)
     |> MuEnum.find(ordinal, fn {wear_slot, item_instance} ->
       item = Items.get!(item_instance.item_id)
 

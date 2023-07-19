@@ -29,8 +29,35 @@ defmodule Mu.Character.Equipment do
     %{equipment | data: Map.put(equipment.data, wear_slot, item)}
   end
 
-  def get(equipment), do: equipment.data
-  def sort_order(equipment), do: equipment.private.sort_order
+  def get(equipment, opts) do
+    case opts[:only] do
+      "items" ->
+        Map.values(equipment.data)
+
+      "sort_order" ->
+        equipment.private.sort_order
+
+      "item_ids" ->
+        Map.values(equipment.data)
+        |> Enum.reject(&empty_slot?/1)
+        |> Enum.map(& &1.id)
+
+      _ ->
+        equipment.data
+    end
+  end
+
+  def trim(data, opts) do
+    case Map.get(opts, :trim, true) do
+      true -> Enum.reject(data, &empty_slot?/1)
+      _ -> data
+    end
+  end
+
+  defp empty_slot?(slot) do
+    slot == %Mu.Character.Equipment.EmptySlot{} or
+      match?({_, %Mu.Character.Equipment.EmptySlot{}}, slot)
+  end
 
   def basic() do
     ["head", "body"]

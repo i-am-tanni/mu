@@ -39,6 +39,8 @@ defmodule Mu.Character do
   @moduledoc """
   Character callbacks for Kalevala
   """
+  import Kalevala.Character.Conn, only: [put_meta: 3]
+
   alias Mu.Character.Pronouns
   alias Mu.Character.Equipment
 
@@ -54,20 +56,16 @@ defmodule Mu.Character do
   end
 
   def put_equipment(conn, wear_slot, item_instance) do
-    character = conn.character
-    equipment = Equipment.put(character.meta.equipment, wear_slot, item_instance)
-    character = %{character | meta: Map.put(character.meta, :equipment, equipment)}
-    %{conn | character: character}
+    equipment = Equipment.put(conn.character.meta.equipment, wear_slot, item_instance)
+    put_meta(conn, :equipment, equipment)
   end
 
   def get_equipment(conn, opts \\ []) do
-    equipment = conn.character.meta.equipment
+    opts = Enum.into(opts, %{})
 
-    case opts[:only] do
-      "items" -> Map.values(Equipment.get(equipment))
-      "sort_order" -> Equipment.sort_order(equipment)
-      _ -> Equipment.get(equipment)
-    end
+    conn.character.meta.equipment
+    |> Equipment.get(opts)
+    |> Equipment.trim(opts)
   end
 
   def matches?(character, keyword) do
@@ -117,8 +115,8 @@ defmodule Mu.Character.PlayerMeta do
     :reply_to,
     :pronouns,
     :mode,
-    equipment: Mu.Character.Equipment.wear_slots(:basic),
-    vitals: %Mu.Character.Vitals{},
+    :equipment,
+    :vitals,
     keywords: []
   ]
 
