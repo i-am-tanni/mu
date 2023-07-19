@@ -53,13 +53,15 @@ defmodule Mu.Character do
     %{character | meta: meta}
   end
 
-  def put_equipment(character, wear_slot, item_instance) do
+  def put_equipment(conn, wear_slot, item_instance) do
+    character = conn.character
     equipment = Equipment.put(character.meta.equipment, wear_slot, item_instance)
-    %{character | meta: Map.put(character.meta, :equipment, equipment)}
+    character = %{character | meta: Map.put(character.meta, :equipment, equipment)}
+    %{conn | character: character}
   end
 
-  def get_equipment(character, opts \\ []) do
-    equipment = character.meta.equipment
+  def get_equipment(conn, opts \\ []) do
+    equipment = conn.character.meta.equipment
 
     case opts[:only] do
       "items" -> Map.values(Equipment.get(equipment))

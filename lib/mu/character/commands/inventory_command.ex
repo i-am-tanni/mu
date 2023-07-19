@@ -4,18 +4,15 @@ defmodule Mu.Character.InventoryCommand do
   alias Mu.Character
   alias Mu.Character.InventoryView
   alias Mu.World.Items
+  alias Mu.World.Item
 
   def run(conn, _params) do
-    equipment_item_instances = Character.get_equipment(conn.character, only: "items")
+    equipment_item_instances = Character.get_equipment(conn, only: "items")
 
     item_instances =
-      Enum.map(conn.character.inventory, fn item_instance ->
-        case item_instance not in equipment_item_instances do
-          true -> %{item_instance | item: Items.get!(item_instance.item_id)}
-          false -> nil
-        end
-      end)
-      |> Enum.reject(&is_nil(&1))
+      conn.character.inventory
+      |> Enum.reject(&(&1 in equipment_item_instances))
+      |> Enum.map(&Item.load/1)
 
     conn
     |> assign(:item_instances, item_instances)
@@ -24,7 +21,7 @@ defmodule Mu.Character.InventoryCommand do
 
   def equipment(conn, params) do
     equipment_list =
-      Character.get_equipment(conn.character)
+      Character.get_equipment(conn)
       |> Enum.map(fn {wear_slot, item_instance} ->
         case item_instance != %Character.Equipment.EmptySlot{} do
           true -> {wear_slot, %{item_instance | item: Items.get!(item_instance.item_id)}}
@@ -36,7 +33,7 @@ defmodule Mu.Character.InventoryCommand do
 
     conn
     |> assign(:equipment, equipment_list)
-    |> assign(:sort_order, Character.get_equipment(conn.character, only: "sort_order"))
+    |> assign(:sort_order, Character.get_equipment(conn, only: "sort_order"))
     |> prompt(InventoryView, "equipment-list")
   end
 
