@@ -62,9 +62,11 @@ defmodule Mu.Character.ItemCommand do
     end
   end
 
-  def get(conn, %{"container_name" => _} = params), do: get_from(conn, params)
+  def get(conn, %{"container" => _} = params) do
+    get_from(conn, params)
+  end
 
-  def get(conn, %{"item_name" => item_name}) do
+  def get(conn, %{"item" => item_name}) do
     conn
     |> request_item_pickup(item_name)
     |> assign(:prompt, false)

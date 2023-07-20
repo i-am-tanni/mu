@@ -118,15 +118,16 @@ defmodule Mu.Character.Commands do
       |> concat(
         text_not(
           choice([
-            string(" in "),
-            string(" from ")
+            string(" in"),
+            string(" from")
           ]),
           :item
         )
       )
       |> optional(
-        optional(dot_ordinal("container"))
-        |> text(:container_name)
+        spaces()
+        |> optional(dot_ordinal("container"))
+        |> text(:container)
       )
     end)
 
@@ -134,7 +135,8 @@ defmodule Mu.Character.Commands do
       command
       |> spaces()
       |> optional(dot_ordinal("item"))
-      |> concat(text_not(string(" in "), :item))
+      |> concat(text_not(string(" in"), :item))
+      |> spaces()
       |> optional(dot_ordinal("container"))
       |> text(:container)
     end)
