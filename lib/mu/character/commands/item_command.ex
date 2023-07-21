@@ -62,14 +62,18 @@ defmodule Mu.Character.ItemCommand do
     end
   end
 
-  def get(conn, %{"container" => _} = params) do
-    get_from(conn, params)
-  end
+  def get(conn, params) do
+    IO.inspect(params, label: "<get>")
 
-  def get(conn, %{"item" => item_name}) do
-    conn
-    |> request_item_pickup(item_name)
-    |> assign(:prompt, false)
+    case params["container"] == "" do
+      true ->
+        conn
+        |> request_item_pickup(params["item"])
+        |> assign(:prompt, false)
+
+      false ->
+        get_from(conn, params)
+    end
   end
 
   def wear(conn, params) do

@@ -5,7 +5,8 @@
     },
     "items": {
         "global:potion": {
-          "type": "consumable/potion",
+          "type": "consumable",
+          "subtype": "potion",
           "description": "This potion is said to have potent healing properties.",
           "dropped_name": "A lurid red flask catches your eye.",
           "keywords": [
@@ -17,7 +18,8 @@
           "name": "a red potion"
         },
         "global:helm": {
-          "type": "equipment/armor",
+          "type": "equipment",
+          "subtype": "armor",
           "description": "Provides strong protection against head injury.",
           "dropped_name": "A helm is discarded here.",
           "keywords": [
@@ -25,6 +27,16 @@
           ],
           "name": "helm",
           "wear_slot": "head"
+        },
+        "global:bag": {
+          "type": "container",
+          "subtype": "bag",
+          "description": "A rugged and spacious bag. Much preferable to a pocket.",
+          "dropped_name": "A bag is here.",
+          "keywords": [
+            "bag"
+          ],
+          "name": "bag"
         }
       }
 }

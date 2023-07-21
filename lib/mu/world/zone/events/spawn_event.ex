@@ -125,18 +125,36 @@ defmodule Mu.World.Zone.SpawnEvent do
   end
 
   defp spawn_item(context, item_id, room_id) do
-    instance = %Kalevala.World.Item.Instance{
-      id: Kalevala.World.Item.Instance.generate_id(),
-      item_id: item_id,
-      created_at: DateTime.utc_now(),
-      meta: %Mu.World.Item.Meta{}
-    }
-
+    instance = build_item_instance(item_id)
     spawners = context.data.item_spawner
     spawner = Map.fetch!(spawners, item_id)
     spawner = %{spawner | count: spawner.count + 1, instances: [instance | spawner.instances]}
 
     put_spawner(context, spawners, spawner)
+  end
+
+  defp build_item_instance(item_id) do
+    item = Mu.World.Items.get!(item_id)
+    meta = item.meta
+
+    %Kalevala.World.Item.Instance{
+      id: Kalevala.World.Item.Instance.generate_id(),
+      item_id: item_id,
+      created_at: DateTime.utc_now(),
+      meta: %{meta | contents: build_container_contents(meta)}
+    }
+  end
+
+  defp build_container_contents(meta) do
+    case meta.container? do
+      true ->
+        Enum.map(meta.contents, fn item_id ->
+          build_item_instance(item_id)
+        end)
+
+      false ->
+        []
+    end
   end
 
   defp spawn_character(context, character_id, room_id, loadout, _expires_in) do

@@ -181,10 +181,12 @@ defmodule Mu.World.Loader do
 
   defp parse_item({key, item}, context) do
     item_verbs =
-      get_verbs(item.type)
+      (get_verbs(item.type) ++ get_verbs(item.subtype))
+      |> Enum.dedup()
       |> Enum.map(fn verb ->
         Map.get(context.verbs, verb)
       end)
+      |> tap(fn x -> IO.inspect(x, label: "verbs") end)
 
     %Item{
       id: key,
@@ -192,19 +194,22 @@ defmodule Mu.World.Loader do
       name: item.name,
       dropped_name: item.dropped_name,
       description: item.description,
-      wear_slot: item[:wear_slot],
+      wear_slot: Map.get(item, :wear_slot),
       callback_module: Item,
-      meta: %{},
+      meta: %Mu.World.Item.Meta{
+        container?: item.type == "container",
+        contents: []
+      },
       verbs: item_verbs
     }
   end
 
   defp get_verbs(type) do
-    parent_type = String.split(type, "/") |> List.first()
-
-    case parent_type do
+    case type do
       "consumable" -> ~w(get drop)
       "equipment" -> ~w(get drop wear remove)
+      "container" -> ~w(get_from put)
+      _ -> []
     end
   end
 

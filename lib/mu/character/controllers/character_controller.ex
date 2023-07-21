@@ -50,13 +50,28 @@ defmodule Mu.Character.CharacterController do
           id: Kalevala.World.Item.Instance.generate_id(),
           item_id: "global:potion",
           created_at: DateTime.utc_now(),
-          meta: %Mu.World.Item.Meta{}
+          meta: %Mu.World.Item.Meta{
+            container?: false,
+            contents: []
+          }
         },
         %Kalevala.World.Item.Instance{
           id: Kalevala.World.Item.Instance.generate_id(),
           item_id: "global:helm",
           created_at: DateTime.utc_now(),
-          meta: %Mu.World.Item.Meta{}
+          meta: %Mu.World.Item.Meta{
+            container?: false,
+            contents: []
+          }
+        },
+        %Kalevala.World.Item.Instance{
+          id: Kalevala.World.Item.Instance.generate_id(),
+          item_id: "global:bag",
+          created_at: DateTime.utc_now(),
+          meta: %Mu.World.Item.Meta{
+            container?: true,
+            contents: []
+          }
         }
       ],
       meta: %Mu.Character.PlayerMeta{

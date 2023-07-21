@@ -35,20 +35,26 @@
             ]
         }
     },
-    "put_in": {
-        "text": "Put In",
+    "wear": {
+        "text": "Wear",
         "conditions": {
             "location": [
-                "room",
+                "inventory/self"
+            ]
+        }
+    },
+    "put": {
+        "text": "Put <x> in <y>",
+        "conditions": {
+            "location": [
                 "inventory/self"
             ]
         }        
     },
     "get_from": {
-        "text": "Get From",
+        "text": "Get <x> from <y>",
         "conditions": {
             "location": [
-                "room",
                 "inventory/self"
             ]
         }        
