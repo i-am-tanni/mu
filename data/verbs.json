@@ -59,6 +59,14 @@
             ]
         }        
     },
+    "look_in": {
+        "text": "look in",
+        "conditions": {
+            "location": [
+                "inventory/self"
+            ]
+        }        
+    },
     "loot": {
         "text": "Loot",
         "conditions": {

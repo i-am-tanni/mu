@@ -89,8 +89,6 @@ defmodule Mu.Character.LookView do
   end
 
   def render("item", %{item_instance: item_instance}) do
-    IO.inspect(item_instance.item.verbs, label: "<verbs>")
-
     item_verbs = Enum.map(item_instance.item.verbs, & &1.text)
 
     ~E"""

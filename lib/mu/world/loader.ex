@@ -183,10 +183,7 @@ defmodule Mu.World.Loader do
     item_verbs =
       (get_verbs(item.type) ++ get_verbs(item.subtype))
       |> Enum.dedup()
-      |> Enum.map(fn verb ->
-        Map.get(context.verbs, verb)
-      end)
-      |> tap(fn x -> IO.inspect(x, label: "verbs") end)
+      |> Enum.map(&Map.fetch!(context.verbs, &1))
 
     %Item{
       id: key,
