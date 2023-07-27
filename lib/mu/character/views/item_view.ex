@@ -55,13 +55,47 @@ defmodule Mu.Character.ItemView do
     ~i(You are wearing #{render("name", %{item_instance: item_instance})}. You must {emphasize}remove{/emphasize} to drop.\n)
   end
 
-  def render("cannot-wear", %{item_instance: item_instance}) do
-    item_name = render("name", %{item_instance: item_instance})
+  def render("put", assigns) do
+    item = assigns.item_instance
+    container = assigns.container_instance
+
+    ~i(You put #{render("name", %{item_instance: item})} in #{render("name", %{item_instance: container})}.)
+  end
+
+  def render("get-from", assigns) do
+    item = assigns.item_instance.item
+    container = assigns.container_instance.item
+
+    ~i(You get #{render("name", item)} from #{render("name", container)}.)
+  end
+
+  def render("cannot-wear", %{item_instance: instance}) do
+    item_name = render("name", %{item_instance: instance})
     ~i(#{item_name} cannot be equipped.\n)
   end
 
   def render("unknown", %{item_name: item_name}) do
     ~i(Cannot find item {color foreground="white"}"#{item_name}"{/color}.\n)
+  end
+
+  def render("unknown", _) do
+    ~i(Cannot find that item.\n)
+  end
+
+  def render("unknown-container", %{item_name: _item_name}) do
+    ~i(Cannot find that container\n)
+  end
+
+  def render("not-container", %{item_instance: instance}) do
+    ~i(#{render("name", %{item_instance: instance})} is not a container.\n)
+  end
+
+  def render("empty", %{item_instance: instance}) do
+    ~i(#{render("name", %{item_instance: instance})} is empty.\n)
+  end
+
+  def render("cannot-wear", %{}) do
+    ~i(That cannot be equipped.\n)
   end
 
   def render("unknown-inventory", %{item_name: item_name}) do

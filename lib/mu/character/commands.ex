@@ -5,6 +5,27 @@ defmodule Mu.Character.Commands.Helpers do
   Helper parsers for commands
   """
 
+  def container() do
+    optional(spaces())
+    |> optional(dot_ordinal("container"))
+    |> text_(:container)
+  end
+
+  def text_(parsec, tag) do
+    parsec
+    |> repeat(utf8_char([]))
+    |> reduce({List, :to_string, []})
+    |> post_traverse({Kalevala.Character.Command.RouterHelpers, :trim, []})
+    |> unwrap_and_tag(tag)
+  end
+
+  def words(tag) do
+    repeat(utf8_char([]))
+    |> reduce({List, :to_string, []})
+    |> post_traverse({Kalevala.Character.Command.RouterHelpers, :trim, []})
+    |> unwrap_and_tag(tag)
+  end
+
   def text_not(stop, tag) do
     repeat(
       lookahead_not(stop)
@@ -124,21 +145,15 @@ defmodule Mu.Character.Commands do
           :item
         )
       )
-      |> optional(
-        optional(spaces())
-        |> optional(dot_ordinal("container"))
-        |> text(:container)
-      )
+      |> optional(container())
     end)
 
     parse("put", :put, fn command ->
       command
       |> spaces()
       |> optional(dot_ordinal("item"))
-      |> concat(text_not(string(" in"), :item))
-      |> spaces()
-      |> optional(dot_ordinal("container"))
-      |> text(:container)
+      |> concat(text_not(string(" in "), :item))
+      |> optional(container())
     end)
 
     parse("wear", :wear, fn command ->
@@ -171,7 +186,10 @@ defmodule Mu.Character.Commands do
     parse("look", :room, aliases: ["l"])
 
     parse("look", :run, fn command ->
-      command |> spaces() |> text(:text)
+      command
+      |> spaces()
+      |> concat(text_not(string("in "), :text))
+      |> optional(container())
     end)
 
     parse("exits", :exits, aliases: ["ex"])

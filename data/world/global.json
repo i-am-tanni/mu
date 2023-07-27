@@ -29,8 +29,8 @@
           "wear_slot": "head"
         },
         "global:bag": {
-          "type": "container",
-          "subtype": "bag",
+          "type": "equipment",
+          "subtype": "container",
           "description": "A rugged and spacious bag. Much preferable to a pocket.",
           "dropped_name": "A bag is here.",
           "keywords": [

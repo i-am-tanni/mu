@@ -63,8 +63,6 @@ defmodule Mu.Character.ItemCommand do
   end
 
   def get(conn, params) do
-    IO.inspect(params, label: "<get>")
-
     case params["container"] == "" do
       true ->
         conn
@@ -117,15 +115,16 @@ defmodule Mu.Character.ItemCommand do
   end
 
   def put(conn, params) do
-    container = params["container"]
-    item = params["item"]
-    container_count = Map.get(params, "container/ordinal", 1)
-    item_count = Map.get(params, "item/ordinal", 1)
+    container_text = params["container"]
+    item_text = params["item"]
+    container_ord = Map.get(params, "container/ordinal", 1)
+    item_ord = Map.get(params, "item/ordinal", 1)
     inventory = conn.character.inventory
 
-    with {:ok, container_instance} <- fetch_container(inventory, container, container_count),
-         {:ok, item_instance} <- fetch_item(inventory, item, item_count) do
-      contents = [item_instance | container_instance.meta.contents]
+    with {:ok, container_instance} <- fetch_container(inventory, container_text, container_ord),
+         {:ok, contents} <- validate_not_full(container_instance),
+         {:ok, item_instance} <- fetch_item(inventory, item_text, item_ord) do
+      contents = [item_instance | contents]
       container_instance = Item.put_meta(container_instance, :contents, contents)
       item_id = item_instance.id
       container_id = container_instance.id
@@ -139,36 +138,36 @@ defmodule Mu.Character.ItemCommand do
 
       conn
       |> put_character(%{conn.character | inventory: inventory})
-      |> assign(:item, Item.load(item_instance))
-      |> assign(:container, Item.load(container_instance))
-      |> render(ItemView, "put")
+      |> assign(:item_instance, Item.load(item_instance))
+      |> assign(:container_instance, Item.load(container_instance))
+      |> prompt(ItemView, "put")
     else
       {:error, topic} ->
         render(conn, ItemView, topic)
 
       {:error, topic, item_instance} ->
         conn
-        |> assign(:item_instance, item_instance)
+        |> assign(:item_instance, Item.load(item_instance))
         |> render(ItemView, topic)
     end
   end
 
   def get_from(conn, params) do
-    container = params["container"]
-    item = params["item"]
-    container_count = Map.get(params, "container/ordinal", 1)
-    item_count = Map.get(params, "item/ordinal", 1)
+    container_text = params["container"]
+    item_text = params["item"]
+    container_ord = Map.get(params, "container/ordinal", 1)
+    item_ord = Map.get(params, "item/ordinal", 1)
     inventory = conn.character.inventory
 
-    with {:ok, container_instance} <- fetch_container(inventory, container, container_count),
-         {:ok, item_instance} <- fetch_item(inventory, item, item_count) do
+    with {:ok, container_instance} <- fetch_container(inventory, container_text, container_ord),
+         {:ok, contents} <- validate_not_empty(container_instance),
+         {:ok, item_instance} <- fetch_item(contents, item_text, item_ord) do
+      # update container contents
       item_id = item_instance.id
-
-      contents =
-        container_instance.meta.contents
-        |> Enum.reject(&(&1 == item_id))
-
+      contents = Enum.reject(contents, &(&1.id == item_id))
       container_instance = Item.put_meta(container_instance, :contents, contents)
+
+      # update inventory
       container_id = container_instance.id
 
       inventory =
@@ -177,18 +176,20 @@ defmodule Mu.Character.ItemCommand do
           no_change -> no_change
         end)
 
+      inventory = [item_instance | inventory]
+
       conn
       |> put_character(%{conn.character | inventory: inventory})
       |> assign(:item_instance, Item.load(item_instance))
       |> assign(:container_instance, Item.load(container_instance))
-      |> render(ItemView, "get_from")
+      |> prompt(ItemView, "get-from")
     else
       {:error, topic} ->
         render(conn, ItemView, topic)
 
       {:error, topic, item_instance} ->
         conn
-        |> assign(:item_instance, item_instance)
+        |> assign(:item_instance, Item.load(item_instance))
         |> render(ItemView, topic)
     end
   end
@@ -224,15 +225,13 @@ defmodule Mu.Character.ItemCommand do
     item_instance = find_item(item_list, item_name, ordinal)
 
     case item_instance do
+      %{meta: meta} ->
+        if meta.container?,
+          do: {:ok, item_instance},
+          else: {:error, "not-container", item_instance}
+
       nil ->
         {:error, "unknown-container"}
-
-      %{meta: meta} ->
-        cond do
-          not meta.container? -> {:error, "not-container", item_instance}
-          Enum.empty?(meta.contents) -> {:error, "empty", item_instance}
-          true -> {:ok, item_instance}
-        end
     end
   end
 
@@ -260,5 +259,20 @@ defmodule Mu.Character.ItemCommand do
       :reject -> update_inventory(t, fun)
       item_instance -> [item_instance | update_inventory(t, fun)]
     end
+  end
+
+  defp validate_not_empty(container_instance) do
+    contents = container_instance.meta.contents
+
+    case contents != [] do
+      true -> {:ok, contents}
+      false -> {:error, "empty", container_instance}
+    end
+  end
+
+  defp validate_not_full(container_instance) do
+    contents = container_instance.meta.contents
+
+    {:ok, contents}
   end
 end

@@ -145,6 +145,18 @@ defmodule Mu.Character.InventoryView do
     ]
   end
 
+  def render("container", %{
+        item_instances: item_instances,
+        container_instance: container_instance
+      }) do
+    container = ItemView.render("name", %{item_instance: container_instance, context: :inventory})
+
+    [
+      ~i(#{container} contains:\n),
+      render("_items", %{item_instances: item_instances})
+    ]
+  end
+
   def render("equipment-list", %{equipment: equipment, sort_order: sort_order}) do
     [
       ~i(You are wearing:\n),
