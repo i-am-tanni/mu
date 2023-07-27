@@ -143,12 +143,12 @@ defmodule Mu.Character.ItemCommand do
       |> prompt(ItemView, "put")
     else
       {:error, topic} ->
-        render(conn, ItemView, topic)
+        prompt(conn, ItemView, topic)
 
       {:error, topic, item_instance} ->
         conn
         |> assign(:item_instance, Item.load(item_instance))
-        |> render(ItemView, topic)
+        |> prompt(ItemView, topic)
     end
   end
 
@@ -185,12 +185,12 @@ defmodule Mu.Character.ItemCommand do
       |> prompt(ItemView, "get-from")
     else
       {:error, topic} ->
-        render(conn, ItemView, topic)
+        prompt(conn, ItemView, topic)
 
       {:error, topic, item_instance} ->
         conn
         |> assign(:item_instance, Item.load(item_instance))
-        |> render(ItemView, topic)
+        |> prompt(ItemView, topic)
     end
   end
 

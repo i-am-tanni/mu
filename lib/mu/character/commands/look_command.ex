@@ -55,7 +55,7 @@ defmodule Mu.Character.LookCommand do
       {:error, topic, item_instance} ->
         conn
         |> assign(:item_instance, Item.load(item_instance))
-        |> render(ItemView, topic)
+        |> prompt(ItemView, topic)
     end
   end
 
