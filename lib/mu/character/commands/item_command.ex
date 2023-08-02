@@ -184,6 +184,16 @@ defmodule Mu.Character.ItemCommand do
       |> assign(:container_instance, Item.load(container_instance))
       |> prompt(ItemView, "get-from")
     else
+      {:error, {:unknown, :container}} ->
+        data = %{
+          container: container_text,
+          item: item_text,
+          container_ordinal: container_ord,
+          item_ordinal: item_ord
+        }
+
+        event(conn, "room/get-from", data)
+
       {:error, topic} ->
         prompt(conn, ItemView, topic)
 
@@ -231,7 +241,7 @@ defmodule Mu.Character.ItemCommand do
           else: {:error, "not-container", item_instance}
 
       nil ->
-        {:error, "unknown-container"}
+        {:error, {:unknown, :container}}
     end
   end
 
@@ -270,6 +280,7 @@ defmodule Mu.Character.ItemCommand do
     end
   end
 
+  # TODO: add limits to what containers can hold
   defp validate_not_full(container_instance) do
     contents = container_instance.meta.contents
 

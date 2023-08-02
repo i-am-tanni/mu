@@ -140,6 +140,10 @@ defmodule Mu.World.Room.Events do
       event("npc/wander", :call)
     end
 
+    module(ItemEvent) do
+      event("room/get-from", :get_from)
+    end
+
     module(MoveEvent) do
       event(Kalevala.Event.Movement.Notice, :call)
     end
