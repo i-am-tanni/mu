@@ -63,8 +63,8 @@ defmodule Mu.Character.ItemView do
   end
 
   def render("get-from", assigns) do
-    item = assigns.item_instance.item
-    container = assigns.container_instance.item
+    item = assigns.item_instance
+    container = assigns.container_instance
 
     ~i(You get #{render("name", item)} from #{render("name", container)}.)
   end

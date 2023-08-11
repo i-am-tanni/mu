@@ -5,6 +5,7 @@ defmodule Mu.World.Room do
   alias Mu.RoomChannel
   alias Mu.Communication
   alias Mu.World.Items
+  alias Kalevala.World.BasicRoom
 
   defstruct [
     :id,
@@ -60,6 +61,14 @@ defmodule Mu.World.Room do
     end
   end
 
+  def item_request_pickup(context, event, item_instance) do
+    BasicRoom.item_request_pickup(context, event, item_instance)
+  end
+
+  def item_request_drop(context, event, item_instance) do
+    BasicRoom.item_request_drop(context, event, item_instance)
+  end
+
   def load_item(item_instance), do: Items.get!(item_instance.item_id)
 
   def event(context, event) do
@@ -94,14 +103,14 @@ defmodule Mu.World.Room do
 
     @impl true
     def item_request_drop(_room, context, event, item_instance),
-      do: BasicRoom.item_request_drop(context, event, item_instance)
+      do: Room.item_request_drop(context, event, item_instance)
 
     @impl true
     def load_item(_room, item_instance), do: Room.load_item(item_instance)
 
     @impl true
     def item_request_pickup(_room, context, event, item_instance),
-      do: BasicRoom.item_request_pickup(context, event, item_instance)
+      do: Room.item_request_pickup(context, event, item_instance)
   end
 end
 
@@ -142,6 +151,7 @@ defmodule Mu.World.Room.Events do
 
     module(ItemEvent) do
       event("room/get-from", :get_from)
+      event("room/put-in", :put)
     end
 
     module(MoveEvent) do

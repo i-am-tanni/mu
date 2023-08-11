@@ -35,6 +35,7 @@ defmodule Mu.Character.Events do
 
       event(ItemPickUp.Abort, :pickup_abort)
       event(ItemPickUp.Commit, :pickup_commit)
+      event("room/put-in", :put_in)
     end
 
     module(ArenaEvent) do

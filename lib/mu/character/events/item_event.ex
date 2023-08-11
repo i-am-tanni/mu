@@ -1,5 +1,6 @@
 defmodule Mu.Character.ItemEvent do
   use Kalevala.Character.Event
+  import Mu.Utility, only: [then_if: 3]
 
   require Logger
 
@@ -70,5 +71,54 @@ defmodule Mu.Character.ItemEvent do
     |> put_character(%{conn.character | inventory: inventory})
     |> render(ItemView, "pickup-commit", %{item: item, item_instance: item_instance})
     |> prompt(CommandView, "prompt")
+  end
+
+  def get_from(conn, event) do
+    acting_character? = conn.character.id == event.acting_character.id
+
+    %{item_instance: item_instance, container_instance: container_instance} = event.data
+
+    conn
+    |> then_if(acting_character?, fn conn ->
+      inventory = [item_instance | conn.character.inventory]
+      put_character(conn, :inventory, inventory)
+    end)
+    |> assign(:item_instance, item_instance)
+    |> assign(:container_instance, container_instance)
+    |> render(ItemView, get_from_topic(acting_character?))
+  end
+
+  def put_in(conn, event) do
+    acting_character? = conn.character.id == event.data.acting_character.id
+    %{item_instance: item_instance, container_instance: container_instance} = event.data
+
+    conn
+    |> then_if(acting_character?, fn conn ->
+      item_instance_id = item_instance.id
+      inventory = Enum.reject(conn.character.inventory, &(&1.id == item_instance_id))
+      put_character(conn, :inventory, inventory)
+    end)
+    |> assign(:item_instance, item_instance)
+    |> assign(:container_instance, container_instance)
+    |> render(ItemView, put_topic(acting_character?))
+  end
+
+  defp get_from_topic(acting_character?) do
+    case acting_character? do
+      true -> "get-from/actor"
+      false -> "get-in/witness"
+    end
+  end
+
+  defp put_topic(acting_character?) do
+    case acting_character? do
+      true -> "put-in/actor"
+      false -> "put-in/witness"
+    end
+  end
+
+  defp put_character(conn = %{character: character}, key, val) do
+    character = Map.put(character, key, val)
+    %{conn | character: character}
   end
 end

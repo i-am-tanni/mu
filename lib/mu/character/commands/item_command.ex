@@ -6,6 +6,7 @@ defmodule Mu.Character.ItemCommand do
   alias Mu.Utility.MuEnum
   alias Mu.Character.ItemView
   alias Mu.World.Item
+  alias Mu.World.Item.Container
 
   # drop all
   def drop(conn, %{"text" => "all"}) do
@@ -41,7 +42,7 @@ defmodule Mu.Character.ItemCommand do
     item_name = params["item_name"]
     ordinal = Map.get(params, "ordinal", 1)
 
-    case fetch_item(conn.character.inventory, item_name, ordinal) do
+    case Item.fetch(conn.character.inventory, item_name, ordinal) do
       {:ok, item_instance} ->
         case item_instance.id not in Character.get_equipment(conn, only: "item_ids") do
           true ->
@@ -78,7 +79,7 @@ defmodule Mu.Character.ItemCommand do
     item_name = params["item_name"]
     ordinal = Map.get(params, "ordinal", 1)
 
-    with {:ok, item_instance} <- fetch_item(conn.character.inventory, item_name, ordinal),
+    with {:ok, item_instance} <- Item.fetch(conn.character.inventory, item_name, ordinal),
          item <- Items.get!(item_instance.item_id),
          {:ok, wear_slot} <- fetch_wear_slot(item) do
       conn
@@ -114,44 +115,6 @@ defmodule Mu.Character.ItemCommand do
     end
   end
 
-  def put(conn, params) do
-    container_text = params["container"]
-    item_text = params["item"]
-    container_ord = Map.get(params, "container/ordinal", 1)
-    item_ord = Map.get(params, "item/ordinal", 1)
-    inventory = conn.character.inventory
-
-    with {:ok, container_instance} <- fetch_container(inventory, container_text, container_ord),
-         {:ok, contents} <- validate_not_full(container_instance),
-         {:ok, item_instance} <- fetch_item(inventory, item_text, item_ord) do
-      contents = [item_instance | contents]
-      container_instance = Item.put_meta(container_instance, :contents, contents)
-      item_id = item_instance.id
-      container_id = container_instance.id
-
-      inventory =
-        update_inventory(conn.character.inventory, fn
-          %{id: ^item_id} -> :reject
-          %{id: ^container_id} -> container_instance
-          no_change -> no_change
-        end)
-
-      conn
-      |> put_character(%{conn.character | inventory: inventory})
-      |> assign(:item_instance, Item.load(item_instance))
-      |> assign(:container_instance, Item.load(container_instance))
-      |> prompt(ItemView, "put")
-    else
-      {:error, topic} ->
-        prompt(conn, ItemView, topic)
-
-      {:error, topic, item_instance} ->
-        conn
-        |> assign(:item_instance, Item.load(item_instance))
-        |> prompt(ItemView, topic)
-    end
-  end
-
   def get_from(conn, params) do
     container_text = params["container"]
     item_text = params["item"]
@@ -159,24 +122,13 @@ defmodule Mu.Character.ItemCommand do
     item_ord = Map.get(params, "item/ordinal", 1)
     inventory = conn.character.inventory
 
-    with {:ok, container_instance} <- fetch_container(inventory, container_text, container_ord),
-         {:ok, contents} <- validate_not_empty(container_instance),
-         {:ok, item_instance} <- fetch_item(contents, item_text, item_ord) do
+    with {:ok, container_instance} <- Container.fetch(inventory, container_text, container_ord),
+         {:ok, contents} <- Container.validate_not_empty(container_instance),
+         {:ok, item_instance} <- Item.fetch(contents, item_text, item_ord) do
       # update container contents
-      item_id = item_instance.id
-      contents = Enum.reject(contents, &(&1.id == item_id))
-      container_instance = Item.put_meta(container_instance, :contents, contents)
 
-      # update inventory
-      container_id = container_instance.id
-
-      inventory =
-        Enum.map(conn.character.inventory, fn
-          %{id: ^container_id} -> container_instance
-          no_change -> no_change
-        end)
-
-      inventory = [item_instance | inventory]
+      {inventory, container_instance} =
+        Container.retrieve(inventory, container_instance, item_instance)
 
       conn
       |> put_character(%{conn.character | inventory: inventory})
@@ -204,6 +156,52 @@ defmodule Mu.Character.ItemCommand do
     end
   end
 
+  def put(conn, params) do
+    container_text = params["container"]
+    item_text = params["item"]
+    container_ord = Map.get(params, "container/ordinal", 1)
+    item_ord = Map.get(params, "item/ordinal", 1)
+    inventory = conn.character.inventory
+
+    item_result = Item.fetch(inventory, item_text, item_ord)
+
+    container_result =
+      with {:ok, container_instance} <- Container.fetch(inventory, container_text, container_ord),
+           {:ok, _} <- Container.validate_not_full(container_instance) do
+        {:ok, container_instance}
+      end
+
+    case {item_result, container_result} do
+      {{:ok, item_instance}, {:ok, container_instance}} ->
+        {inventory, container_instance} =
+          Container.insert(inventory, container_instance, item_instance)
+
+        conn
+        |> put_character(%{conn.character | inventory: inventory})
+        |> assign(:item_instance, Item.load(item_instance))
+        |> assign(:container_instance, Item.load(container_instance))
+        |> prompt(ItemView, "put")
+
+      _ ->
+        # If errors, try room
+
+        data = %{
+          container: container_result(container_result, container_text),
+          item: item_result(item_result, item_text),
+          container_ordinal: container_ord,
+          item_ordinal: item_ord
+        }
+
+        event(conn, "room/put-in", data)
+    end
+  end
+
+  defp container_result({:ok, container_instance}, _), do: container_instance
+  defp container_result(_, container_text), do: container_text
+
+  defp item_result({:ok, item_instance}, _), do: item_instance
+  defp item_result(_, item_text), do: item_text
+
   defp reject_equipment(item_instances, conn) do
     equipment_item_instances = Character.get_equipment(conn, only: "items", trim: true)
 
@@ -229,61 +227,5 @@ defmodule Mu.Character.ItemCommand do
       true -> {:ok, wear_slot}
       false -> {:error, "cannot-wear"}
     end
-  end
-
-  defp fetch_container(item_list, item_name, ordinal) do
-    item_instance = find_item(item_list, item_name, ordinal)
-
-    case item_instance do
-      %{meta: meta} ->
-        if meta.container?,
-          do: {:ok, item_instance},
-          else: {:error, "not-container", item_instance}
-
-      nil ->
-        {:error, {:unknown, :container}}
-    end
-  end
-
-  defp fetch_item(item_list, item_name, ordinal) do
-    item = find_item(item_list, item_name, ordinal)
-
-    case !is_nil(item) do
-      true -> {:ok, item}
-      false -> {:error, "unknown"}
-    end
-  end
-
-  defp find_item(item_list, item_name, ordinal) do
-    MuEnum.find(item_list, ordinal, fn item_instance ->
-      item = Items.get!(item_instance.item_id)
-      item.callback_module.matches?(item, item_name)
-    end)
-  end
-
-  # an approximate combination of Enum.reject() and Enum.map()
-  defp update_inventory([], _), do: []
-
-  defp update_inventory([h | t], fun) do
-    case fun.(h) do
-      :reject -> update_inventory(t, fun)
-      item_instance -> [item_instance | update_inventory(t, fun)]
-    end
-  end
-
-  defp validate_not_empty(container_instance) do
-    contents = container_instance.meta.contents
-
-    case contents != [] do
-      true -> {:ok, contents}
-      false -> {:error, "empty", container_instance}
-    end
-  end
-
-  # TODO: add limits to what containers can hold
-  defp validate_not_full(container_instance) do
-    contents = container_instance.meta.contents
-
-    {:ok, contents}
   end
 end

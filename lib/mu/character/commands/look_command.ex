@@ -3,6 +3,7 @@ defmodule Mu.Character.LookCommand do
 
   alias Mu.World.Items
   alias Mu.World.Item
+  alias Mu.World.Item.Container
   alias Mu.Utility.MuEnum
   alias Mu.Character.LookView
   alias Mu.Character.ItemView
@@ -45,8 +46,10 @@ defmodule Mu.Character.LookCommand do
     ordinal = Map.get(params, "container/ordinal", 1)
     inventory = conn.character.inventory
 
-    with {:ok, container_instance} <- fetch_container(inventory, text, ordinal),
-         {:ok, contents} <- validate_not_empty(container_instance) do
+    with {:ok, container_instance} <- Container.fetch(inventory, text, ordinal),
+         {:ok, contents} <- Container.validate_not_empty(container_instance) do
+      IO.inspect(contents, label: "<Container Contents>")
+
       conn
       |> assign(:container_instance, Item.load(container_instance))
       |> assign(:item_instances, Enum.map(contents, &Item.load(&1)))
@@ -76,29 +79,6 @@ defmodule Mu.Character.LookCommand do
     conn
     |> event("room/look-arg", data)
     |> assign(:prompt, false)
-  end
-
-  defp fetch_container(item_list, item_name, ordinal) do
-    item_instance = find_item(item_list, item_name, ordinal)
-
-    case item_instance do
-      %{meta: meta} ->
-        if meta.container?,
-          do: {:ok, item_instance},
-          else: {:error, "not-container", item_instance}
-
-      nil ->
-        {:error, "unknown-container"}
-    end
-  end
-
-  defp validate_not_empty(container_instance) do
-    contents = container_instance.meta.contents
-
-    case contents != [] do
-      true -> {:ok, contents}
-      false -> {:error, "empty", container_instance}
-    end
   end
 
   defp find_item(item_list, item_name, ordinal) do
