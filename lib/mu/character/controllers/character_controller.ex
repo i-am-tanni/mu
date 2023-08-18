@@ -10,6 +10,7 @@ defmodule Mu.Character.CharacterController do
   alias Mu.Character.ChannelEvent
   alias Mu.Character.TellEvent
   alias Mu.Character.MoveEvent
+  alias Mu.World.Item
 
   @impl true
   def init(conn) do
@@ -46,33 +47,9 @@ defmodule Mu.Character.CharacterController do
       status: "#{name} is here.",
       description: "#{name} is a person.",
       inventory: [
-        %Kalevala.World.Item.Instance{
-          id: Kalevala.World.Item.Instance.generate_id(),
-          item_id: "global:potion",
-          created_at: DateTime.utc_now(),
-          meta: %Mu.World.Item.Meta{
-            container?: false,
-            contents: []
-          }
-        },
-        %Kalevala.World.Item.Instance{
-          id: Kalevala.World.Item.Instance.generate_id(),
-          item_id: "global:helm",
-          created_at: DateTime.utc_now(),
-          meta: %Mu.World.Item.Meta{
-            container?: false,
-            contents: []
-          }
-        },
-        %Kalevala.World.Item.Instance{
-          id: Kalevala.World.Item.Instance.generate_id(),
-          item_id: "global:bag",
-          created_at: DateTime.utc_now(),
-          meta: %Mu.World.Item.Meta{
-            container?: true,
-            contents: []
-          }
-        }
+        Item.instance("global:potion"),
+        Item.instance("global:helm"),
+        Item.instance("global:bag", container?: true)
       ],
       meta: %Mu.Character.PlayerMeta{
         vitals: %Mu.Character.Vitals{

@@ -4,6 +4,24 @@ defmodule Mu.World.Items do
   use Kalevala.Cache
 end
 
+defmodule Mu.World.Item.Meta do
+  @moduledoc """
+  Item metadata, implements `Kalevala.Meta`
+  """
+
+  defstruct [:container?, :contents]
+
+  defimpl Kalevala.Meta.Trim do
+    def trim(meta), do: Map.take(meta, [:container?, :contents])
+  end
+
+  defimpl Kalevala.Meta.Access do
+    def get(meta, key), do: Map.get(meta, key)
+
+    def put(meta, key, value), do: Map.put(meta, key, value)
+  end
+end
+
 defmodule Mu.World.Item do
   @moduledoc """
   Local callbacks for `Kalevala.World.Item`
@@ -67,23 +85,24 @@ defmodule Mu.World.Item do
   def load(item_instance) do
     %{item_instance | item: Items.get!(item_instance.item_id)}
   end
-end
 
-defmodule Mu.World.Item.Meta do
-  @moduledoc """
-  Item metadata, implements `Kalevala.Meta`
-  """
-
-  defstruct [:container?, :contents]
-
-  defimpl Kalevala.Meta.Trim do
-    def trim(meta), do: Map.take(meta, [:container?, :contents])
+  def instance(item_id, opts \\ []) do
+    %Kalevala.World.Item.Instance{
+      id: Kalevala.World.Item.Instance.generate_id(),
+      item_id: item_id,
+      created_at: DateTime.utc_now(),
+      meta: instance_meta(opts)
+    }
   end
 
-  defimpl Kalevala.Meta.Access do
-    def get(meta, key), do: Map.get(meta, key)
-
-    def put(meta, key, value), do: Map.put(meta, key, value)
+  defp instance_meta(opts) do
+    Enum.reduce(opts, %Mu.World.Item.Meta{}, fn opt, acc ->
+      case opt do
+        {:meta, override} -> Map.merge(acc, override)
+        {:container?, true} -> Map.merge(acc, %{container?: true, contents: []})
+        _ -> acc
+      end
+    end)
   end
 end
 
