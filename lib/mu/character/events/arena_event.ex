@@ -12,7 +12,7 @@ defmodule Mu.Character.ArenaEvent do
   alias Mu.Character.CommandView
 
   @doc """
-  Turn notificiation by the arena.
+  A turn notificiation is received from the arena when it is your turn.
   """
   def notify(conn, event) do
     turn_queue = get_combat_flash(conn, :turn_queue)
@@ -43,7 +43,7 @@ defmodule Mu.Character.ArenaEvent do
   end
 
   @doc """
-  Victim receives turn request from attacker and either approves or rejects.
+  A turn request is received by the victim from the attacker for their approval or rejection.
   If approved, victim processes turn outcome.
   """
   def request(conn, event) do
@@ -53,7 +53,8 @@ defmodule Mu.Character.ArenaEvent do
   end
 
   @doc """
-  All participants in the room receive the commited turn outcome as decided by attacker and victim.
+  A committed turn is received by all participants in the room.
+  The commited turn is the outcome as decided by both attacker and victim.
   """
   def commit(conn, event) do
     conn =
@@ -70,7 +71,7 @@ defmodule Mu.Character.ArenaEvent do
   end
 
   @doc """
-  If victim and/or room rejects turn request for whatever reason.
+  An abort is recieved if victim and/or room rejects turn request for whatever reason.
   """
   def abort(conn, event) do
     conn
