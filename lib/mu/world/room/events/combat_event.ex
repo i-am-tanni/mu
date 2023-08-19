@@ -256,31 +256,23 @@ defmodule Mu.World.Room.ArenaTurnEvent do
   alias Mu.World.Arena.CooldownTimer
 
   def request(context, event) do
-    active_character = get_arena_data(context, :active_character)
+    on_turn_character = get_arena_data(context, :active_character)
+    on_turn_character? = on_turn_character.id == event.acting_character.id
 
-    case active_character.id == event.acting_character.id do
-      true -> _request(context, event)
-      false -> event(context, event.acting_character.pid, self(), "turn/wait", %{})
-    end
-  end
-
-  defp _request(context, event) do
-    victim = find_victim(context, event)
-
-    case !is_nil(victim) do
-      true ->
-        event = %{event | data: Map.put(event.data, :victim, victim)}
-        event(context, event.data.victim.pid, self(), "turn/request", event.data)
-
-      false ->
-        event(context, event.acting_character.pid, self(), "target/invalid", %{})
+    with {:ok, _} <- on_turn_character? |> if_err("turn/wait"),
+         {:ok, victim} <- find_victim(context, event) |> if_err("target/invalid") do
+      event = %{event | data: Map.put(event.data, :victim, victim)}
+      # request victim to approve turn. If approved, victim processes outcome.
+      event(context, event.data.victim.pid, self(), "turn/request", event.data)
+    else
+      {:error, topic} -> event(context, event.acting_character.pid, self(), topic, %{})
     end
   end
 
   def commit(context, event) do
-    active_character = get_arena_data(context, :active_character)
+    on_turn_character = get_arena_data(context, :active_character)
 
-    case active_character.id == event.data.attacker.id do
+    case on_turn_character.id == event.acting_character.id do
       true ->
         context
         |> update_turn_data(event)
@@ -393,5 +385,12 @@ defmodule Mu.World.Room.ArenaTurnEvent do
     Enum.reduce(context.characters, context, fn character, acc ->
       event(acc, character.pid, self(), event.topic, event.data)
     end)
+  end
+
+  defp if_err(result, topic) do
+    case result not in [nil, false] do
+      true -> {:ok, result}
+      false -> {:error, topic}
+    end
   end
 end

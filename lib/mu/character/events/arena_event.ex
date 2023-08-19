@@ -1,7 +1,7 @@
 defmodule Mu.Character.ArenaEvent do
   @moduledoc """
-  Events for in-progress combat events.
-  For initiating combat events, see CombatEvent.
+  Events for in-progress combat events that occur in the instanced arena.
+  For initiating combat, see CombatEvent.
   """
 
   use Kalevala.Character.Event
@@ -11,20 +11,9 @@ defmodule Mu.Character.ArenaEvent do
   alias Mu.Character.ArenaView
   alias Mu.Character.CommandView
 
-  def npc_autoattack(conn, _event) do
-    data = %{
-      type: :attack,
-      attacker: conn.character,
-      victim: :random,
-      turn_cost: 1000,
-      effects: [
-        struct!(Damage, verb: "punch", type: :blunt, amount: 2)
-      ]
-    }
-
-    Mu.Character.TurnAction.run(conn, data)
-  end
-
+  @doc """
+  Turn notificiation by the arena.
+  """
   def notify(conn, event) do
     turn_queue = get_combat_flash(conn, :turn_queue)
 
@@ -53,10 +42,19 @@ defmodule Mu.Character.ArenaEvent do
     end
   end
 
+  @doc """
+  Victim receives turn request from attacker and either approves or rejects.
+  If approved, victim processes turn outcome.
+  """
   def request(conn, event) do
-    event(conn, "turn/commit", event.data)
+    data = calc_damage(conn, event)
+
+    event(conn, "turn/commit", data)
   end
 
+  @doc """
+  All participants in the room receive the commited turn outcome as decided by attacker and victim.
+  """
   def commit(conn, event) do
     conn =
       conn
@@ -71,12 +69,30 @@ defmodule Mu.Character.ArenaEvent do
     |> prompt(CommandView, "prompt")
   end
 
+  @doc """
+  If victim and/or room rejects turn request for whatever reason.
+  """
   def abort(conn, event) do
     conn
     |> assign(:reason, event.reason)
     |> assign(:victim, event.victim)
     |> render(ArenaView, "turn/error")
     |> put_combat_flash(:turn_requested?, false)
+  end
+
+  # If victim approves turn, victim processes outcome.
+  # I.e. roll for hit and net any damage against damage reduction / resistances
+
+  defp calc_damage(_conn, event) do
+    data = event.data
+
+    total_damage =
+      Enum.reduce(data.effects, 0, fn
+        %Damage{amount: amount}, acc -> acc + amount
+        _, acc -> acc
+      end)
+
+    Map.put(data, :total_damage, total_damage)
   end
 
   defp render_effect(conn, effect = %Damage{}, context) do
@@ -122,11 +138,7 @@ defmodule Mu.Character.ArenaEvent do
     threat_table = get_combat_flash(conn, :threat_table)
     max_hp = conn.character.meta.vitals.max_health_points
 
-    total_damage =
-      Enum.reduce(event.data.effects, 0, fn
-        %Damage{amount: amount}, acc -> acc + amount
-        _, acc -> acc
-      end)
+    total_damage = event.data.total_damage
 
     id = event.data.attacker.id
     threat = total_damage / max_hp * 1000
