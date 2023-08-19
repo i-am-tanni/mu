@@ -96,6 +96,20 @@ defmodule Mu.Character.ArenaEvent do
     Map.put(data, :total_damage, total_damage)
   end
 
+  def npc_autoattack(conn, _event) do
+    data = %{
+      type: :attack,
+      attacker: conn.character,
+      victim: :random,
+      turn_cost: 1000,
+      effects: [
+        struct!(Damage, verb: "punch", type: :blunt, amount: 2)
+      ]
+    }
+
+    Mu.Character.TurnAction.run(conn, data)
+  end
+
   defp render_effect(conn, effect = %Damage{}, context) do
     conn
     |> assign(:type, effect.type)
