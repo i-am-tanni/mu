@@ -244,9 +244,12 @@ end
 
 defmodule Mu.World.Room.ArenaTurnEvent do
   @moduledoc """
-  Combat actions are turn based in the Arena.
-  This event processes turn requests.
-  Turns typically go through three stages: notification, request, and commit.
+  CombatEvents that occur in an instanced combat room (a.k.a. an arena).
+  Combat actions are locked except to the active (on-turn) character.
+  Turns go through three stages:
+    - notification (to active character)
+    - request (to victim to approve and process)
+    - commit (notification of turn outcome to everyone in the room)
   """
 
   import Kalevala.World.Room.Context
@@ -259,16 +262,27 @@ defmodule Mu.World.Room.ArenaTurnEvent do
     on_turn_character = get_arena_data(context, :active_character)
     on_turn_character? = on_turn_character.id == event.acting_character.id
 
-    with {:ok, _} <- on_turn_character? |> if_err("turn/wait"),
+    with {:ok, _} <- on_turn_character? |> if_err("not-on-turn"),
          {:ok, victim} <- find_victim(context, event) |> if_err("target/invalid") do
       event = %{event | data: Map.put(event.data, :victim, victim)}
       # request victim to approve turn. If approved, victim processes outcome.
       event(context, event.data.victim.pid, self(), "turn/request", event.data)
     else
-      {:error, topic} -> event(context, event.acting_character.pid, self(), topic, %{})
+      {:error, reason} ->
+        event(context, event.acting_character.pid, self(), "turn/abort", %{reason: reason})
     end
   end
 
+  @doc """
+  Notify active character that victim rejected their turn action
+  """
+  def abort(context, event) do
+    event(context, event.data.attacker.pid, self(), "turn/abort", %{reason: event.data.reason})
+  end
+
+  @doc """
+  Notify the room of the turn result and notify next character they are on-turn
+  """
   def commit(context, event) do
     on_turn_character = get_arena_data(context, :active_character)
 
@@ -281,7 +295,7 @@ defmodule Mu.World.Room.ArenaTurnEvent do
         |> Turn.next()
 
       false ->
-        event(context, event.acting_character.pid, self(), "turn/wait", event.data)
+        event(context, event.acting_character.pid, self(), "turn/abort", reason: "not-on-turn")
     end
   end
 

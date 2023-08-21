@@ -1,6 +1,9 @@
 defmodule Mu.Character.CombatFlash do
   @moduledoc """
   Temporary combat data that lives on the character in combat
+
+  on_turn? = is Arena locked so that only I can take my turn?
+  turn_requested? = Have I requested a turn and I'm waiting on the arena to respond?
   """
   defstruct turn_requested?: false,
             on_turn?: false,

@@ -132,7 +132,7 @@ defmodule Mu.Character.NonPlayerEvents do
     end
 
     module(ArenaEvent) do
-      event("turn/notify", :npc_autoattack)
+      event("turn/notify", :npc_notify)
       event("turn/request", :request)
       event("turn/commit", :commit)
     end

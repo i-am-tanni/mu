@@ -5,52 +5,31 @@ defmodule Mu.Character.ArenaEvent do
   """
 
   use Kalevala.Character.Event
-  import Mu.Character.CombatFlash
 
   alias Mu.World.Arena.Damage
   alias Mu.Character.ArenaView
   alias Mu.Character.CommandView
+  alias Mu.Character.ArenaEvent.Victim
+  alias Mu.Character.ArenaEvent.Attacker
+
+  # Public interface
 
   @doc """
   A turn notificiation is received from the arena when it is your turn.
   """
-  def notify(conn, event) do
-    turn_queue = get_combat_flash(conn, :turn_queue)
-
-    case turn_queue do
-      [[] | turn_queue] ->
-        conn
-        |> put_combat_flash(:turn_queue, turn_queue)
-        |> notify(event)
-
-      [sequence | turn_queue] when is_list(sequence) ->
-        [turn | rest] = sequence
-
-        conn
-        |> put_combat_flash(:turn_queue, [rest | turn_queue])
-        |> put_combat_flash(:turn_requested?, true)
-        |> event("turn/request", %{turn: turn})
-
-      [turn | turn_queue] ->
-        conn
-        |> put_combat_flash(:turn_queue, turn_queue)
-        |> put_combat_flash(:turn_requested?, true)
-        |> event("turn/request", %{turn: turn})
-
-      [] ->
-        put_combat_flash(conn, :on_turn?, true)
-    end
-  end
+  def notify(conn, event), do: Attacker.notify_on_turn(conn, event)
+  def npc_notify(conn, event), do: Attacker.npc_notify_on_turn(conn, event)
 
   @doc """
-  A turn request is received by the victim from the attacker for their approval or rejection.
+  A turn request is received by the victim from the attacker for the victim's approval or rejection.
   If approved, victim processes turn outcome.
   """
-  def request(conn, event) do
-    data = calc_damage(conn, event)
+  def request(conn, event), do: Victim.request(conn, event)
 
-    event(conn, "turn/commit", data)
-  end
+  @doc """
+  A turn request has been aported / rejected by room or victim for whatever reason
+  """
+  def abort(conn, event), do: Attacker.abort(conn, event)
 
   @doc """
   A committed turn is received by all participants in the room.
@@ -70,45 +49,7 @@ defmodule Mu.Character.ArenaEvent do
     |> prompt(CommandView, "prompt")
   end
 
-  @doc """
-  An abort is recieved if victim and/or room rejects turn request for whatever reason.
-  """
-  def abort(conn, event) do
-    conn
-    |> assign(:reason, event.reason)
-    |> assign(:victim, event.victim)
-    |> render(ArenaView, "turn/error")
-    |> put_combat_flash(:turn_requested?, false)
-  end
-
-  # If victim approves turn, victim processes outcome.
-  # I.e. roll for hit and net any damage against damage reduction / resistances
-
-  defp calc_damage(_conn, event) do
-    data = event.data
-
-    total_damage =
-      Enum.reduce(data.effects, 0, fn
-        %Damage{amount: amount}, acc -> acc + amount
-        _, acc -> acc
-      end)
-
-    Map.put(data, :total_damage, total_damage)
-  end
-
-  def npc_autoattack(conn, _event) do
-    data = %{
-      type: :attack,
-      attacker: conn.character,
-      victim: :random,
-      turn_cost: 1000,
-      effects: [
-        struct!(Damage, verb: "punch", type: :blunt, amount: 2)
-      ]
-    }
-
-    Mu.Character.TurnAction.run(conn, data)
-  end
+  # Private Functions
 
   defp render_effect(conn, effect = %Damage{}, context) do
     conn
@@ -132,33 +73,9 @@ defmodule Mu.Character.ArenaEvent do
     id = conn.character.id
 
     cond do
-      id == event.data.attacker.id -> update_attacker(conn, event)
-      id == event.data.victim.id -> update_victim(conn, event)
+      id == event.data.attacker.id -> Attacker.update(conn, event)
+      id == event.data.victim.id -> Victim.update(conn, event)
       true -> conn
     end
-  end
-
-  defp update_attacker(conn, event) do
-    conn
-    |> put_combat_flash(:on_turn?, false)
-    |> put_combat_flash(:turn_requested?, false)
-  end
-
-  defp update_victim(conn, event) do
-    conn
-    |> update_threat(event)
-  end
-
-  defp update_threat(conn, event) do
-    threat_table = get_combat_flash(conn, :threat_table)
-    max_hp = conn.character.meta.vitals.max_health_points
-
-    total_damage = event.data.total_damage
-
-    id = event.data.attacker.id
-    threat = total_damage / max_hp * 1000
-    threat = threat + Map.get(threat_table, id, 0)
-    threat_table = Map.put(threat_table, id, threat)
-    put_combat_flash(conn, :threat_table, threat_table)
   end
 end
