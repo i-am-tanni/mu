@@ -286,7 +286,7 @@ defmodule Mu.World.Room.ArenaTurnEvent do
   def commit(context, event) do
     on_turn_character = get_arena_data(context, :active_character)
 
-    case on_turn_character.id == event.acting_character.id do
+    case on_turn_character.id == event.data.attacker.id do
       true ->
         context
         |> update_turn_data(event)

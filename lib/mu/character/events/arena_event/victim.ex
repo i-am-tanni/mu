@@ -42,15 +42,10 @@ defmodule Mu.Character.ArenaEvent.Victim do
     Map.put(data, :total_damage, total_damage)
   end
 
-  defp update_hp(conn, event = %{data: data}) do
+  defp update_hp(conn, event) when event.data.total_damage > 0 do
+    total_damage = event.data.total_damage
     vitals = conn.character.meta.vitals
-
-    vitals =
-      if data.total_damage > 0,
-        do: %{vitals | health_points: vitals.health_points - data.total_damage},
-        else: vitals
-
-    conn = put_meta(conn, :vitals, vitals)
+    vitals = %{vitals | health_points: vitals.health_points - total_damage}
 
     case vitals.health_points > 0 do
       true ->
@@ -61,6 +56,8 @@ defmodule Mu.Character.ArenaEvent.Victim do
         |> event("character/death", event.data)
     end
   end
+
+  defp update_hp(conn, _event), do: conn
 
   defp update_threat(conn, event) do
     threat_table = get_combat_flash(conn, :threat_table)

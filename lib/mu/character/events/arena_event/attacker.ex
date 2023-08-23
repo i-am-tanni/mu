@@ -5,6 +5,7 @@ defmodule Mu.Character.ArenaEvent.Attacker do
 
   use Kalevala.Character.Event
   import Mu.Character.CombatFlash
+  alias Mu.World.Arena.Damage
 
   @doc """
   Notify a player they are on turn.
