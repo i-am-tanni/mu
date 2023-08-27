@@ -144,6 +144,7 @@ defmodule Mu.World.Room.CombatEvent do
       status: :init,
       waiting_for: Enum.map(attackers ++ defenders, & &1.id),
       on_turn_characters: [],
+      tic_count: 0,
       turn_list: [],
       timers: [],
       attackers: struct(Mu.World.Arena.Team, members: attackers),
@@ -187,7 +188,6 @@ defmodule Mu.World.Room.ArenaJoinEvent do
   import Kalevala.World.Room.Context
   import Mu.World.Arena.Context
 
-  alias Mu.World.Arena.TurnData
   alias Mu.World.Arena.Turn
 
   def commit(context, event) when context.data.arena_data.status != :terminating do
@@ -221,8 +221,9 @@ defmodule Mu.World.Room.ArenaJoinEvent do
   end
 
   defp turn_data(character) do
-    %TurnData{
-      id: character.id,
+    %Mu.World.Arena.TurnData{
+      id: Kalevala.World.Item.Instance.generate_id(),
+      character_id: character.id,
       pid: character.pid,
       ap: Map.get(character, :ap, 0),
       speed: Map.get(character, :speed, 100),
@@ -260,7 +261,9 @@ defmodule Mu.World.Room.ArenaTurnEvent do
 
   def request(context, event) do
     on_turn_character = get_arena_data(context, :active_character)
-    on_turn_character? = on_turn_character.id == event.acting_character.id
+    on_turn_character? = on_turn_character.character_id == event.acting_character.id
+
+    IO.inspect(on_turn_character, label: "<onturncharacter")
 
     with {:ok, _} <- on_turn_character? |> if_err("not-on-turn"),
          {:ok, victim} <- find_victim(context, event) |> if_err("target/invalid") do
@@ -286,7 +289,7 @@ defmodule Mu.World.Room.ArenaTurnEvent do
   def commit(context, event) do
     on_turn_character = get_arena_data(context, :active_character)
 
-    case on_turn_character.id == event.data.attacker.id do
+    case on_turn_character.character_id == event.data.attacker.id do
       true ->
         context
         |> update_turn_data(event)

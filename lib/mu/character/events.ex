@@ -135,6 +135,7 @@ defmodule Mu.Character.NonPlayerEvents do
       event("turn/notify", :npc_notify)
       event("turn/request", :request)
       event("turn/commit", :commit)
+      event("turn/abort", :abort)
     end
 
     module(CombatEvent) do

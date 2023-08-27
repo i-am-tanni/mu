@@ -5,6 +5,7 @@ defmodule Mu.Character.ArenaEvent.Victim do
 
   use Kalevala.Character.Event
   import Mu.Character.CombatFlash
+  import Mu.Utility, only: [then_if: 3]
 
   alias Mu.World.Arena.Damage
 
@@ -47,14 +48,11 @@ defmodule Mu.Character.ArenaEvent.Victim do
     vitals = conn.character.meta.vitals
     vitals = %{vitals | health_points: vitals.health_points - total_damage}
 
-    case vitals.health_points > 0 do
-      true ->
-        conn
-
-      false ->
-        conn
-        |> event("character/death", event.data)
-    end
+    conn
+    |> put_meta(:vitals, vitals)
+    |> then_if(vitals.health_points < 0, fn conn ->
+      event(conn, "char/death", event.data)
+    end)
   end
 
   defp update_hp(conn, _event), do: conn

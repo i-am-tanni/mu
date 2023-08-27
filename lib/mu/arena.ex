@@ -7,7 +7,7 @@ defmodule Mu.World.Arena.Team do
 end
 
 defmodule Mu.World.Arena.TurnData do
-  defstruct [:id, :pid, :ap, :speed, :turn_threshold]
+  defstruct [:id, :character_id, :pid, :ap, :speed, :turn_threshold]
 end
 
 defmodule Mu.World.Arena.Context do
@@ -26,6 +26,22 @@ defmodule Mu.World.Arena.Context do
   end
 end
 
+defmodule Mu.World.Arena.SpeedModTimer do
+  alias Mu.World.Arena.TurnData
+
+  defstruct [:id, :character_id, :ap, :speed, :turn_threshold]
+
+  def init(turn_timer = %TurnData{}, speed_mod_timer)
+      when turn_timer.character_id == speed_mod_timer.character_id do
+    %{turn_timer | speed: turn_timer.speed + speed_mod_timer.speed}
+  end
+
+  def call(turn_timer = %TurnData{}, speed_mod_timer)
+      when turn_timer.character_id == speed_mod_timer.character_id do
+    %{turn_timer | speed: turn_timer.speed + speed_mod_timer.speed}
+  end
+end
+
 defmodule Mu.World.Arena.Turn do
   @moduledoc """
   Module for advancing turns
@@ -35,29 +51,82 @@ defmodule Mu.World.Arena.Turn do
   import Mu.World.Arena.Context
 
   alias Mu.World.Arena.Timer
+  alias Mu.World.Arena.TurnData
+  alias Mu.World.Arena.SpeedModTimer
 
-  def next(context) when context.data.arena_data.on_turn_characters == [] do
-    characters = get_arena_data(context, :turn_list)
-    {characters, tic_count} = tic_til_turn(characters)
+  @doc """
+  Advances timers until one completes.
 
-    on_turn_characters =
-      characters
+  Once completed,
+  """
+  def next(context, opts \\ %{})
+
+  def next(context, opts) when context.data.arena_data.on_turn_characters == [] do
+    timers = Map.get(opts, :timers, get_arena_data(context, :turn_list))
+    tic_count = Map.get(opts, :tic_count, 0)
+
+    {timers, tics} = tic_til_turn(timers)
+
+    tic_count = tic_count + tics
+
+    expired_timers =
+      timers
       |> Enum.filter(fn x -> x.ap >= x.turn_threshold end)
-      |> Enum.sort(&(&1.ap >= &2.ap))
+      |> Enum.reduce(%{}, fn timer, acc ->
+        module = timer.__struct__
+        list = Map.get(acc, module, [])
+        Map.put(acc, module, [timer | list])
+      end)
 
-    timers = get_arena_data(context, :timers)
-    timers = tic(timers, tic_count)
+    expired_speed_modifiers = Map.get(expired_timers, SpeedModTimer, [])
 
-    context
-    |> put_arena_data(:turn_list, characters)
-    |> put_arena_data(:timers, timers)
-    |> resolve_timers(timers)
-    |> activate_character(on_turn_characters)
+    timers =
+      case expired_speed_modifiers != [] do
+        true -> remove_speed_modifiers(timers, expired_speed_modifiers)
+        false -> timers
+      end
+
+    on_turn_characters = Map.get(expired_timers, TurnData, [])
+    on_turn_characters = Enum.sort(on_turn_characters, &(&1.ap >= &2.ap))
+
+    case on_turn_characters != [] do
+      true ->
+        context
+        |> put_arena_data(:turn_list, timers)
+        |> put_arena_data(:tic_count, tic_count)
+        |> activate_character(on_turn_characters, tic_count)
+
+      false ->
+        next(context, %{timers: timers, tic_count: tic_count})
+    end
   end
 
-  def next(context) do
+  def next(context, _) do
     on_turn_characters = get_arena_data(context, :on_turn_characters)
-    activate_character(context, on_turn_characters)
+    tic_count = get_arena_data(context, :tic_count)
+    activate_character(context, on_turn_characters, tic_count)
+  end
+
+  def tic(list, count) do
+    Enum.reduce(1..count, list, fn _, list ->
+      Enum.map(list, fn x -> Map.put(x, :ap, x.ap + x.speed) end)
+    end)
+  end
+
+  # remove effect of a speed modifier after expiration
+  defp remove_speed_modifiers(timers, expired_speed_modifiers) do
+    timers
+    |> Enum.reject(fn %{id: id} ->
+      Enum.any?(expired_speed_modifiers, &(&1.id == id))
+    end)
+    |> Enum.map(fn %{character_id: character_id} = timer ->
+      mods = Enum.find(expired_speed_modifiers, &(&1.character_id == character_id))
+
+      case !is_nil(mods) do
+        true -> SpeedModTimer.call(timer, mods)
+        false -> timer
+      end
+    end)
   end
 
   defp tic_til_turn(list, count \\ 1) do
@@ -69,14 +138,9 @@ defmodule Mu.World.Arena.Turn do
     end
   end
 
-  defp tic(list, count) do
-    Enum.reduce(1..count, list, fn _, list ->
-      Enum.map(list, fn x -> Map.put(x, :ap, x.ap + x.speed) end)
-    end)
-  end
-
-  defp activate_character(context, on_turn_characters) do
+  defp activate_character(context, on_turn_characters, tic_count) do
     [active_character | on_turn_characters] = on_turn_characters
+    IO.inspect(active_character, label: "<active_character>")
 
     merge_data = %{
       active_character: active_character,
@@ -86,6 +150,7 @@ defmodule Mu.World.Arena.Turn do
 
     context
     |> merge_arena_data(merge_data)
+    |> broadcast("turn/tics", %{tics: tic_count})
     |> event(active_character.pid, self(), "turn/notify", %{})
   end
 
@@ -94,6 +159,12 @@ defmodule Mu.World.Arena.Turn do
     |> Enum.filter(fn x -> x.ap >= x.turn_threshold end)
     |> Enum.reduce(context, fn timer, acc ->
       Timer.call(acc, timer)
+    end)
+  end
+
+  defp broadcast(context, topic, data) do
+    Enum.reduce(context.characters, context, fn character, acc ->
+      event(acc, character.pid, self(), topic, data)
     end)
   end
 end
@@ -108,6 +179,7 @@ defmodule Mu.World.Arena do
     :status,
     :waiting_for,
     :on_turn_characters,
+    :tic_count,
     :turn_list,
     :timers,
     :attackers,

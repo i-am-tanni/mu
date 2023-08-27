@@ -50,9 +50,11 @@ defmodule Mu.Character.ArenaEvent.Attacker do
   They are simply inform their turn request was denied for whatever reason and to try again.
   """
   def abort(conn, event) do
+    IO.inspect(event.data.reason, label: "<reason>")
+
     conn
-    |> assign(:reason, event.reason)
-    |> assign(:victim, event.victim)
+    |> assign(:reason, event.data.reason)
+    |> assign(:victim, event.data.victim)
     |> render(ArenaView, event.data.reason)
     |> put_combat_flash(:turn_requested?, false)
     |> notify_on_turn(event)
