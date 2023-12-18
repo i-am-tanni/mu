@@ -107,4 +107,12 @@ defmodule Mu.Utility do
   def then_if(val, condition, fun) do
     if condition, do: fun.(val), else: val
   end
+
+  @doc """
+  Wrap result with either :ok or :error
+  If there is an error, respond with {:error, error_message}
+  """
+  def if_err(result, error_message) do
+    if result, do: {:ok, result}, else: {:error, error_message}
+  end
 end

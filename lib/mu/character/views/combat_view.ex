@@ -1,8 +1,21 @@
-defmodule Mu.Character.ArenaView do
+defmodule Mu.Character.CombatView do
   use Kalevala.Character.View
 
   alias Mu.Character.CharacterView
-  import Mu.Utility, only: [then_if: 3]
+
+  def render("kickoff/attacker", %{victim: victim}) do
+    ~i(You attack #{CharacterView.render("name", %{character: victim})}!\n)
+  end
+
+  def render("kickoff/victim", %{attacker: attacker}) do
+    ~i(#{CharacterView.render("name", %{character: attacker})} attacks you!\n)
+  end
+
+  def render("kickoff/witness", %{attacker: attacker, victim: victim}) do
+    attacker = CharacterView.render("name", %{character: attacker})
+    victim = CharacterView.render("name", %{character: victim})
+    ~i(#{attacker} attacks #{victim}!\n)
+  end
 
   def render("damage/attacker", assigns) do
     victim = CharacterView.render("name", %{character: assigns.victim})
@@ -30,20 +43,47 @@ defmodule Mu.Character.ArenaView do
   end
 
   def render("miss/victim", assigns) do
-    attacker = CharacterView.render("name-possessive", %{character: assigns.attacker})
+    attacker = CharacterView.render("name", %{character: assigns.attacker})
     ~i(#{attacker} #{assigns.verb} misses you.)
   end
 
   def render("miss/witness", assigns) do
-    attacker = CharacterView.render("name-possessive", %{character: assigns.attacker})
+    attacker = CharacterView.render("name", %{character: assigns.attacker})
     victim = CharacterView.render("name", %{character: assigns.victim})
 
     ~i(#{attacker} #{assigns.verb} misses #{victim}.\n)
   end
 
+  def render("death/witness", %{attacker: attacker, victim: victim, death_cry: death_cry}) do
+    attacker = CharacterView.render("name", %{character: attacker})
+    victim = CharacterView.render("name", %{character: victim})
+
+    [~i(#{victim} #{death_cry}!\n), ~i(#{attacker} kills #{victim}!)]
+  end
+
+  def render("death/victim", assigns) do
+    attacker = CharacterView.render("name", %{character: assigns.attacker})
+    [~i(#{attacker} has killed you!\n), ~i(You are DEAD!!!)]
+  end
+
+  def render("death/attacker", %{victim: victim, death_cry: death_cry}) do
+    victim = CharacterView.render("name", %{character: victim})
+    [~i(#{victim} #{death_cry}!\n), ~i(You have killed #{victim}!)]
+  end
+
+  def render("error", %{reason: reason}) do
+    case reason do
+      "pvp" -> ~i(Player vs player combat isn't allowed.\n)
+      "already-fighting" -> ~i(You are already fighting!\n)
+      "peaceful" -> ~i(Violence is not allowed here.\n)
+      "combat/over" -> ~i(You've already won the fight!\n)
+      "not-in-combat" -> ~i(You aren't in combat. Use the kill command to start combat.\n)
+    end
+  end
+
   defp damage_feedback(%{victim: victim, damage: damage}) do
     max_health_points = victim.meta.vitals.max_health_points
-    dam_percent = damage / max_health_points * 100
+    dam_percent = div(damage * 100, max_health_points)
 
     cond do
       dam_percent <= 0 -> "misses"
@@ -75,7 +115,7 @@ defmodule Mu.Character.ArenaView do
       dam_percent <= 300 -> "LIQUIFIES"
       dam_percent <= 400 -> "VAPORIZES"
       dam_percent <= 500 -> "ATOMIZES"
-      true -> "does UNSPEAKABLE things to"
+      dam_percent > 500 -> "does UNSPEAKABLE things to"
     end
   end
 
@@ -89,52 +129,5 @@ defmodule Mu.Character.ArenaView do
       head = Regex.run(~r/\w+[^aeiou](?=y$)/, verb) -> [head, "ies"]
       true -> [verb, "s"]
     end
-  end
-end
-
-defmodule Mu.Character.CombatView do
-  use Kalevala.Character.View
-
-  alias Mu.Character.CharacterView
-
-  def render("init/attacker", %{victim: victim}) do
-    ~i(You attack #{CharacterView.render("name", %{character: victim})}!\n)
-  end
-
-  def render("init/victim", %{attacker: attacker}) do
-    ~i(#{CharacterView.render("name", %{character: attacker})} attacks you!\n)
-  end
-
-  def render("init/witness", %{attacker: attacker, victim: victim}) do
-    attacker = CharacterView.render("name", %{character: attacker})
-    victim = CharacterView.render("name", %{character: victim})
-    ~i(#{attacker} attacks #{victim}!\n)
-  end
-
-  def render("combat/join", %{character: character}) do
-    ~i(#{CharacterView.render("name", %{character: character})} joins the fray!\n)
-  end
-
-  def render("abort/attacker", _) do
-    ~i(Your attack whiffs and you almost fall on your face - oof!\n)
-  end
-
-  def render("abort/witness", %{attacker: attacker, victim: victim}) do
-    attacker = CharacterView.render("name", %{character: attacker})
-    victim = CharacterView.render("name", %{character: victim})
-
-    ~i(#{attacker} whiffs their attack on #{victim} almost falling on their face in the process!"\n)
-  end
-
-  def render("error", %{reason: "pvp"}) do
-    ~i(Player vs player combat is disallowed.\n)
-  end
-
-  def render("error/arena", _) do
-    ~i(You are already fighting!\n)
-  end
-
-  def render("error/peaceful", _) do
-    ~i(Violence is not allowed here.\n)
   end
 end

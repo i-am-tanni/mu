@@ -86,7 +86,7 @@ defmodule Mu.Character.ItemView do
     ~i(Cannot find that container\n)
   end
 
-  def render("not-container", %{item_instance: instance}) do
+  def render({"not-container"}, %{item_instance: instance}) do
     ~i(#{render("name", %{item_instance: instance})} is not a container.\n)
   end
 

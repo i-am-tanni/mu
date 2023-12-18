@@ -36,20 +36,17 @@ defmodule Mu.Character.Events do
       event(ItemPickUp.Abort, :pickup_abort)
       event(ItemPickUp.Commit, :pickup_commit)
       event("room/put-in", :put_in)
-    end
-
-    module(ArenaEvent) do
-      event("turn/notify", :notify)
-      event("turn/request", :request)
-      event("turn/commit", :commit)
-      event("turn/abort", :abort)
-      event("flee", :flee)
+      event("room/get-from", :get_from)
     end
 
     module(CombatEvent) do
       event("combat/request", :request)
       event("combat/commit", :commit)
       event("combat/abort", :abort)
+      event("combat/kickoff", :kickoff)
+      event("round/request", :request)
+      event("round/commit", :commit_round)
+      event("round/end", :end_round)
     end
 
     module(MoveEvent) do
@@ -131,16 +128,13 @@ defmodule Mu.Character.NonPlayerEvents do
       event(Movement.Abort, :abort)
     end
 
-    module(ArenaEvent) do
-      event("turn/notify", :npc_notify)
-      event("turn/request", :request)
-      event("turn/commit", :commit)
-      event("turn/abort", :abort)
-    end
-
     module(CombatEvent) do
+      event("combat/kickoff", :kickoff)
       event("combat/request", :request)
       event("combat/commit", :commit)
+      event("round/request", :request)
+      event("round/commit", :commit_round)
+      event("round/end", :end_round)
     end
 
     module(RandomExitEvent) do

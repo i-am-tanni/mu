@@ -12,9 +12,9 @@ defmodule Mu.World.Room do
     :zone_id,
     :name,
     :description,
-    :arena?,
-    :peaceful?,
-    :arena_data,
+    :round_queue,
+    :next_round_queue,
+    :round_in_process?,
     exits: []
   ]
 
@@ -111,6 +111,10 @@ defmodule Mu.World.Room do
     @impl true
     def item_request_pickup(_room, context, event, item_instance),
       do: Room.item_request_pickup(context, event, item_instance)
+
+    @impl true
+    def match_character?(character, keyword),
+      do: Mu.Character.matches?(character, keyword)
   end
 end
 
@@ -118,24 +122,24 @@ defmodule Mu.World.Room.Events do
   use Kalevala.Event.Router
 
   scope(Mu.World.Room) do
-    module(ArenaJoinEvent) do
-      event("arena/join/commit", :commit)
-    end
-
-    module(ArenaTurnEvent) do
-      event("turn/request", :request)
-      event("turn/commit", :commit)
-      event("turn/abort", :abort)
-    end
-
     module(BuildEvent) do
       event("room/dig", :dig)
     end
 
     module(CombatEvent) do
       event("combat/request", :request)
-      event("combat/commit", :commit)
-      event("combat/abort", :refuse)
+      event("combat/abort", :abort)
+    end
+
+    module(CombatRoundEvent) do
+      event("round/push", :push)
+      event("round/pop", :pop)
+    end
+
+    module(BroadcastEvent) do
+      event("combat/kickoff", :call)
+      event("combat/commit", :call)
+      event("round/commit", :call)
     end
 
     module(CommunicationEvent) do
@@ -188,5 +192,21 @@ defmodule Mu.World.Room.Events do
     module(TerminateEvent) do
       event("room/terminate", :call)
     end
+  end
+end
+
+defmodule Mu.World.Room.BroadcastEvent do
+  import Kalevala.World.Room.Context
+
+  def call(context, event) do
+    broadcast(context, event.topic, event.data)
+  end
+end
+
+defmodule Mu.World.Room.ForwardEvent do
+  import Kalevala.World.Room.Context
+
+  def call(context, event) do
+    event(context, event.from_pid, self(), event.topic, event.data)
   end
 end

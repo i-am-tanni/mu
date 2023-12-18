@@ -13,6 +13,10 @@ defmodule Mu.Character.MoveView do
     ~i(#{CharacterView.render("name", %{character: character})} leaves.)
   end
 
+  def render("respawn", %{character: character}) do
+    ~i(#{CharacterView.render("name", %{character: character})} fades into existence.)
+  end
+
   def render("notice", %{direction: :to, reason: reason}) do
     [reason, "\n"]
   end

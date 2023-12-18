@@ -174,12 +174,6 @@ defmodule Mu.Character.Commands do
     parse("kill", :request, fn command ->
       command |> spaces() |> text(:text)
     end)
-
-    parse("attack", :attack, fn command ->
-      command |> optional(spaces() |> text(:target))
-    end)
-
-    parse("flee", :flee, aliases: ["fle"])
   end
 
   module(LookCommand) do

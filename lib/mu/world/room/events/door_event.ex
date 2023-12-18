@@ -21,7 +21,7 @@ defmodule Mu.World.Room.DoorEvent do
         context
         |> pass(event)
         |> update_exit(room_exit)
-        |> broadcast(event, params(context, event))
+        |> relay(event, params(context, event))
 
       false ->
         context
@@ -85,7 +85,7 @@ defmodule Mu.World.Room.DoorEvent do
     end
   end
 
-  defp broadcast(context, event, params) do
+  defp relay(context, event, params) do
     event = %Kalevala.Event{
       acting_character: event.acting_character,
       from_pid: event.from_pid,

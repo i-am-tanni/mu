@@ -1,413 +1,158 @@
 defmodule Mu.World.Room.CombatEvent do
-  @moduledoc """
-  Combat is initiated via this event.
+  import Kalevala.World.Room.Context
+  import Mu.Utility
+
+  alias Mu.Character
+
+  @doc """
+  Check if combat is allowed in room and if so, ask the victims to confirmed they can be attacked.
   """
-
-  import Kalevala.World.Room.Context
-  import Mu.World.Arena.Context
-
-  alias Mu.World.Arena
-  alias Mu.World.Room
-  alias Mu.World.Exit
-  alias Mu.World.Kickoff
-
-  alias Mu.Character.LookView
-  alias Mu.Character.CommandView
-
-  def request(context, event) when context.data.arena? do
-    context
-    |> render(event.from_pid, CombatView, "error/arena")
-    |> render_prompt(event)
-  end
-
-  def request(context, event) when context.data.peaceful? do
-    context
-    |> render(event.from_pid, CombatView, "error/peaceful")
-    |> render_prompt(event)
-  end
-
   def request(context, event) do
-    text = event.data.text
-    target = find_local_character(context, text)
-
-    case !is_nil(target) do
-      true ->
-        data = %{attacker: event.acting_character}
-
-        event(context, target.pid, self(), "combat/request", data)
-
-      false ->
-        context
-        |> assign(:text, text)
-        |> render(event.from_pid, LookView, "unknown")
-        |> render_prompt(event)
-    end
-  end
-
-  def commit(context, event) do
-    params = %{
-      origin_room: context.data.id,
-      zone_id: context.data.zone_id,
-      attackers: attackers = get_attackers(context, event),
-      defenders: defenders = get_defenders(context, event)
-    }
-
-    arena = build_arena(params)
-    {:ok, arena_pid} = Kickoff.start_room(arena)
-
-    data = %{
-      from: context.data.id,
-      to: arena.id,
-      attacker: event.data.attacker,
-      victim: event.acting_character,
-      participants: attackers ++ defenders
-    }
-
-    context
-    |> event(arena_pid, self(), "arena/init", %{initial_events: []})
-    |> broadcast(%{event | topic: "combat/commit", data: data})
-  end
-
-  def refuse(context, event) do
-    event(context, event.data.attacker.pid, self(), "combat/abort", event.data)
-  end
-
-  def force_start_or_abort(context, event) when context.data.arena_data.status == :init do
-    arena_data = context.data.arena_data
-    attackers = arena_data.attackers.members
-    defenders = arena_data.defenders.members
-
-    case attackers != [] and defenders != [] do
-      true ->
-        context
-        |> merge_arena_data(%{status: :running, waiting_for: []})
-        |> Mu.World.Arena.Turn.next()
-
-      false ->
-        abort(context, event)
-    end
-  end
-
-  def force_start_or_abort(context, _), do: context
-
-  def abort(context, event) when context.data.arena? do
-    terminate_event = %Kalevala.Event{
-      topic: "room/terminate",
-      from_pid: self(),
-      data: %{}
-    }
-
-    Process.send_after(self(), terminate_event, 5000)
-
-    context
-    |> put_arena_data(:status, :terminating)
-    |> broadcast(event, "combat/abort")
-  end
-
-  def abort(context, _event), do: context
-
-  defp build_arena(params) do
-    arena_id = Kalevala.Character.generate_id()
-
-    exits = [
-      %Exit{
-        id: "flee",
-        type: :normal,
-        exit_name: "flee",
-        start_room_id: arena_id,
-        end_room_id: params.origin_room,
-        hidden?: false,
-        secret?: false,
-        door: nil
-      }
-    ]
-
-    %Room{
-      arena?: true,
-      id: arena_id,
-      zone_id: params.zone_id,
-      name: "You are fighting!",
-      description: "You are in combat!",
-      exits: exits,
-      peaceful?: false,
-      arena_data: build_arena_data(params)
-    }
-  end
-
-  defp build_arena_data(params) do
-    attackers = params.attackers
-    defenders = params.defenders
-
-    %Arena{
-      active_character: nil,
-      turn_notifications: 0,
-      status: :init,
-      waiting_for: Enum.map(attackers ++ defenders, & &1.id),
-      on_turn_characters: [],
-      tic_count: 0,
-      turn_list: [],
-      timers: [],
-      attackers: struct(Mu.World.Arena.Team, members: attackers),
-      defenders: struct(Mu.World.Arena.Team, members: defenders)
-    }
-  end
-
-  defp get_attackers(_context, event) do
-    [event.data.attacker]
-  end
-
-  defp get_defenders(_context, event) do
-    [event.acting_character]
-  end
-
-  defp broadcast(context, event, topic_override \\ nil) do
-    event =
-      if topic_override,
-        do: Map.put(event, :topic, topic_override),
-        else: event
-
-    Enum.reduce(context.characters, context, fn character, acc ->
-      event(acc, character.pid, self(), event.topic, event.data)
-    end)
-  end
-
-  defp find_local_character(context, name) do
-    Enum.find(context.characters, fn character ->
-      Mu.Character.matches?(character, name)
-    end)
-  end
-
-  defp render_prompt(context, event) do
-    context
-    |> assign(:character, event.acting_character)
-    |> render(event.from_pid, CommandView, "prompt")
-  end
-end
-
-defmodule Mu.World.Room.ArenaJoinEvent do
-  import Kalevala.World.Room.Context
-  import Mu.World.Arena.Context
-
-  alias Mu.World.Arena.Turn
-
-  def commit(context, event) when context.data.arena_data.status != :terminating do
-    character = event.acting_character
-    team = get_arena_data(context, event.data.team)
-    team = %{team | members: [character | team.members]}
-    turn_list = get_arena_data(context, :turn_list)
-    turn_list = [turn_data(character) | turn_list]
-    waiting_for = get_arena_data(context, :waiting_for)
-
-    waiting_for =
-      case waiting_for != [] and character.id in waiting_for do
-        true -> Enum.reject(waiting_for, &(&1 == character.id))
-        false -> waiting_for
-      end
-
-    merge_data = %{team: team, turn_list: turn_list, waiting_for: waiting_for}
-
-    context = merge_arena_data(context, merge_data)
-
-    case get_arena_data(context, :status) == :init and waiting_for == [] do
-      true ->
-        context
-        |> put_arena_data(:status, :running)
-        |> broadcast(%{event | data: %{}}, "room/look")
-        |> Turn.next()
-
-      false ->
-        context
-    end
-  end
-
-  defp turn_data(character) do
-    %Mu.World.Arena.TurnData{
-      id: Kalevala.World.Item.Instance.generate_id(),
-      character_id: character.id,
-      pid: character.pid,
-      ap: Map.get(character, :ap, 0),
-      speed: Map.get(character, :speed, 100),
-      turn_threshold: Map.get(character, :turn_threshold, 1000)
-    }
-  end
-
-  defp broadcast(context, event, topic_override \\ nil) do
-    event =
-      if topic_override,
-        do: Map.put(event, :topic, topic_override),
-        else: event
-
-    Enum.reduce(context.characters, context, fn character, acc ->
-      event(acc, character.pid, self(), event.topic, event.data)
-    end)
-  end
-end
-
-defmodule Mu.World.Room.ArenaTurnEvent do
-  @moduledoc """
-  CombatEvents that occur in an instanced combat room (a.k.a. an arena).
-  Combat actions are locked except to the active (on-turn) character.
-  Turns go through three stages:
-    - notification (to active character)
-    - request (to victim to approve and process)
-    - commit (notification of turn outcome to everyone in the room)
-  """
-
-  import Kalevala.World.Room.Context
-  import Mu.World.Arena.Context
-
-  alias Mu.World.Arena.Turn
-  alias Mu.World.Arena.CooldownTimer
-
-  def request(context, event) do
-    on_turn_character = get_arena_data(context, :active_character)
-    on_turn_character? = on_turn_character.character_id == event.acting_character.id
-
-    IO.inspect(on_turn_character, label: "<onturncharacter")
-
-    with {:ok, _} <- on_turn_character? |> if_err("not-on-turn"),
-         {:ok, victim} <- find_victim(context, event) |> if_err("target/invalid") do
-      event = %{event | data: Map.put(event.data, :victim, victim)}
-      # request victim to approve turn. If approved, victim processes outcome.
-      event(context, event.data.victim.pid, self(), "turn/request", event.data)
+    with :ok <- consider(context, event),
+         {:ok, victims} <- find_victims(context, event) |> if_err("not-found") do
+      data = %{event.data | attacker: event.acting_character}
+      broadcast(context, "combat/request", data, to: victims)
     else
       {:error, reason} ->
-        event(context, event.acting_character.pid, self(), "turn/abort", %{reason: reason})
+        event(context, event.acting_character.pid, self(), "combat/error", %{reason: reason})
     end
   end
 
-  @doc """
-  Notify active character that victim rejected their turn action
-  """
   def abort(context, event) do
-    event(context, event.data.attacker.pid, self(), "turn/abort", %{reason: event.data.reason})
+    event(context, event.attacker.id, self(), "combat/error", %{reason: event.data.reason})
+  end
+
+  defp consider(_context, _event) do
+    :ok
+  end
+
+  defp find_victims(context, event) do
+    case event.data.victims do
+      victims when is_list(victims) ->
+        Enum.filter(context.characters, fn character ->
+          Enum.any?(victims, &Character.matches?(character, &1))
+        end)
+
+      victim ->
+        context.characters
+        |> Enum.find(&Character.matches?(&1, victim))
+        |> List.wrap()
+    end
+  end
+end
+
+defmodule Mu.World.Room.CombatRoundEvent do
+  @moduledoc """
+  Events pertaining to cyclical combat rounds.
+  Round actions are received by participants and fired off at the end of the round
+  """
+
+  import Kalevala.World.Room.Context
+
+  @round_length_ms 3000
+  @max_speed 1000
+
+  @doc """
+  Push event into a queue to be fired off at the end of a round
+  If in process, prioritize the round action and put it into a queue to be added to the next round.
+  If the round is NOT in process and the round_queue is empty, schedule the next round
+  """
+
+  def push(context, event) when context.data.round_in_process? do
+    # assume late event and give it priority next round
+    data = %{event.data | speed: @max_speed, attacker: event.acting_character}
+    event = Map.put(event, :data, data)
+    next_round_queue = context.data.next_round_queue
+    put_data(context, :next_round_queue, [event | next_round_queue])
+  end
+
+  def push(context, event) do
+    data = %{event.data | attacker: event.acting_character}
+    event = Map.put(event, :data, data)
+    round_queue = context.data.round_queue
+    if Enum.empty?(round_queue), do: schedule()
+    put_data(context, :round_queue, [event | round_queue])
   end
 
   @doc """
-  Notify the room of the turn result and notify next character they are on-turn
+  If the round is not in process, initialize the round. Otherwise, pop the next event in the queue
+  The reason all round events are fired off one by one is so events can be:
+    - reacted to (e.g. parries)
+    - cancelled in the event that the victim is incapcitated or dies
   """
-  def commit(context, event) do
-    on_turn_character = get_arena_data(context, :active_character)
+  def pop(context, _) when context.data.round_in_process? do
+    case context.data.round_queue do
+      [head | rest] ->
+        # send round request
+        victim = find_victim(context, head)
 
-    case on_turn_character.character_id == event.data.attacker.id do
-      true ->
+        context =
+          case !is_nil(victim) do
+            true ->
+              event(context, victim.pid, self(), "round/request", head.data)
+
+            false ->
+              data = %{reason: "not_found"}
+              event(context, head.acting_character.pid, self(), "combat/error", data)
+          end
+
+        put_data(context, :round_queue, rest)
+
+      [] ->
+        # complete round
+        next_round_queue = context.data.next_round_queue
+        if !Enum.empty?(next_round_queue), do: schedule()
+
         context
-        |> update_turn_data(event)
-        |> update_timers(event)
-        |> broadcast(event, "turn/commit")
-        |> Turn.next()
-
-      false ->
-        event(context, event.acting_character.pid, self(), "turn/abort", reason: "not-on-turn")
+        |> put_data(:round_queue, next_round_queue)
+        |> put_data(:next_round_queue, [])
+        |> put_data(:round_in_process?, false)
+        |> broadcast("round/end", %{})
     end
   end
 
-  defp review(context, event) do
-    cooldown =
-      get_arena_data(context, :timers)
-      |> Enum.find(fn timer ->
-        timer.callback_module == CooldownTimer and
-          timer.owner == event.acting_charater.id and
-          timer.data.skill_id == event.data.skill_id
-      end)
+  def pop(context, event), do: kickoff(context, event)
 
-    case is_nil(cooldown) do
-      true ->
-        approve(context, event)
+  defp kickoff(context, event) do
+    sorted = Enum.sort(context.data.round_queue, &(&1.data.speed >= &2.data.speed))
 
-      false ->
-        time_left = cooldown.turn_threshold - cooldown.ap
-        data = Map.merge(event.data, %{time_left: time_left, reason: :skill_on_cooldown})
-
-        event(context, event.acting_character.pid, self(), "action/abort", data)
-    end
+    context
+    |> put_data(:round_in_process?, true)
+    |> put_data(:round_queue, sorted)
+    |> pop(event)
   end
 
-  defp approve(context, event) do
-    event(context, event.data.victim.pid, self(), "turn/request", event.data)
-  end
+  defp schedule() do
+    now = Time.utc_now()
+    now_in_ms = now.second * 1000 + div(elem(now.microsecond, 0), 1000)
 
-  defp update_turn_data(context, event) do
-    turn_list = get_arena_data(context, :turn_list)
-    attacker_id = event.data.attacker.id
-    victim_id = event.data.victim.id
+    delay = @round_length_ms - rem(now_in_ms, @round_length_ms)
 
-    turn_list =
-      Enum.map(turn_list, fn
-        %{id: ^attacker_id} = turn_data ->
-          turn_cost = Map.get(event.data, :turn_cost, 1000)
-          Map.put(turn_data, :ap, turn_data.ap - turn_cost)
-
-        %{id: ^victim_id} = turn_data when attacker_id != victim_id ->
-          hit_stun = Map.get(event.data, :hit_stun, 0)
-          Map.put(turn_data, :ap, turn_data.ap - hit_stun)
-
-        no_change ->
-          no_change
-      end)
-
-    put_arena_data(context, :turn_list, turn_list)
-  end
-
-  defp update_timers(context, event) do
-    timer_updates = Map.get(event.data, :timer_updates, [])
-    timers = get_arena_data(context, :timers)
-
-    timers =
-      case timer_updates != [] do
-        true ->
-          Enum.map(get_arena_data(context, :timers), fn timer ->
-            update = Enum.find(timer_updates, &(&1.owner == timer.owner))
-
-            case !is_nil(update) do
-              true -> Map.merge(timer, update)
-              false -> timer
-            end
-          end)
-
-        false ->
-          timers
-      end
-
-    new_timers = Map.get(event.data, :timer_adds, [])
-    put_arena_data(context, :timers, new_timers ++ timers)
+    event = %Kalevala.Event{topic: "round/pop", from_pid: self(), data: %{}}
+    Process.send_after(self(), event, delay)
   end
 
   defp find_victim(context, event) do
-    case event.data.victim do
-      :random ->
-        attacker_id = event.acting_character.id
+    victim_id = event.data.victims.id
 
-        context.characters
-        |> Enum.reject(&(&1.id == attacker_id))
-        |> Enum.random()
-
-      text ->
-        find_local_character(context, text)
-    end
-  end
-
-  defp find_local_character(context, name) do
     Enum.find(context.characters, fn character ->
-      Mu.Character.matches?(character, name)
+      Mu.Character.matches?(character, victim_id)
     end)
   end
+end
 
-  defp broadcast(context, event, topic_override \\ nil) do
-    event =
-      if topic_override,
-        do: Map.put(event, :topic, topic_override),
-        else: event
+defmodule Mu.World.Room.CombatCancel do
+  import Kalevala.World.Room.Context
 
-    Enum.reduce(context.characters, context, fn character, acc ->
-      event(acc, character.pid, self(), event.topic, event.data)
-    end)
-  end
+  def call(context, event) do
+    victim_id = event.data.victim.id
 
-  defp if_err(result, topic) do
-    case result not in [nil, false] do
-      true -> {:ok, result}
-      false -> {:error, topic}
-    end
+    round_queue =
+      Enum.reject(context.data.round_queue, fn event ->
+        event.acting_character.id == victim_id or
+          event.data.victim.id == victim_id
+      end)
+
+    put_data(context, :round_queue, round_queue)
   end
 end

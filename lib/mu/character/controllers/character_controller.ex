@@ -61,6 +61,7 @@ defmodule Mu.Character.CharacterController do
           max_endurance_points: 30
         },
         pronouns: :male,
+        mode: :wander,
         equipment: Mu.Character.Equipment.wear_slots(:basic)
       }
     }

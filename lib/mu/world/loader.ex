@@ -121,9 +121,9 @@ defmodule Mu.World.Loader do
       name: room.name,
       description: room.description,
       exits: exits,
-      arena?: false,
-      peaceful?: Map.get(room, :peaceful?, false),
-      arena_data: nil
+      round_queue: [],
+      next_round_queue: [],
+      round_in_process?: false
     }
   end
 

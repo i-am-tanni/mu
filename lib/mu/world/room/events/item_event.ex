@@ -31,7 +31,7 @@ defmodule Mu.World.Room.ItemEvent do
 
       context
       |> Map.put(:item_instances, items)
-      |> broadcast(event, data)
+      |> broadcast(event.topic, data)
     else
       {:error, topic} ->
         prompt(context, event.from_pid, ItemView, topic, %{})
@@ -60,7 +60,7 @@ defmodule Mu.World.Room.ItemEvent do
 
       context
       |> Map.put(:item_instances, items)
-      |> broadcast(event, data)
+      |> broadcast(event.topic, data)
     else
       {:error, topic} ->
         prompt(context, event.from_pid, ItemView, topic)
@@ -86,13 +86,5 @@ defmodule Mu.World.Room.ItemEvent do
 
   defp fetch_item(item_list, item_name, ordinal) do
     Item.fetch(item_list, item_name, ordinal)
-  end
-
-  defp broadcast(context, event, data) do
-    data = Map.put(data, :acting_character, event.acting_character)
-
-    Enum.reduce(context.characters, context, fn character, acc ->
-      event(acc, character.pid, self(), event.topic, data)
-    end)
   end
 end

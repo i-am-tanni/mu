@@ -1,28 +1,3 @@
-defmodule Mu.Character.CombatFlash do
-  @moduledoc """
-  Temporary combat data that lives on the character in combat
-
-  on_turn? = is Arena locked so that only I can take my turn?
-  turn_requested? = Have I requested a turn and I'm waiting on the arena to respond?
-  """
-  defstruct turn_requested?: false,
-            on_turn?: false,
-            turn_queue: [],
-            threat_table: %{}
-
-  def put_combat_flash(conn, key, val) do
-    combat_data = Map.get(conn.flash, :combat_data, %__MODULE__{})
-    combat_data = %{combat_data | key => val}
-    %{conn | flash: Map.put(conn.flash, :combat_data, combat_data)}
-  end
-
-  def get_combat_flash(conn, key) do
-    conn.flash
-    |> Map.get(:combat_data, %__MODULE__{})
-    |> Map.get(key)
-  end
-end
-
 defmodule Mu.Character.Instance do
   @moduledoc """
   Used for spawners to keep data about instances of characters they create
@@ -38,6 +13,65 @@ defmodule Mu.Character.InitialEvent do
   defstruct [:data, :delay, :topic]
 end
 
+defmodule Mu.Character.PlayerMeta do
+  @moduledoc """
+  Specific metadata for a character in Mu
+  """
+
+  defstruct [
+    :reply_to,
+    :pronouns,
+    :mode,
+    :equipment,
+    :vitals,
+    :target,
+    threat_table: %{},
+    keywords: []
+  ]
+
+  defimpl Kalevala.Meta.Trim do
+    def trim(meta) do
+      Map.take(meta, [:vitals, :pronouns, :keywords, :mode, :target])
+    end
+  end
+
+  defimpl Kalevala.Meta.Access do
+    def get(meta, key), do: Map.get(meta, key)
+
+    def put(meta, key, value), do: Map.put(meta, key, value)
+  end
+end
+
+defmodule Mu.Character.NonPlayerMeta do
+  @moduledoc """
+  Specific metadata for a world character in Kantele
+  """
+
+  defstruct [
+    :initial_events,
+    :vitals,
+    :zone_id,
+    :mode,
+    :aggressive?,
+    :move_delay,
+    :keywords,
+    :target,
+    threat_table: %{}
+  ]
+
+  defimpl Kalevala.Meta.Trim do
+    def trim(meta) do
+      Map.take(meta, [:zone_id, :vitals, :keywords, :mode, :target])
+    end
+  end
+
+  defimpl Kalevala.Meta.Access do
+    def get(meta, key), do: Map.get(meta, key)
+
+    def put(meta, key, value), do: Map.put(meta, key, value)
+  end
+end
+
 defmodule Mu.Character do
   @moduledoc """
   Character callbacks for Kalevala
@@ -46,6 +80,8 @@ defmodule Mu.Character do
 
   alias Mu.Character.Pronouns
   alias Mu.Character.Equipment
+  alias Mu.Character.CombatRequest
+  alias Mu.Character.DamageSource
 
   @doc """
   Converts the gender atom to a pronoun set.
@@ -78,6 +114,25 @@ defmodule Mu.Character do
       String.downcase(character.name) == keyword or
       Enum.any?(character.meta.keywords, &(&1 == keyword))
   end
+
+  def build_auto_attack(target) do
+    %CombatRequest{
+      victims: target,
+      hitroll: 4,
+      verb: "punch",
+      speed: 1,
+      damages: [
+        %DamageSource{
+          type: :blunt,
+          damroll: 1
+        }
+      ],
+      effects: []
+    }
+  end
+
+  def player?(character), do: match?(%Mu.Character.PlayerMeta{}, character.meta)
+  def npc?(character), do: match?(%Mu.Character.NonPlayerMeta{}, character.meta)
 end
 
 defmodule Mu.Character.Vitals do
@@ -107,51 +162,4 @@ defmodule Mu.Character.PathFindData do
   - The search depth >= max_depth (lives in the event data)
   """
   defstruct [:id, :visited, :lead_count, :created_at, :status]
-end
-
-defmodule Mu.Character.PlayerMeta do
-  @moduledoc """
-  Specific metadata for a character in Mu
-  """
-
-  defstruct [
-    :reply_to,
-    :pronouns,
-    :mode,
-    :equipment,
-    :vitals,
-    keywords: []
-  ]
-
-  defimpl Kalevala.Meta.Trim do
-    def trim(meta) do
-      Map.take(meta, [:vitals, :pronouns, :keywords])
-    end
-  end
-
-  defimpl Kalevala.Meta.Access do
-    def get(meta, key), do: Map.get(meta, key)
-
-    def put(meta, key, value), do: Map.put(meta, key, value)
-  end
-end
-
-defmodule Mu.Character.NonPlayerMeta do
-  @moduledoc """
-  Specific metadata for a world character in Kantele
-  """
-
-  defstruct [:initial_events, :vitals, :zone_id, :mode, :aggressive?, :move_delay, :keywords]
-
-  defimpl Kalevala.Meta.Trim do
-    def trim(meta) do
-      Map.take(meta, [:zone_id, :vitals, :keywords])
-    end
-  end
-
-  defimpl Kalevala.Meta.Access do
-    def get(meta, key), do: Map.get(meta, key)
-
-    def put(meta, key, value), do: Map.put(meta, key, value)
-  end
 end
