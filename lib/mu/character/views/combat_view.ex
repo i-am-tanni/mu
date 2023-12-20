@@ -3,18 +3,28 @@ defmodule Mu.Character.CombatView do
 
   alias Mu.Character.CharacterView
 
+  def render("prompt", %{character: character, target: target}) do
+    character_name = CharacterView.render("name", %{character: character})
+    target_name = CharacterView.render("name", %{character: target})
+
+    [
+      ~i(#{character_name} #{health_feedback(character.meta)}\n),
+      ~i(#{target_name} #{health_feedback(target.meta)})
+    ]
+  end
+
   def render("kickoff/attacker", %{victim: victim}) do
-    ~i(You attack #{CharacterView.render("name", %{character: victim})}!\n)
+    ~i(You attack #{CharacterView.render("name", %{character: victim})}!)
   end
 
   def render("kickoff/victim", %{attacker: attacker}) do
-    ~i(#{CharacterView.render("name", %{character: attacker})} attacks you!\n)
+    ~i(#{CharacterView.render("name", %{character: attacker})} attacks you!)
   end
 
   def render("kickoff/witness", %{attacker: attacker, victim: victim}) do
     attacker = CharacterView.render("name", %{character: attacker})
     victim = CharacterView.render("name", %{character: victim})
-    ~i(#{attacker} attacks #{victim}!\n)
+    ~i(#{attacker} attacks #{victim}!)
   end
 
   def render("damage/attacker", assigns) do
@@ -81,6 +91,21 @@ defmodule Mu.Character.CombatView do
     end
   end
 
+  defp health_feedback(%{vitals: vitals}) do
+    hp_percent = div(vitals.health_points * 100, vitals.max_health_points)
+
+    cond do
+      hp_percent >= 100 -> "is in excellent condition."
+      hp_percent >= 90 -> "has a few scratches."
+      hp_percent >= 75 -> "has some small wounds and bruises."
+      hp_percent >= 50 -> "has quite a few wounds."
+      hp_percent >= 30 -> "has some big nasty wounds and scratches."
+      hp_percent >= 15 -> "looks pretty hurt."
+      hp_percent >= 0 -> "is in awful condition."
+      true -> "is bleeding to death."
+    end
+  end
+
   defp damage_feedback(%{victim: victim, damage: damage}) do
     max_health_points = victim.meta.vitals.max_health_points
     dam_percent = div(damage * 100, max_health_points)
@@ -90,7 +115,7 @@ defmodule Mu.Character.CombatView do
       dam_percent <= 1 -> "tickles"
       dam_percent <= 2 -> "nicks"
       dam_percent <= 3 -> "scuffs"
-      dam_percent <= 4 -> "bruises"
+      dam_percent <= 4 -> "scrapes"
       dam_percent <= 5 -> "scratches"
       dam_percent <= 10 -> "grazes"
       dam_percent <= 15 -> "injures"

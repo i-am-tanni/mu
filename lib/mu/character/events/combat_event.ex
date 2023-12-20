@@ -65,28 +65,21 @@ defmodule Mu.Character.CombatEvent do
   end
 
   def end_round(conn, _event) do
-    conn
-    |> assign(:character, conn.character)
-    |> prompt(CommandView, "prompt")
-    |> then_if(conn.character.meta.mode == :combat, fn conn ->
-      schedule_auto_attack(conn)
-    end)
-  end
-
-  def combat_prompt(conn, _event) do
     target = conn.character.meta.target
 
-    case !is_nil(target) do
+    case is_nil(target) do
       true ->
         conn
         |> assign(:character, conn.character)
-        |> assign(:target, conn.character.meta.target)
-        |> prompt(CombatView, "prompt")
+        |> prompt(CommandView, "prompt")
 
       false ->
         conn
         |> assign(:character, conn.character)
+        |> assign(:target, target)
+        |> prompt(CombatView, "prompt")
         |> prompt(CommandView, "prompt")
+        |> schedule_auto_attack()
     end
   end
 
