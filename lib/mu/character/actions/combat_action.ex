@@ -1,11 +1,8 @@
 defmodule Mu.Character.CombatAction do
   use Kalevala.Character.Action
 
-  alias Mu.Character
-
   @impl true
   def run(conn, params) do
-    params = Character.build_attack(conn, params.text)
     event(conn, "combat/request", params)
   end
 end
