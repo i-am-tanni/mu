@@ -5,11 +5,8 @@ defmodule Mu.Character.CombatAction do
 
   @impl true
   def run(conn, params) do
-    params = Character.build_attack(params.text)
-
-    Enum.reduce(1..1, conn, fn _, acc ->
-      event(acc, "combat/request", params)
-    end)
+    params = Character.build_attack(conn, params.text)
+    event(conn, "combat/request", params)
   end
 end
 
@@ -30,7 +27,7 @@ defmodule Mu.Character.AutoAttackAction do
 
         delay = @round_length_ms_less_500 - rem(now_in_ms, @round_length_ms_less_500)
 
-        data = Character.build_attack(target)
+        data = Character.build_attack(conn, target)
         delay_event(conn, delay, "round/push", data)
 
       false ->
