@@ -115,7 +115,7 @@ defmodule Mu.Character do
       Enum.any?(character.meta.keywords, &(&1 == keyword))
   end
 
-  def build_auto_attack(target) do
+  def build_attack(target) do
     %CombatRequest{
       victims: target,
       hitroll: 4,

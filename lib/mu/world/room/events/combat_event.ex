@@ -133,10 +133,10 @@ defmodule Mu.World.Room.CombatRoundEvent do
   end
 
   defp find_victim(context, event) do
-    victim_id = event.data.victims.id
+    keyword = event.data.victims
 
     Enum.find(context.characters, fn character ->
-      Mu.Character.matches?(character, victim_id)
+      Mu.Character.matches?(character, keyword)
     end)
   end
 end

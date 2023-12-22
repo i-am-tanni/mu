@@ -23,6 +23,7 @@ defmodule Mu.Character.CombatEvent do
   alias Mu.Character.CombatEvent.Victim
   alias Mu.Character.CombatView
   alias Mu.Character.CommandView
+  alias Mu.Character.AutoAttackAction
 
   @round_length_ms 3000
 
@@ -39,10 +40,11 @@ defmodule Mu.Character.CombatEvent do
     |> assign(:victim, victim)
     |> prompt(CombatView, kickoff_topic(conn, event))
     |> update_kickoff(event)
-    |> then_if(conn.character.id in [attacker.id, victim.id], fn conn ->
-      schedule_auto_attack(conn)
-    end)
     |> commit(event)
+    |> then_if(conn.character.id in [attacker.id, victim.id], fn conn ->
+      character = character(conn)
+      AutoAttackAction.run(conn, %{target: character.meta.target.id})
+    end)
   end
 
   @doc """
@@ -79,38 +81,10 @@ defmodule Mu.Character.CombatEvent do
         |> assign(:target, target)
         |> prompt(CombatView, "prompt")
         |> prompt(CommandView, "prompt")
-        |> schedule_auto_attack()
+        |> then_if(conn.character.meta.mode == :combat, fn conn ->
+          AutoAttackAction.run(conn, %{target: target.id})
+        end)
     end
-  end
-
-  defp schedule_auto_attack(conn) do
-    character = character(conn)
-    target = character.meta.target
-    mode = character.meta.mode
-
-    case !busy?(conn) and mode == :combat and !is_nil(target) do
-      true ->
-        now = Time.utc_now()
-        now_in_ms = now.second * 1000 + div(elem(now.microsecond, 0), 1000)
-
-        delay = @round_length_ms - 500 - rem(now_in_ms, @round_length_ms - 500)
-
-        data = Character.build_auto_attack(target)
-        delay_event(conn, delay, "round/push", data)
-
-      false ->
-        conn
-    end
-  end
-
-  # booleans
-
-  defp busy?(%{character: character}) do
-    dead?(character)
-  end
-
-  defp dead?(character) do
-    character.meta.vitals.health_points < 0
   end
 
   # updates
