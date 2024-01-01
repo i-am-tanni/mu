@@ -66,7 +66,7 @@ defmodule Mu.Character.Action do
       {:error, reason} ->
         conn
         |> assign(:reason, reason)
-        |> prompt(CharacterView, "error")
+        |> prompt(CommandView, "error")
         |> put_meta(:action_queue, [])
         |> put_meta(:processing_action, nil)
     end

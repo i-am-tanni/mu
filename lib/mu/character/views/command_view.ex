@@ -20,6 +20,10 @@ defmodule Mu.Character.CommandView do
     }
   end
 
+  def render("reason", %{reason: reason}) do
+    reason
+  end
+
   def render("unknown", _assigns) do
     "huh?\n"
   end
