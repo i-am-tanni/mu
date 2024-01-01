@@ -18,6 +18,7 @@ defmodule Mu.Character.CombatEvent do
   use Kalevala.Character.Event
   import Mu.Utility
 
+  alias Mu.Character
   alias Mu.Character.CombatEvent.Attacker
   alias Mu.Character.CombatEvent.Victim
   alias Mu.Character.CombatView
@@ -80,7 +81,7 @@ defmodule Mu.Character.CombatEvent do
         |> assign(:target, target)
         |> prompt(CombatView, "prompt")
         |> prompt(CommandView, "prompt")
-        |> then_if(conn.character.meta.mode == :combat, fn conn ->
+        |> then_if(&Character.in_combat?/1, fn conn ->
           AutoAttackAction.run(conn, %{target: target.id})
         end)
     end

@@ -16,8 +16,22 @@ defmodule Mu.Character.Events do
   alias Mu.Character.YellEvent
 
   scope(Mu.Character) do
+    module(CombatEvent) do
+      event("combat/request", :request)
+      event("combat/commit", :commit)
+      event("combat/abort", :abort)
+      event("combat/kickoff", :kickoff)
+      event("round/request", :request)
+      event("round/commit", :commit_round)
+      event("round/end", :end_round)
+    end
+
     module(BuildEvent) do
       event("room/dig", :call)
+    end
+
+    module(CharacterEvent) do
+      event("action/next", :action_next)
     end
 
     module(CloseEvent) do
@@ -37,16 +51,6 @@ defmodule Mu.Character.Events do
       event(ItemPickUp.Commit, :pickup_commit)
       event("room/put-in", :put_in)
       event("room/get-from", :get_from)
-    end
-
-    module(CombatEvent) do
-      event("combat/request", :request)
-      event("combat/commit", :commit)
-      event("combat/abort", :abort)
-      event("combat/kickoff", :kickoff)
-      event("round/request", :request)
-      event("round/commit", :commit_round)
-      event("round/end", :end_round)
     end
 
     module(MoveEvent) do

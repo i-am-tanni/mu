@@ -34,6 +34,8 @@ defmodule Mu.World.Room.CombatEvent do
         end)
 
       victim ->
+        IO.inspect(context.characters, label: "characters")
+
         context.characters
         |> Enum.find(&Character.matches?(&1, victim))
         |> List.wrap()

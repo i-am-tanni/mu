@@ -25,6 +25,8 @@ defmodule Mu.Character.PlayerMeta do
     :equipment,
     :vitals,
     :target,
+    :processing_action,
+    action_queue: [],
     threat_table: %{},
     keywords: []
   ]
@@ -56,6 +58,8 @@ defmodule Mu.Character.NonPlayerMeta do
     :move_delay,
     :keywords,
     :target,
+    :processing_action,
+    action_queue: [],
     threat_table: %{}
   ]
 
@@ -76,7 +80,7 @@ defmodule Mu.Character do
   @moduledoc """
   Character callbacks for Kalevala
   """
-  import Kalevala.Character.Conn, only: [put_meta: 3]
+  import Kalevala.Character.Conn, only: [put_meta: 3, character: 1]
 
   alias Mu.Character.Pronouns
   alias Mu.Character.Equipment
@@ -113,6 +117,11 @@ defmodule Mu.Character do
     character.id == keyword or
       String.downcase(character.name) == keyword or
       Enum.any?(character.meta.keywords, &(&1 == keyword))
+  end
+
+  def in_combat?(conn) do
+    character = character(conn)
+    character.meta.mode == :combat
   end
 
   def build_attack(_conn, target) do
