@@ -29,6 +29,7 @@ defmodule Mu.Character.Action do
   """
 
   import Kalevala.Character.Conn
+  alias Mu.Character.CommandView
 
   @doc """
   Queues the next action if the priority is equal or lower and character is busy.
