@@ -1,4 +1,4 @@
-defmodule Mu.Character.ContinueEvent do
+defmodule Mu.Character.CharacterEvent do
   use Kalevala.Character.Event
 
   def action_next(conn, _event) do

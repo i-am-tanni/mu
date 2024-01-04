@@ -13,7 +13,7 @@ defmodule Mu.Character.FleeAction do
     Mu.Character.WanderAction.run(conn, %{})
   end
 
-  def build(params \\ %{}) do
+  def build(_params) do
     %Action{
       priority: 1,
       conditions: [&Validate.alive/1],

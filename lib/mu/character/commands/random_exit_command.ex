@@ -11,7 +11,7 @@ defmodule Mu.Character.RandomExitCommand do
   def flee(conn, params) do
     case Mu.Character.in_combat?(conn) do
       true ->
-        action = FleeAction.build()
+        action = FleeAction.build(%{})
         Action.put(conn, action)
 
       false ->

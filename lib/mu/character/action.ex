@@ -33,6 +33,17 @@ defmodule Mu.Character.Action do
   alias Mu.Character.CommandView
   alias Mu.Character.LoopAction
 
+  def loop(conn, action, opts \\ []) do
+    action = LoopAction.build(action, opts)
+    put(conn, action)
+  end
+
+  def stop(conn) do
+    conn
+    |> put_meta(:processing_action, nil)
+    |> put_meta(:action_queue, [])
+  end
+
   @doc """
   Queues the next action if the priority is equal or lower and character is busy.
   Else it overrides all outstanding actions and cancels the remainder.
@@ -51,7 +62,7 @@ defmodule Mu.Character.Action do
 
       false ->
         conn
-        |> put_meta(:action_queue, action_queue ++ action)
+        |> put_meta(:action_queue, action_queue ++ [action])
     end
   end
 
@@ -73,17 +84,6 @@ defmodule Mu.Character.Action do
         |> put_meta(:action_queue, [])
         |> put_meta(:processing_action, nil)
     end
-  end
-
-  def loop(conn, action, opts \\ []) do
-    action = LoopAction.build(action, opts)
-    put(conn, action)
-  end
-
-  def stop(conn) do
-    conn
-    |> put_meta(:processing_action, nil)
-    |> put_meta(:action_queue, [])
   end
 
   # private functions

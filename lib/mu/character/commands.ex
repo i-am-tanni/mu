@@ -189,6 +189,10 @@ defmodule Mu.Character.Commands do
     parse("exits", :exits, aliases: ["ex"])
   end
 
+  module(LoopCommand) do
+    parse("test", :run)
+  end
+
   module(DoorCommand) do
     parse("open", :run, fn command ->
       command |> spaces() |> text(:text)

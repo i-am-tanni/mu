@@ -17,7 +17,7 @@ defmodule Mu.Character.LoopAction do
 
   @impl true
   def run(conn, %{action: action, count: count}) do
-    case count > 0 do
+    case count > 1 do
       true -> Action.loop(conn, action, count: count - 1)
       false -> conn
     end
@@ -39,6 +39,6 @@ defmodule Mu.Character.LoopAction do
       params: params
     }
 
-    %{action | steps: [loop_step | action.steps]}
+    %{action | steps: action.steps ++ [loop_step]}
   end
 end
