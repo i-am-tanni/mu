@@ -177,6 +177,7 @@ defmodule Mu.Character.CombatEvent.Victim do
 
   alias __MODULE__.Request
   alias __MODULE__.Commit
+  alias Mu.Character
 
   def request(conn, event) do
     case consider(conn, event) do
@@ -212,7 +213,7 @@ defmodule Mu.Character.CombatEvent.Victim do
       event.topic == "round/request" ->
         "round/commit"
 
-      get_meta(conn, :mode) == :combat and event.data.attacker.meta.mode == :combat ->
+      Character.in_combat?(conn) and event.data.attacker.meta.mode == :combat ->
         "combat/commit"
 
       true ->
