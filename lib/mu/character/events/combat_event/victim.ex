@@ -213,7 +213,7 @@ defmodule Mu.Character.CombatEvent.Victim do
       event.topic == "round/request" ->
         "round/commit"
 
-      Character.in_combat?(conn) and event.data.attacker.meta.mode == :combat ->
+      Character.in_combat?(conn) and Character.in_combat?(event.data.attacker) ->
         "combat/commit"
 
       true ->

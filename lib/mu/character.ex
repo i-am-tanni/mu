@@ -120,7 +120,12 @@ defmodule Mu.Character do
   end
 
   def in_combat?(conn) do
-    character = character(conn)
+    character =
+      case Map.has_key?(conn, :private) do
+        true -> character(conn)
+        false -> conn
+      end
+
     character.meta.mode == :combat
   end
 
