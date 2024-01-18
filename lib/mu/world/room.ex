@@ -61,6 +61,18 @@ defmodule Mu.World.Room do
     end
   end
 
+  def confirm_movement(context, event) when context.data.id == event.data.to do
+    from_room_id = event.data.from
+    entrance = Enum.find(context.data.exits, &(&1.end_room_id == from_room_id))
+    entrance_name = entrance.exit_name || "nowhere"
+    event = %{event | data: Map.put(event.data, :entrance_name, entrance_name)}
+    {context, event}
+  end
+
+  def confirm_movement(context, event) do
+    {context, event}
+  end
+
   def item_request_pickup(context, event, item_instance) do
     BasicRoom.item_request_pickup(context, event, item_instance)
   end
@@ -77,8 +89,6 @@ defmodule Mu.World.Room do
 
   defimpl Kalevala.World.Room.Callbacks do
     require Logger
-
-    alias Kalevala.World.BasicRoom
     alias Mu.World.Room
 
     @impl true
@@ -99,7 +109,7 @@ defmodule Mu.World.Room do
 
     @impl true
     def confirm_movement(_room, context, event),
-      do: BasicRoom.confirm_movement(context, event)
+      do: Room.confirm_movement(context, event)
 
     @impl true
     def item_request_drop(_room, context, event, item_instance),
@@ -111,10 +121,6 @@ defmodule Mu.World.Room do
     @impl true
     def item_request_pickup(_room, context, event, item_instance),
       do: Room.item_request_pickup(context, event, item_instance)
-
-    @impl true
-    def match_character?(character, keyword),
-      do: Mu.Character.matches?(character, keyword)
   end
 end
 
@@ -129,17 +135,14 @@ defmodule Mu.World.Room.Events do
     module(CombatEvent) do
       event("combat/request", :request)
       event("combat/abort", :abort)
+      event("combat/kickoff", :commit)
+      event("combat/commit", :commit)
+      event("round/commit", :commit)
     end
 
     module(CombatRoundEvent) do
       event("round/push", :push)
       event("round/pop", :pop)
-    end
-
-    module(BroadcastEvent) do
-      event("combat/kickoff", :call)
-      event("combat/commit", :call)
-      event("round/commit", :call)
     end
 
     module(CommunicationEvent) do
@@ -185,21 +188,9 @@ defmodule Mu.World.Room.Events do
       event("room/wander", :call)
     end
 
-    module(NotifyEvent) do
-      event("combat/refuse", :call)
-    end
-
     module(TerminateEvent) do
       event("room/terminate", :call)
     end
-  end
-end
-
-defmodule Mu.World.Room.BroadcastEvent do
-  import Kalevala.World.Room.Context
-
-  def call(context, event) do
-    broadcast(context, event.topic, event.data)
   end
 end
 
