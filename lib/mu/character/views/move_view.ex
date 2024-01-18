@@ -5,12 +5,24 @@ defmodule Mu.Character.MoveView do
 
   def render(:suppress, _assigns), do: []
 
-  def render("enter", %{character: character}) do
-    ~i(#{CharacterView.render("name", %{character: character})} enters.)
+  def render("enter", %{character: character, from: entrance_name}) do
+    enter_string =
+      case character.meta.mode do
+        :combat -> "flees"
+        _ -> "enters"
+      end
+
+    ~i(#{CharacterView.render("name", %{character: character})} #{enter_string} from the #{entrance_name}.)
   end
 
-  def render("leave", %{character: character}) do
-    ~i(#{CharacterView.render("name", %{character: character})} leaves.)
+  def render("leave", %{character: character, to: exit_name}) do
+    leave_string =
+      case character.meta.mode do
+        :combat -> "flees"
+        _ -> "leaves"
+      end
+
+    ~i(#{CharacterView.render("name", %{character: character})} #{leave_string} #{exit_name}.)
   end
 
   def render("respawn", %{character: character}) do
@@ -23,6 +35,10 @@ defmodule Mu.Character.MoveView do
 
   def render("notice", %{direction: :from, reason: reason}) do
     [reason, "\n"]
+  end
+
+  def render("fail", %{reason: "no-exits"}) do
+    ~i(You diligently search for an exit, but fail to find one.\n)
   end
 
   def render("fail", %{reason: :no_exit, exit_name: exit_name}) do
