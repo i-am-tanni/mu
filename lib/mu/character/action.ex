@@ -32,16 +32,15 @@ defmodule Mu.Character.Action do
 
   alias Mu.Character.CommandView
   alias Mu.Character.LoopAction
+  alias Mu.Character.DelayAction
 
   def loop(conn, action, opts \\ []) do
     action = LoopAction.build(action, opts)
     put(conn, action)
   end
 
-  def stop(conn) do
-    conn
-    |> put_meta(:processing_action, nil)
-    |> put_meta(:action_queue, [])
+  def delay(action, delay) do
+    DelayAction.build(action, delay)
   end
 
   @doc """
