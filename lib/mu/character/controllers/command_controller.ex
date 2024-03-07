@@ -62,6 +62,7 @@ defmodule Mu.Character.CommandController do
   use Kalevala.Character.Controller
 
   alias Kalevala.Output.Tags
+  alias Mu.Character.CombatController
   alias Mu.Character.CommandView
   alias Mu.Character.Commands
   alias Mu.Character.Events
@@ -70,10 +71,7 @@ defmodule Mu.Character.CommandController do
   alias Mu.Output.EscapeSequences
 
   @impl true
-  def init(conn) do
-    conn
-    |> render(CommandView, "prompt")
-  end
+  def init(conn), do: conn
 
   @impl true
   def recv(conn, ""), do: conn
@@ -81,12 +79,7 @@ defmodule Mu.Character.CommandController do
   def recv(conn, data) do
     Logger.info("Received - #{inspect(data)}")
 
-    data =
-      data
-      |> Tags.escape()
-      |> EscapeSequences.remove()
-      |> String.trim()
-      |> PreParser.run()
+    data = sanitize_input(data)
 
     case Commands.call(conn, data) do
       {:error, :unknown} ->
@@ -113,5 +106,33 @@ defmodule Mu.Character.CommandController do
   end
 
   @impl true
+  def event(conn, event = %{topic: "combat/kickoff"}) do
+    self_id = conn.character.id
+    victim_id = event.data.victim.id
+    attacker_id = event.data.attacker.id
+
+    case self_id do
+      ^victim_id ->
+        data = %CombatController{target: event.data.attacker, initial_event: event}
+        put_controller(conn, CombatController, data)
+
+      ^attacker_id ->
+        data = %CombatController{target: event.data.victim, initial_event: event}
+        put_controller(conn, CombatController, data)
+
+      _ ->
+        Events.call(conn, event)
+    end
+  end
+
+  @impl true
   def event(conn, event), do: Events.call(conn, event)
+
+  defp sanitize_input(data) do
+    data
+    |> Tags.escape()
+    |> EscapeSequences.remove()
+    |> String.trim()
+    |> PreParser.run()
+  end
 end

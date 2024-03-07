@@ -1,21 +1,27 @@
 defmodule Mu.Character.RandomExitCommand do
   use Kalevala.Character.Command
+  import Mu.Character.Guards
+
   alias Mu.Character.WanderAction
-  alias Mu.Character.FleeAction
-  alias Mu.Character.Action
+  alias Mu.Character.CombatView
 
-  def wander(conn, params) do
-    WanderAction.run(conn, params)
-  end
-
-  def flee(conn, params) do
-    case Mu.Character.in_combat?(conn) do
+  def call(conn, _params) when in_combat(conn) do
+    case get_meta(conn, :pose) != :pos_fleeing do
       true ->
-        action = FleeAction.build(%{})
-        Action.put(conn, action)
+        conn
+        |> WanderAction.put(%{}, pre_delay: 4000)
+        |> render(CombatView, "flee/attempt")
+        |> put_meta(:pose, :pos_fleeing)
+        |> assign(:prompt, false)
 
       false ->
-        WanderAction.run(conn, params)
+        conn
     end
+  end
+
+  def call(conn, _params) do
+    conn
+    |> WanderAction.put(%{})
+    |> assign(:prompt, false)
   end
 end

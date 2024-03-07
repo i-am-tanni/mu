@@ -1,9 +1,19 @@
 defmodule Mu.Character.CombatRequest do
-  defstruct [:attacker, :victims, :verb, :hitroll, :speed, damages: [], effects: []]
+  defstruct [
+    :attacker,
+    :victims,
+    :target_count,
+    :verb,
+    :hitroll,
+    :speed,
+    round_based?: false,
+    damages: [],
+    effects: []
+  ]
 end
 
 defmodule Mu.Character.CombatCommit do
-  defstruct [:attacker, :victim, :verb, :damage, effects: []]
+  defstruct [:round_based?, :attacker, :victim, :verb, :damage, effects: []]
 end
 
 defmodule Mu.Character.DamageSource do
@@ -15,8 +25,28 @@ defmodule Mu.Character.Threat do
 end
 
 defmodule Mu.Character.CombatEvent do
+  @moduledoc """
+  When a combat packet is received by the victim, it is either:
+  - Rejected and the attacker is informed to abort the combat action with the reason.
+  - Approved and the combat packet is committed immediately by the victim to prevent race conditions
+
+  If approved, the victim commits immediately to prevent race conditions.
+  After which, the attacker and any witnesses are notified.
+
+  A notification entails updating threat tables and target health
+
+  #Threat Table
+
+  Tracks threat per character and is used to help determine which target to attack.
+
+  The threat table persists between rooms, but threat data has an expiration date.
+
+  Is used to choose who to attack or who to hunt.
+
+  """
   use Kalevala.Character.Event
   import Mu.Utility
+  import Mu.Character.Guards
 
   alias Mu.Character
   alias Mu.Character.CombatEvent.Attacker
@@ -25,13 +55,14 @@ defmodule Mu.Character.CombatEvent do
   alias Mu.Character.CommandView
   alias Mu.Character.AutoAttackAction
 
-  @round_length_ms 3000
-
   def request(conn, event), do: Victim.request(conn, event)
 
   def abort(conn, event), do: Attacker.abort(conn, event)
 
   def kickoff(conn, event) do
+    # Check the controller (NonPlayerController or CommandController)
+    # for the state transition into the combat controller on receipt of a kickoff event
+
     attacker = event.data.attacker
     victim = event.data.victim
 
@@ -39,85 +70,75 @@ defmodule Mu.Character.CombatEvent do
     |> assign(:attacker, attacker)
     |> assign(:victim, victim)
     |> prompt(CombatView, kickoff_topic(conn, event))
-    |> update_kickoff(event)
     |> commit(event)
-    |> then_if(conn.character.id in [attacker.id, victim.id], fn conn ->
-      character = character(conn)
-      AutoAttackAction.run(conn, %{target: character.meta.target.id})
-    end)
   end
 
-  @doc """
-  Commit a combat packet from a round -- one segement of a round
-  """
-  def commit_round(conn, event) do
+  def commit(conn, event) do
+    attacker = event.data.attacker
+    advance_round? = event.data.round_based? and conn.character.id == attacker.id
+
     conn
-    |> commit(event)
-    |> then_if(conn.character.id == event.data.attacker.id, fn conn ->
+    |> assign(:attacker, attacker)
+    |> assign(:victim, event.data.victim)
+    |> render_effects(event)
+    |> update_character(event)
+    |> then_if(advance_round?, fn conn ->
+      # tell room to advance next round segement
       event(conn, "round/pop", %{})
     end)
   end
 
-  def commit(conn, event) do
+  def end_round(conn, _event) when in_combat(conn) do
+    target = get_meta(conn, :target)
+
     conn
-    |> assign(:attacker, event.data.attacker)
-    |> assign(:victim, event.data.victim)
-    |> render_effects(event)
-    |> update_character(event)
+    |> assign(:character, conn.character)
+    |> assign(:target, target)
+    |> prompt(CombatView, "prompt")
+    |> prompt(CommandView, "prompt")
+    |> then_if(&Character.in_combat?/1, fn conn ->
+      AutoAttackAction.run(conn, %{target: target.id})
+    end)
   end
 
-  def end_round(conn, _event) do
-    target = conn.character.meta.target
+  def end_round(conn, _), do: conn
 
-    case is_nil(target) do
-      true ->
-        conn
-        |> assign(:character, conn.character)
-        |> prompt(CommandView, "prompt")
-
-      false ->
-        conn
-        |> assign(:character, conn.character)
-        |> assign(:target, target)
-        |> prompt(CombatView, "prompt")
-        |> prompt(CommandView, "prompt")
-        |> then_if(&Character.in_combat?/1, fn conn ->
-          AutoAttackAction.run(conn, %{target: target.id})
-        end)
-    end
+  def death_notice(conn, event) do
+    conn
+    |> assign(:victim, event.data.victim)
+    |> assign(:attacker, event.data.attacker)
+    |> assign(:death_cry, event.data.death_cry)
+    |> render(CombatView, death_topic(conn, event))
   end
 
   # updates
 
-  defp update_kickoff(conn, event) do
-    id = conn.character.id
-
-    cond do
-      id == event.data.attacker.id -> Attacker.kickoff(conn, event)
-      id == event.data.victim.id -> Victim.kickoff(conn, event)
-      true -> conn
+  defp update_character(conn, event) when in_combat(conn) do
+    case conn.character.id == event.data.victim.id do
+      true -> Victim.update(conn, event)
+      false -> Attacker.update(conn, event)
     end
   end
 
-  defp update_character(conn, event) do
-    id = conn.character.id
-
-    cond do
-      id == event.data.attacker.id -> Attacker.update(conn, event)
-      id == event.data.victim.id -> Victim.update(conn, event)
-      true -> conn
-    end
-  end
+  defp update_character(conn, _), do: conn
 
   # renders
 
   defp render_effects(conn, event) do
     data = event.data
+    damage = data.damage
 
-    conn
-    |> assign(:verb, data.verb)
-    |> assign(:damage, data.damage)
-    |> render(CombatView, damage_topic(conn, event))
+    case damage > 0 do
+      true ->
+        conn
+        |> assign(:verb, data.verb)
+        |> assign(:damage, damage)
+        |> render(CombatView, damage_topic(conn, event))
+
+      false ->
+        # suppress damage attempts that yield no result
+        conn
+    end
   end
 
   # topics
@@ -139,6 +160,16 @@ defmodule Mu.Character.CombatEvent do
       id == event.data.attacker.id -> "damage/attacker"
       id == event.data.victim.id -> "damage/victim"
       true -> "damage/witness"
+    end
+  end
+
+  defp death_topic(conn, event) do
+    id = conn.character.id
+
+    cond do
+      id == event.data.attacker.id -> "death/attacker"
+      id == event.data.victim.id -> "death/victim"
+      true -> "death/witness"
     end
   end
 end

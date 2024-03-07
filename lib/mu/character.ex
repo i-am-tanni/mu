@@ -1,3 +1,12 @@
+defmodule Mu.Character.Guards do
+  defguard is_non_player(conn) when is_struct(conn.character.meta, Mu.Character.NonPlayerMeta)
+  defguard is_player(conn) when is_struct(conn.character.meta, Mu.Character.PlayerMeta)
+  defguard in_combat(conn) when conn.character.meta.in_combat?
+  defguard is_hunting(conn) when is_struct(conn.controller, Mu.Character.HuntController)
+  defguard is_pathing(conn) when is_struct(conn.controller, Mu.Character.PathController)
+  defguard is_character(character) when is_struct(character, Kalevala.Character)
+end
+
 defmodule Mu.Character.Instance do
   @moduledoc """
   Used for spawners to keep data about instances of characters they create
@@ -21,10 +30,11 @@ defmodule Mu.Character.PlayerMeta do
   defstruct [
     :reply_to,
     :pronouns,
-    :mode,
+    :pose,
     :equipment,
     :vitals,
     :target,
+    :in_combat?,
     :processing_action,
     action_queue: [],
     threat_table: %{},
@@ -33,7 +43,8 @@ defmodule Mu.Character.PlayerMeta do
 
   defimpl Kalevala.Meta.Trim do
     def trim(meta) do
-      Map.take(meta, [:vitals, :pronouns, :keywords, :mode, :target])
+      keys = [:vitals, :pronouns, :keywords, :pose, :in_combat?]
+      Map.take(meta, keys)
     end
   end
 
@@ -46,18 +57,19 @@ end
 
 defmodule Mu.Character.NonPlayerMeta do
   @moduledoc """
-  Specific metadata for a world character in Kantele
+  Specific metadata for a world character
   """
 
   defstruct [
-    :initial_events,
-    :vitals,
     :zone_id,
-    :mode,
-    :aggressive?,
-    :move_delay,
     :keywords,
+    :flags,
+    :vitals,
+    :pose,
+    :move_delay,
+    :initial_events,
     :target,
+    :in_combat?,
     :processing_action,
     action_queue: [],
     threat_table: %{}
@@ -65,7 +77,8 @@ defmodule Mu.Character.NonPlayerMeta do
 
   defimpl Kalevala.Meta.Trim do
     def trim(meta) do
-      Map.take(meta, [:zone_id, :vitals, :keywords, :mode, :target])
+      keys = [:zone_id, :vitals, :keywords, :pose, :in_combat?]
+      Map.take(meta, keys)
     end
   end
 
@@ -80,7 +93,7 @@ defmodule Mu.Character do
   @moduledoc """
   Character callbacks for Kalevala
   """
-  import Kalevala.Character.Conn, only: [put_meta: 3, character: 1]
+  import Kalevala.Character.Conn
 
   alias Mu.Character.Pronouns
   alias Mu.Character.Equipment
@@ -119,34 +132,54 @@ defmodule Mu.Character do
       Enum.any?(character.meta.keywords, &(&1 == keyword))
   end
 
-  def in_combat?(conn) do
-    character =
-      case Map.has_key?(conn, :private) do
-        true -> character(conn)
-        false -> conn
-      end
-
-    character.meta.mode == :combat
+  def in_combat?(conn) when is_struct(conn, Kalevala.Character.Conn) do
+    character = character(conn)
+    character.meta.in_combat?
   end
 
-  def build_attack(_conn, target) do
+  def in_combat?(%Kalevala.Character{meta: %{in_combat?: in_combat?}}) do
+    in_combat?
+  end
+
+  def build_attack(conn, target) when not is_list(target) do
+    build_attack(conn, List.wrap(target))
+  end
+
+  def build_attack(_conn, targets) do
     %CombatRequest{
-      victims: target,
+      round_based?: true,
+      victims: targets,
+      target_count: 1,
       hitroll: 4,
       verb: "punch",
       speed: 1,
       damages: [
         %DamageSource{
           type: :blunt,
-          damroll: 1
+          damroll: Enum.random(1..8)
         }
       ],
       effects: []
     }
   end
+end
 
-  def player?(character), do: match?(%Mu.Character.PlayerMeta{}, character.meta)
-  def npc?(character), do: match?(%Mu.Character.NonPlayerMeta{}, character.meta)
+defmodule Mu.Character.NonPlayerFlags do
+  @derive Jason.Encoder
+
+  @moduledoc """
+  Booleans related to non-players only
+
+  - sentinel? : True if the mob can leave the room
+  - pursuer? : True if the mob will hunt fleeing players (overriden by sentinel)
+  - aggressive? : True if mob will attack players without provocation
+  """
+
+  defstruct [
+    :sentinel?,
+    :pursuer?,
+    :aggressive?
+  ]
 end
 
 defmodule Mu.Character.Vitals do

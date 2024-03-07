@@ -285,8 +285,8 @@ defmodule Mu.Character.Commands do
   end
 
   module(RandomExitCommand) do
-    parse("wander", :wander, aliases: ["wa"])
-    parse("flee", :flee, aliases: ["fle"])
+    parse("wander", :call, aliases: ["wa"])
+    parse("flee", :call)
   end
 
   dynamic(SocialCommand, :social, [])

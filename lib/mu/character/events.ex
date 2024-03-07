@@ -16,22 +16,21 @@ defmodule Mu.Character.Events do
   alias Mu.Character.YellEvent
 
   scope(Mu.Character) do
+    module(CharacterEvent) do
+      event(:action_next, :action_next)
+    end
+
     module(CombatEvent) do
-      event("combat/request", :request)
       event("combat/commit", :commit)
+      event("combat/request", :request)
       event("combat/abort", :abort)
       event("combat/kickoff", :kickoff)
-      event("round/request", :request)
-      event("round/commit", :commit_round)
       event("round/end", :end_round)
+      event("death", :death_notice)
     end
 
     module(BuildEvent) do
       event("room/dig", :call)
-    end
-
-    module(CharacterEvent) do
-      event("action/next", :action_next)
     end
 
     module(CloseEvent) do
@@ -103,6 +102,7 @@ defmodule Mu.Character.Events do
 
     module(ForwardEvent) do
       event("room/look", :call)
+      event("combat/end", :call)
     end
   end
 end
@@ -127,8 +127,13 @@ defmodule Mu.Character.NonPlayerEvents do
   alias Kalevala.Event.Movement
 
   scope(Mu.Character) do
+    module(CharacterEvent) do
+      event(:action_next, :action_next)
+    end
+
     module(MoveEvent) do
       event(Movement.Commit, :commit)
+      event(Movement.Notice, :notice)
       event(Movement.Abort, :abort)
     end
 
@@ -136,33 +141,12 @@ defmodule Mu.Character.NonPlayerEvents do
       event("combat/kickoff", :kickoff)
       event("combat/request", :request)
       event("combat/commit", :commit)
-      event("round/request", :request)
-      event("round/commit", :commit_round)
       event("round/end", :end_round)
+      event("death", :death_notice)
     end
 
     module(RandomExitEvent) do
       event("room/wander", :call)
-    end
-
-    module(NonPlayerEvent) do
-      event("npc/wander", :wander)
-    end
-  end
-end
-
-defmodule Mu.Character.NonPlayerEvent do
-  use Kalevala.Character.Event
-
-  def wander(conn, _event) do
-    case get_meta(conn, :mode) == :wander do
-      true ->
-        conn
-        |> delay_event(get_meta(conn, :move_delay), "npc/wander", %{})
-        |> Mu.Character.WanderAction.run(%{})
-
-      false ->
-        conn
     end
   end
 end

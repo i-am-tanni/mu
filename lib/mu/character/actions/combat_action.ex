@@ -1,9 +1,21 @@
 defmodule Mu.Character.CombatAction do
-  use Kalevala.Character.Action
+  use Mu.Character.Action
 
   @impl true
   def run(conn, params) do
     event(conn, "combat/request", params)
+  end
+
+  @impl true
+  def build(params, _opts \\ []) do
+    %Action{
+      type: __MODULE__,
+      priority: 2,
+      conditions: [:pos_standing],
+      steps: [
+        Action.step(__MODULE__, 250, params)
+      ]
+    }
   end
 end
 
@@ -14,6 +26,7 @@ defmodule Mu.Character.AutoAttackAction do
 
   @round_length_ms_less_500 2500
 
+  @impl true
   def run(conn, %{target: target}) do
     character = character(conn)
 
@@ -33,6 +46,7 @@ defmodule Mu.Character.AutoAttackAction do
   end
 
   defp can_attack?(character) do
-    character.meta.vitals.health_points > 0
+    character.meta.vitals.health_points > 0 and
+      character.meta.pose == :pos_fighting
   end
 end

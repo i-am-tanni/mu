@@ -245,11 +245,11 @@ defmodule Mu.World.Loader do
   defp parse_character({key, character}, context) do
     initial_events = get_initial_events(character)
 
-    mode =
-      case Map.get(character, :sentinal?) != true do
-        true -> :wander
-        false -> :stay
-      end
+    flags = %Mu.Character.NonPlayerFlags{
+      sentinel?: Map.get(character, :sentinel?) == true,
+      pursuer?: true,
+      aggressive?: Map.get(character, :aggressive?, false)
+    }
 
     %Character{
       id: "#{context.zone_id}:#{key}",
@@ -258,30 +258,17 @@ defmodule Mu.World.Loader do
       meta: %Mu.Character.NonPlayerMeta{
         move_delay: Map.get(character, :move_delay, 60000),
         keywords: character.keywords,
-        mode: mode,
-        aggressive?: Map.get(character, :aggressive?, false),
+        pose: :pos_standing,
         zone_id: context.zone_id,
-        initial_events: parse_initial_events(initial_events, context)
+        initial_events: parse_initial_events(initial_events, context),
+        in_combat?: false,
+        flags: flags
       }
     }
   end
 
   defp get_initial_events(character) do
-    initial_events = Map.get(character, :initial_events, [])
-
-    case Map.get(character, :sentinal?) != true do
-      true ->
-        wander_event = %{
-          "delay" => Map.get(character, :move_delay, 60000),
-          "topic" => "npc/wander",
-          "data" => %{}
-        }
-
-        initial_events ++ [wander_event]
-
-      false ->
-        initial_events
-    end
+    Map.get(character, :initial_events, [])
   end
 
   defp parse_initial_events(initial_events, _context) do

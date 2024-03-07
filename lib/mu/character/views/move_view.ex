@@ -7,22 +7,36 @@ defmodule Mu.Character.MoveView do
 
   def render("enter", %{character: character, from: entrance_name}) do
     enter_string =
-      case character.meta.mode do
-        :combat -> "flees"
+      case character.meta.pose do
+        :pos_fighting -> "flees"
         _ -> "enters"
       end
+
+    entrance_name = entrance_name || "somewhere"
 
     ~i(#{CharacterView.render("name", %{character: character})} #{enter_string} from the #{entrance_name}.)
   end
 
   def render("leave", %{character: character, to: exit_name}) do
     leave_string =
-      case character.meta.mode do
-        :combat -> "flees"
+      case character.meta.pose do
+        :pos_fighting -> "flees"
         _ -> "leaves"
       end
 
     ~i(#{CharacterView.render("name", %{character: character})} #{leave_string} #{exit_name}.)
+  end
+
+  def render("teleport/enter", %{character: character}) do
+    ~i(#{CharacterView.render("name", %{character: character})} enters from a tear in interstitial space.)
+  end
+
+  def render("teleport/leave", %{character: character}) do
+    ~i(#{CharacterView.render("name", %{character: character})} leaves in a tear of interstitial space.)
+  end
+
+  def render("flee", %{}) do
+    ~i(You flee head over heels!)
   end
 
   def render("respawn", %{character: character}) do

@@ -6,10 +6,11 @@ defmodule Mu.Character.CombatCommand do
 
   def request(conn, params) do
     text = params["text"]
-    data = Character.build_attack(conn, text)
+    attack_data = Character.build_attack(conn, text)
+    attack_data = %{attack_data | round_based?: false}
 
     conn
-    |> CombatAction.run(data)
+    |> CombatAction.run(attack_data)
     |> assign(:prompt, false)
   end
 end

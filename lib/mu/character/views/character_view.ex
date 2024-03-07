@@ -15,6 +15,10 @@ defmodule Mu.Character.CharacterView do
     ~s(What is your name? )
   end
 
+  def render("error", %{reason: reason}) do
+    reason
+  end
+
   defp possessive(subject) do
     case Regex.match?(~r/s$/, subject) do
       true -> [subject, "'"]

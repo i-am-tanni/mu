@@ -3,7 +3,7 @@ defmodule Mu.Character.SayAction do
   Action to speak in a channel (e.g. a room)
   """
 
-  use Kalevala.Character.Action
+  use Mu.Character.Action
 
   @impl true
   def run(conn, params) do
@@ -14,6 +14,18 @@ defmodule Mu.Character.SayAction do
       [meta: meta(params)],
       &publish_error/2
     )
+  end
+
+  @impl true
+  def build(params, _opts \\ []) do
+    %Action{
+      type: __MODULE__,
+      priority: 3,
+      conditions: [:pos_sitting],
+      steps: [
+        Action.step(__MODULE__, 0, params)
+      ]
+    }
   end
 
   defp meta(params) do

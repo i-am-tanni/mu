@@ -64,7 +64,7 @@ defmodule Mu.World.Room do
   def confirm_movement(context, event) when context.data.id == event.data.to do
     from_room_id = event.data.from
     entrance = Enum.find(context.data.exits, &(&1.end_room_id == from_room_id))
-    entrance_name = entrance.exit_name || "nowhere"
+    entrance_name = entrance.exit_name
     event = %{event | data: Map.put(event.data, :entrance_name, entrance_name)}
     {context, event}
   end
@@ -137,12 +137,18 @@ defmodule Mu.World.Room.Events do
       event("combat/abort", :abort)
       event("combat/kickoff", :commit)
       event("combat/commit", :commit)
-      event("round/commit", :commit)
+      event("combat/flee", :flee)
+    end
+
+    module(ListEvent) do
+      event("room/chars", :characters)
     end
 
     module(CombatRoundEvent) do
       event("round/push", :push)
       event("round/pop", :pop)
+      event("round/cancel", :cancel)
+      event("death", :death)
     end
 
     module(CommunicationEvent) do

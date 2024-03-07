@@ -2,32 +2,42 @@ defmodule Mu.Character.CombatEvent.Victim.Request do
   use Kalevala.Character.Event
 
   alias Mu.Character.CombatCommit
+  alias Mu.Character
 
-  def process(conn, %{data: data}) do
+  def build_commit_data(conn, %{data: data}) do
     # stats = conn.character.meta.stats
     hitroll = data.hitroll
 
-    amount =
+    damage =
       data.damages
       |> Enum.map(&calc_damage(&1, hitroll, %{}))
       |> Enum.sum()
 
+    character = character(conn, trim: true)
+    vitals = character.meta.vitals
+    vitals = %{vitals | health_points: vitals.health_points - damage}
+    meta = %{character.meta | vitals: vitals}
+    character = %{character | meta: meta}
+
     %CombatCommit{
+      round_based?: data.round_based?,
       attacker: data.attacker,
-      victim: character(conn),
+      victim: character,
       verb: data.verb,
-      damage: amount,
+      damage: damage,
       effects: data.effects
     }
   end
 
+  # private
+
   defp calc_damage(damage, hitroll, _stats) do
-    attacker_dam_type = damage.type
+    dam_type = damage.type
     hit? = hitroll > Enum.random(1..4)
 
     case hit? do
       true ->
-        case physical?(attacker_dam_type) do
+        case physical?(dam_type) do
           true ->
             damage = damage.damroll
             max_protection = 4
@@ -81,81 +91,104 @@ defmodule Mu.Character.CombatEvent.Victim.Request do
 end
 
 defmodule Mu.Character.CombatEvent.Victim.Commit do
+  @moduledoc """
+  Commit an approved combat request as the victim.
+  Commit occurs immediately after approval then is dispatched back to the room to notify attacker / witnesses.
+
+  Update vitals, handle the victim's death, update the victim's threat table, etc.
+  """
+
   use Kalevala.Character.Event
-  import Mu.Utility
+  import Mu.Character.Guards
 
   alias Mu.Character.Threat
 
   @threat_expires_in 3
 
   def update(conn, event) do
-    conn
-    |> update_hp(event)
-    |> update_threat(event)
+    # this was originally broken out into multiple functions
+    # but combined into one for readability so that it flows linearly
+
+    # update vitals and check for death
+    %{vitals: vitals} = event.data.victim.meta
+
+    conn = put_meta(conn, :vitals, vitals)
+
+    case vitals.health_points > 1 do
+      true ->
+        # update threat table and target
+        threat_table = get_meta(conn, :threat_table)
+
+        threat_table =
+          Enum.filter(threat_table, fn {_, %{expires_at: expires_at}} ->
+            Time.compare(Time.utc_now(), expires_at) == :lt
+          end)
+          |> Enum.into(%{})
+
+        attacker = event.data.attacker
+        attacker_id = attacker.id
+        threat = update_threat(conn, event, threat_table, attacker_id)
+        threat_table = Map.put(threat_table, attacker_id, threat)
+        target = get_meta(conn, :target)
+        target = update_target(conn, event, threat_table, target, attacker)
+
+        conn
+        |> put_meta(:threat_table, threat_table)
+        |> put_meta(:target, target)
+
+      false ->
+        data = Map.take(event.data, [:attacker, :victim])
+        data = Map.put(data, :death_cry, "shrieks in agony")
+        event(conn, "death", data)
+    end
   end
 
-  defp update_hp(conn, event) do
-    damage = event.data.damage
-    vitals = conn.character.meta.vitals
-    vitals = %{vitals | health_points: vitals.health_points - damage}
+  # private
 
-    conn
-    |> put_meta(:vitals, vitals)
-    |> then_if(vitals < 0, fn conn ->
-      data = Map.take(event.data, [:attacker, :victim])
-      data = Map.put(data, :death_cry, "shrieks in agony")
-      event(conn, "char/death", data)
-    end)
-  end
-
-  defp update_threat(conn, event) do
-    threat_table = get_meta(conn, :threat_table)
-
-    threat_table =
-      Enum.reject(threat_table, fn {_, %{expires_at: expires_at}} ->
-        Time.compare(Time.utc_now(), expires_at) == :gt
-      end)
-      |> Enum.into(%{})
-
-    attacker = event.data.attacker
-    attacker_id = attacker.id
+  defp update_threat(conn, event, threat_table, attacker_id) do
+    target = get_meta(conn, :target)
+    %{attacker: attacker, damage: damage} = event.data
 
     threat =
-      Map.get(
-        threat_table,
-        attacker_id,
-        struct(Threat, id: attacker_id, character: attacker, value: 0)
-      )
+      case target.id == attacker_id do
+        true ->
+          Map.get(
+            threat_table,
+            attacker_id,
+            struct(Threat, id: attacker_id, character: target, value: 0)
+          )
 
-    threat = %{
+        false ->
+          Map.get(
+            threat_table,
+            attacker_id,
+            struct(Threat, id: attacker_id, character: attacker, value: 0)
+          )
+      end
+
+    %{
       threat
-      | value: threat.value + event.data.damage,
+      | value: threat.value + damage,
         expires_at: Time.add(Time.utc_now(), @threat_expires_in, :minute)
     }
-
-    threat_table = Map.put(threat_table, attacker_id, threat)
-
-    target = update_target(conn, event, threat_table)
-
-    conn
-    |> put_meta(:target, target)
-    |> put_meta(:threat_table, threat_table)
   end
 
-  defp update_target(conn, event, threat_table) do
-    target = get_meta(conn, :target)
-    attacker = event.data.attacker
+  defp update_target(_, _, _, target, attacker) when target.id == attacker.id, do: target
+
+  defp update_target(conn, event, threat_table, target, attacker) do
     attacker_id = attacker.id
 
-    case !is_nil(target) and target.id != attacker_id and damage_percent(conn, event) < 0.25 do
+    case damage_percent(conn, event) < 0.25 do
       true ->
+        # Change to attacker_id if threat is significantly the highest
         sorted =
           threat_table
           |> Map.values()
           |> Enum.sort(&(&1.value > &2.value))
 
         case Enum.take(sorted, 2) do
-          [%{id: ^attacker_id, value: threat1}, %{value: threat2}] when threat1 > threat2 * 1.5 ->
+          [%{id: ^attacker_id, value: threat1}, %{value: threat2}]
+          when threat1 > threat2 * 1.5 ->
             attacker
 
           _ ->
@@ -168,12 +201,14 @@ defmodule Mu.Character.CombatEvent.Victim.Commit do
   end
 
   defp damage_percent(conn, event) do
-    event.data.damage / conn.character.meta.vitals.max_health_points
+    %{max_health_points: max_health_points} = get_meta(conn, :vitals)
+    event.data.damage / max_health_points
   end
 end
 
 defmodule Mu.Character.CombatEvent.Victim do
   use Kalevala.Character.Event
+  import Mu.Character.Guards
 
   alias __MODULE__.Request
   alias __MODULE__.Commit
@@ -182,42 +217,46 @@ defmodule Mu.Character.CombatEvent.Victim do
   def request(conn, event) do
     case consider(conn, event) do
       :ok ->
-        data = Request.process(conn, event)
-        event(conn, commit_topic(conn, event), data)
+        data = Request.build_commit_data(conn, event)
+        topic = commit_topic(conn, event)
+
+        conn
+        |> event(topic, data)
+        |> reroute(topic, data)
 
       {:error, reason} ->
         event(conn, "combat/abort", %{reason: reason})
     end
   end
 
-  def kickoff(conn, event) do
-    case get_meta(conn, :mode) != :combat do
-      true ->
-        conn
-        |> put_meta(:target, event.data.attacker)
-        |> put_meta(:mode, :combat)
+  # Victim commits immediately (does not wait for forwarding event) to prevent race conditions
+  # Race conditions can occur if an event is received between the request and the commit
+  # Because the commit is material to consideration of any subsequent event, it should record immediately
 
-      false ->
-        conn
+  defp reroute(conn, topic, data) do
+    event = %Kalevala.Event{
+      topic: topic,
+      data: data,
+      from_pid: self()
+    }
+
+    # Must reroute event because this will trigger the change to combat state if kickoff
+    conn.controller.event(conn, event)
+  end
+
+  defdelegate update(conn, event), to: Commit
+
+  defp consider(conn, _event) do
+    cond do
+      is_pathing(conn) -> {:error, "forbidden"}
+      true -> :ok
     end
   end
 
-  def update(conn, event), do: Commit.update(conn, event)
-
-  defp consider(conn, event) do
-    :ok
-  end
-
   defp commit_topic(conn, event) do
-    cond do
-      event.topic == "round/request" ->
-        "round/commit"
-
-      Character.in_combat?(conn) and Character.in_combat?(event.data.attacker) ->
-        "combat/commit"
-
-      true ->
-        "combat/kickoff"
+    case Character.in_combat?(conn) and Character.in_combat?(event.data.attacker) do
+      true -> "combat/commit"
+      false -> "combat/kickoff"
     end
   end
 end

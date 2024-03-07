@@ -1,11 +1,15 @@
 defmodule Mu.Character.MoveCommand do
   use Kalevala.Character.Command
 
+  alias Mu.Character.Action
+  alias Mu.Character.MoveAction
+
   def run(conn, params) do
-    direction = params["command"]
+    direction = to_long(params["command"])
+    action = MoveAction.build(%{direction: direction})
 
     conn
-    |> request_movement(to_long(direction))
+    |> Action.put(action)
     |> assign(:prompt, false)
   end
 

@@ -20,7 +20,7 @@ defmodule Mu.Character.CommandView do
     }
   end
 
-  def render("reason", %{reason: reason}) do
+  def render("error", %{reason: reason}) do
     reason
   end
 

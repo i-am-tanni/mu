@@ -3,14 +3,12 @@ defmodule Mu.Character.MoveEvent do
 
   require Logger
 
+  alias Mu.Character.Action
   alias Mu.Character.CommandView
   alias Mu.Character.MoveView
 
   # Movement TODO:
   # - Add a data parameter to request_movement(conn, exit_name, data)
-  # - Add the enter exit_name for the :to side
-
-  # #Data Paremeter#
   # Data can add context to the move -- i.e. is the character being forcefully moved?
   # I.e. what if a character is summoned, pushed, teleported, or banished?
 
@@ -22,17 +20,19 @@ defmodule Mu.Character.MoveEvent do
     |> unsubscribe("rooms:#{event.from}", [], &unsubscribe_error/2)
     |> subscribe("rooms:#{event.to}", [], &subscribe_error/2)
     |> event("room/look")
-    |> remove_combat_status()
   end
 
   def abort(conn, %{data: event}) do
+    conn =
+      case get_meta(conn, :pose) do
+        :pos_fleeing -> put_meta(conn, :pose, :pos_fighting)
+        _ -> conn
+      end
+
     conn
+    |> Action.stop()
     |> render(MoveView, "fail", event)
     |> prompt(CommandView, "prompt")
-  end
-
-  def notice(conn, %{data: event}) when event.reason == [] do
-    conn
   end
 
   def notice(conn, %{data: event}) do
@@ -55,14 +55,5 @@ defmodule Mu.Character.MoveEvent do
     Logger.error("Tried to subscribe to the new room and failed - #{inspect(error)}")
 
     conn
-  end
-
-  # private
-
-  defp remove_combat_status(conn) do
-    case Mu.Character.in_combat?(conn) do
-      true -> put_meta(conn, :mode, :wander)
-      false -> conn
-    end
   end
 end

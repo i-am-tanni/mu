@@ -15,18 +15,11 @@ defmodule Mu.Character.CharacterController do
   @impl true
   def init(conn) do
     name = get_flash(conn, :username)
-    process_character(conn, name)
-  end
-
-  @impl true
-  def recv(conn, ""), do: conn
-
-  defp process_character(conn, name) do
     character = build_character(name)
 
     conn
     |> put_character(character)
-    |> move(:to, character.room_id, MoveView, "enter", %{})
+    |> move(:to, character.room_id, MoveView, "respawn", %{})
     |> subscribe("rooms:#{character.room_id}", [], &MoveEvent.subscribe_error/2)
     |> register_and_subscribe_character_channel(character)
     |> subscribe("ooc", [], &ChannelEvent.subscribe_error/2)
@@ -35,6 +28,9 @@ defmodule Mu.Character.CharacterController do
     |> event("room/look", %{})
     |> put_controller(CommandController)
   end
+
+  @impl true
+  def recv(conn, ""), do: conn
 
   defp build_character(name) do
     starting_room_id = 1
@@ -61,8 +57,9 @@ defmodule Mu.Character.CharacterController do
           max_endurance_points: 30
         },
         pronouns: :male,
-        mode: :wander,
-        equipment: Mu.Character.Equipment.wear_slots(:basic)
+        pose: :pos_standing,
+        equipment: Mu.Character.Equipment.wear_slots(:basic),
+        in_combat?: false
       }
     }
   end

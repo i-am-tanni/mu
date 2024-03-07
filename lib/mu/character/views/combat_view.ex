@@ -4,17 +4,15 @@ defmodule Mu.Character.CombatView do
   alias Mu.Character.CharacterView
 
   def render("prompt", %{character: character, target: target}) do
-    character_name = CharacterView.render("name", %{character: character})
-    target_name = CharacterView.render("name", %{character: target})
-
     [
-      ~i(#{character_name} #{health_feedback(character.meta)}\n),
-      ~i(#{target_name} #{health_feedback(target.meta)})
+      _render("health/feedback", %{character: character}),
+      "\n",
+      _render("health/feedback", %{target: target})
     ]
   end
 
   def render("kickoff/attacker", %{victim: victim}) do
-    ~i(You attack #{CharacterView.render("name", %{character: victim})}!)
+    ~i(You attack #{CharacterView.render("name", %{character: victim})}! )
   end
 
   def render("kickoff/victim", %{attacker: attacker}) do
@@ -61,7 +59,7 @@ defmodule Mu.Character.CombatView do
     attacker = CharacterView.render("name", %{character: assigns.attacker})
     victim = CharacterView.render("name", %{character: assigns.victim})
 
-    ~i(#{attacker} #{assigns.verb} misses #{victim}.\n)
+    ~i(#{attacker} #{assigns.verb} misses #{victim}.)
   end
 
   def render("death/witness", %{attacker: attacker, victim: victim, death_cry: death_cry}) do
@@ -73,7 +71,7 @@ defmodule Mu.Character.CombatView do
 
   def render("death/victim", assigns) do
     attacker = CharacterView.render("name", %{character: assigns.attacker})
-    [~i(#{attacker} has killed you!\n), ~i(You are DEAD!!!)]
+    [~i(#{attacker} has killed you!\n), ~i(You are DEAD!!!\n)]
   end
 
   def render("death/attacker", %{victim: victim, death_cry: death_cry}) do
@@ -81,17 +79,46 @@ defmodule Mu.Character.CombatView do
     [~i(#{victim} #{death_cry}!\n), ~i(You have killed #{victim}!)]
   end
 
+  def render("flee/attempt", %{}) do
+    ~i(You make a desparate attempt at escape!\n)
+  end
+
   def render("error", %{reason: reason}) do
     case reason do
+      "not-found" -> ~i(There's no one matching that keyword here.\n)
       "pvp" -> ~i(Player vs player combat isn't allowed.\n)
+      "forbidden" -> ~i(You are not allowed to attack that.\n)
       "already-fighting" -> ~i(You are already fighting!\n)
       "peaceful" -> ~i(Violence is not allowed here.\n)
-      "combat/over" -> ~i(You've already won the fight!\n)
       "not-in-combat" -> ~i(You aren't in combat. Use the kill command to start combat.\n)
     end
   end
 
-  defp health_feedback(%{vitals: vitals}) do
+  defp _render("health/feedback", %{character: character}) do
+    ~i(You #{health_feedback_1p(character.meta)})
+  end
+
+  defp _render("health/feedback", %{target: target}) do
+    target_name = CharacterView.render("name", %{character: target})
+    ~i(#{target_name} #{health_feedback_3p(target.meta)})
+  end
+
+  defp health_feedback_1p(%{vitals: vitals}) do
+    hp_percent = div(vitals.health_points * 100, vitals.max_health_points)
+
+    cond do
+      hp_percent >= 100 -> "are in excellent condition."
+      hp_percent >= 90 -> "have a few scratches."
+      hp_percent >= 75 -> "have some small wounds and bruises."
+      hp_percent >= 50 -> "have quite a few wounds."
+      hp_percent >= 30 -> "have some big nasty wounds and scratches."
+      hp_percent >= 15 -> "look pretty hurt."
+      hp_percent >= 0 -> "are in awful condition."
+      true -> "are bleeding to death."
+    end
+  end
+
+  defp health_feedback_3p(%{vitals: vitals}) do
     hp_percent = div(vitals.health_points * 100, vitals.max_health_points)
 
     cond do

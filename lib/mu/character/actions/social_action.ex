@@ -3,7 +3,7 @@ defmodule Mu.Character.SocialAction do
   Action to use a social in a channel (e.g. a room)
   """
 
-  use Kalevala.Character.Action
+  use Mu.Character.Action
 
   @impl true
 
@@ -33,6 +33,18 @@ defmodule Mu.Character.SocialAction do
       true ->
         run(conn, %{params | "at_character" => nil})
     end
+  end
+
+  @impl true
+  def build(params, _opts \\ []) do
+    %Action{
+      type: __MODULE__,
+      priority: 3,
+      conditions: [:pos_sitting],
+      steps: [
+        Action.step(__MODULE__, 0, params)
+      ]
+    }
   end
 
   defp send_event(conn, social, at_character) do

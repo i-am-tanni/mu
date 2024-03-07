@@ -1,19 +1,16 @@
 defmodule Mu.Character.DelayAction do
-  use Kalevala.Character.Action
-
-  alias Mu.Character.Action
-  alias Mu.Character.Action.Step
+  @moduledoc """
+  A wrapper around an action to give it a pre-delay.
+  Adds a dummy step with a delay to the front of the action's steps list.
+  """
+  use Mu.Character.Action
 
   @impl true
   def run(conn, _params), do: conn
 
-  def build(action, delay) do
-    pre_delay = %Step{
-      delay: delay,
-      callback_module: __MODULE__,
-      params: %{}
-    }
-
+  @impl true
+  def build(action, delay: delay) do
+    pre_delay = Action.step(__MODULE__, delay, %{})
     %Action{action | steps: [pre_delay | action.steps]}
   end
 end

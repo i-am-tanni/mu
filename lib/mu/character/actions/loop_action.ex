@@ -1,44 +1,29 @@
-defmodule Mu.Character.StopAction do
-  use Kalevala.Character.Action
-  alias Mu.Character.Action
-
-  @impl true
-  def run(conn, _params), do: Action.stop(conn)
-end
-
 defmodule Mu.Character.LoopAction do
   @moduledoc """
-  Loops an action either a specified number of times or infinitely
+  Modifies the last step in an action so that it will loop.
+  Can loop a finite number of times or indefinitely (until cancelled).
   """
 
-  use Kalevala.Character.Action
-  alias Mu.Character.Action.Step
-  alias Mu.Character.Action
+  use Mu.Character.Action
 
   @impl true
-  def run(conn, %{action: action, count: count}) do
-    case count > 1 do
-      true -> Action.loop(conn, action, count: count - 1)
+  def run(conn, %{action: action, count: :infinity}) do
+    Action.loop(conn, action)
+  end
+
+  @impl true
+  def run(conn, %{action: action, count: loops_remaining}) do
+    case loops_remaining > 1 do
+      true -> Action.loop(conn, action, count: loops_remaining - 1)
       false -> conn
     end
   end
 
   @impl true
-  def run(conn, action), do: Action.loop(conn, action)
-
   def build(action, opts \\ []) do
-    params =
-      case Keyword.get(opts, :count) do
-        nil -> action
-        count -> %{action: action, count: count}
-      end
-
-    loop_step = %Step{
-      callback_module: __MODULE__,
-      delay: 0,
-      params: params
-    }
-
+    loop_count = Keyword.get(opts, :count, :infinity)
+    params = %{action: action, count: loop_count}
+    loop_step = Action.step(__MODULE__, 0, params)
     %{action | steps: action.steps ++ [loop_step]}
   end
 end
