@@ -62,7 +62,6 @@ defmodule Mu.Character.CommandController do
   use Kalevala.Character.Controller
 
   alias Kalevala.Output.Tags
-  alias Mu.Character.CombatController
   alias Mu.Character.CommandView
   alias Mu.Character.Commands
   alias Mu.Character.Events
@@ -103,26 +102,6 @@ defmodule Mu.Character.CommandController do
     Logger.debug("Received event from client - #{inspect(event)}")
 
     IncomingEvents.call(conn, event)
-  end
-
-  @impl true
-  def event(conn, event = %{topic: "combat/kickoff"}) do
-    self_id = conn.character.id
-    victim_id = event.data.victim.id
-    attacker_id = event.data.attacker.id
-
-    case self_id do
-      ^victim_id ->
-        data = %CombatController{target: event.data.attacker, initial_event: event}
-        put_controller(conn, CombatController, data)
-
-      ^attacker_id ->
-        data = %CombatController{target: event.data.victim, initial_event: event}
-        put_controller(conn, CombatController, data)
-
-      _ ->
-        Events.call(conn, event)
-    end
   end
 
   @impl true

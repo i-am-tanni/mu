@@ -196,8 +196,6 @@ defmodule Mu.Character.AiCombatController do
   Controller for non-players to fight
   """
 
-  defstruct [:target, :foes, :initial_event]
-
   use Kalevala.Character.Controller
 
   alias Mu.Character.NonPlayerCombatEvents
@@ -207,17 +205,8 @@ defmodule Mu.Character.AiCombatController do
 
   @impl true
   def init(conn) do
-    target = get_flash(conn, :target)
-    foes = MapSet.new([target.id])
-    initial_event = get_flash(conn, :initial_event)
     character = character(conn)
-    meta = %{character.meta | in_combat?: true, target: target, pose: :pos_fighting}
-
-    conn
-    |> put_character(%{character | meta: meta})
-    |> put_flash(:foes, foes)
-    |> AutoAttackAction.run(%{target: target.id})
-    |> NonPlayerEvents.call(initial_event)
+    AutoAttackAction.run(conn, %{target: character.meta.target.id})
   end
 
   @impl true

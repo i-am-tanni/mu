@@ -3,7 +3,6 @@ defmodule Mu.Character.NonPlayerController do
 
   alias Mu.Character.NonPlayerEvents
   alias Mu.Character.WanderAction
-  alias Mu.Character.AiCombatController
 
   @impl true
   def init(conn) do
@@ -19,25 +18,6 @@ defmodule Mu.Character.NonPlayerController do
   def event(conn, %{topic: "npc/wander"}) do
     move_delay = get_meta(conn, :move_delay)
     WanderAction.loop(conn, %{}, delay: move_delay)
-  end
-
-  def event(conn, event = %{topic: "combat/kickoff"}) do
-    self_id = conn.character.id
-    victim_id = event.data.victim.id
-    attacker_id = event.data.attacker.id
-
-    case self_id do
-      ^victim_id ->
-        data = %AiCombatController{target: event.data.attacker, initial_event: event}
-        put_controller(conn, AiCombatController, data)
-
-      ^attacker_id ->
-        data = %AiCombatController{target: event.data.victim, initial_event: event}
-        put_controller(conn, AiCombatController, data)
-
-      _ ->
-        NonPlayerEvents.call(conn, event)
-    end
   end
 
   def event(conn, event) do

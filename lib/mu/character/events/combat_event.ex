@@ -60,18 +60,39 @@ defmodule Mu.Character.CombatEvent do
   def abort(conn, event), do: Attacker.abort(conn, event)
 
   def kickoff(conn, event) do
-    # Check the controller (NonPlayerController or CommandController)
-    # for the state transition into the combat controller on receipt of a kickoff event
-
     attacker = event.data.attacker
     victim = event.data.victim
+
+    self_id = conn.character.id
+    victim_id = victim.id
+
+    conn =
+      case !in_combat(conn) and self_id in [victim_id, attacker.id] do
+        true ->
+          target = if self_id == victim_id, do: attacker, else: victim
+
+          character = character(conn)
+          meta = %{character.meta | in_combat?: true, target: target, pose: :pos_fighting}
+          flash = %{foes: MapSet.new([target.id])}
+
+          conn
+          |> put_character(%{character | meta: meta})
+          |> put_controller(combat_controller(conn), flash)
+
+        false ->
+          conn
+      end
 
     conn
     |> assign(:attacker, attacker)
     |> assign(:victim, victim)
     |> prompt(CombatView, kickoff_topic(conn, event))
+    |> prompt(CommandView, "prompt")
     |> commit(event)
   end
+
+  defp combat_controller(conn) when is_non_player(conn), do: Mu.Character.AiCombatController
+  defp combat_controller(conn) when is_player(conn), do: Mu.Character.CombatController
 
   def commit(conn, event) do
     attacker = event.data.attacker
