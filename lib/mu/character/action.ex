@@ -127,17 +127,6 @@ defmodule Mu.Character.Action do
     end
   end
 
-  @doc """
-  A wrapper around an action that runs when called. An action is made up of 1 - n steps.
-  """
-  def step(callback_module, delay, params) do
-    %Mu.Character.Action.Step{
-      callback_module: callback_module,
-      delay: delay,
-      params: params
-    }
-  end
-
   # private functions
 
   defp perform(conn, action = %{steps: [head | rest]}) do
@@ -145,7 +134,7 @@ defmodule Mu.Character.Action do
 
     conn =
       conn
-      |> run(head)
+      |> head.callback_module.run(head.params)
       |> put_meta(:processing_action, action)
 
     case head.delay do
@@ -166,16 +155,12 @@ defmodule Mu.Character.Action do
     case character.meta.action_queue do
       [next | rest] ->
         conn
-        |> progress(next)
         |> put_meta(:action_queue, rest)
+        |> progress(next)
 
       [] ->
         put_meta(conn, :processing_action, nil)
     end
-  end
-
-  defp run(conn, %{callback_module: callback_module, params: params}) do
-    apply(callback_module, :run, [conn, params])
   end
 
   defp schedule_next_progress(delay, id) do
@@ -195,6 +180,17 @@ defmodule Mu.Character.Action do
         {:error, reason} -> {:error, reason}
       end
     end)
+  end
+
+  @doc """
+  A wrapper around an action that runs when called. An action is made up of 1 - n steps.
+  """
+  def step(callback_module, delay, params) do
+    %Mu.Character.Action.Step{
+      callback_module: callback_module,
+      delay: delay,
+      params: params
+    }
   end
 end
 

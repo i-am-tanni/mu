@@ -115,4 +115,10 @@ defmodule Mu.Utility do
   def if_err(result, error_message) do
     if result, do: {:ok, result}, else: {:error, error_message}
   end
+
+  def maybe(nil), do: nil
+  def maybe(result), do: {:ok, result}
+
+  def maybe_empty([]), do: nil
+  def maybe_empty(result), do: {:ok, result}
 end

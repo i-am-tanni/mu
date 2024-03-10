@@ -4,7 +4,7 @@ defmodule Mu.Character.ListAction do
 
   @impl true
   def run(conn, %{type: :characters}) when is_non_player(conn) do
-    event(conn, "room/chars", %{})
+    event(conn, "room/chars")
   end
 
   @impl true

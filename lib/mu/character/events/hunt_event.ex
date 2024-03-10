@@ -6,6 +6,7 @@ defmodule Mu.Character.HuntEvent do
 
   use Kalevala.Character.Event
   import Mu.Character.Guards
+  import Mu.Utility
 
   alias Mu.Character
   alias Mu.Character.PathController
@@ -23,10 +24,12 @@ defmodule Mu.Character.HuntEvent do
     case Time.compare(Time.utc_now(), expires_at) == :lt do
       true ->
         # If quarry is in the room
-        case Enum.find(event.data.characters, &Character.matches?(&1, target_id)) do
+        result = Enum.find(event.data.characters, &(&1 == target_id))
+
+        case maybe(result) do
           # attack
-          %{} ->
-            attack_data = Character.build_attack(conn, target_id)
+          {:ok, target} ->
+            attack_data = Character.build_attack(conn, target)
             CombatAction.put(conn, attack_data)
 
           # ...or continue hunting

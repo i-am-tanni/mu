@@ -83,7 +83,7 @@ defmodule Mu.Character.CombatEvent do
   defp start_combat(conn, target) do
     character = character(conn)
     meta = %{character.meta | in_combat?: true, target: target, pose: :pos_fighting}
-    flash = %{foes: MapSet.new([target.id])}
+    combat_flash = %{foes: MapSet.new([target.id])}
 
     combat_controller =
       cond do
@@ -94,7 +94,7 @@ defmodule Mu.Character.CombatEvent do
 
     conn
     |> put_character(%{character | meta: meta})
-    |> put_controller(combat_controller, flash)
+    |> put_controller(combat_controller, combat_flash)
   end
 
   def commit(conn, event) do
