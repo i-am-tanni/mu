@@ -16,9 +16,6 @@ defmodule Mu.Utility do
 
   def maybe(nil), do: nil
   def maybe(result), do: {:ok, result}
-
-  def maybe_empty([]), do: nil
-  def maybe_empty(result), do: {:ok, result}
 end
 
 defmodule Mu.Utility.MuEnum do
