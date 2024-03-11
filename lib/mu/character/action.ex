@@ -94,7 +94,6 @@ defmodule Mu.Character.Action do
     action = %{action | id: Kalevala.Character.generate_id()}
     character = character(conn)
     processing_action = character.meta.processing_action
-    action_queue = character.meta.action_queue
     priority = action.priority
 
     case is_nil(processing_action) or priority > processing_action.priority do
@@ -104,6 +103,8 @@ defmodule Mu.Character.Action do
         |> progress(action)
 
       false ->
+        action_queue = character.meta.action_queue
+
         conn
         |> put_meta(:action_queue, action_queue ++ [action])
     end
