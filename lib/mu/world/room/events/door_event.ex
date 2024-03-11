@@ -1,5 +1,7 @@
 defmodule Mu.World.Room.DoorEvent do
   import Kalevala.World.Room.Context
+  import Mu.Utility
+
   require Logger
   alias Mu.World.Exit
 
@@ -35,7 +37,7 @@ defmodule Mu.World.Room.DoorEvent do
     end)
   end
 
-  defp toggleable?(room_exit, _topic) when room_exit == nil, do: false
+  defp toggleable?(nil, _topic), do: false
 
   defp toggleable?(%{door: door}, topic) do
     case topic do
@@ -61,14 +63,14 @@ defmodule Mu.World.Room.DoorEvent do
   end
 
   defp pass(context, event) when context.data.id == event.data.start_room_id do
-    end_room_pid =
+    result =
       event.data.end_room_id
       |> Kalevala.World.Room.global_name()
       |> GenServer.whereis()
 
-    case !is_nil(end_room_pid) do
-      true -> send(end_room_pid, event)
-      false -> Logger.error("Room #{event.data.end_room_id} doesn't exist to receive DoorEvent.")
+    case maybe(result) do
+      {:ok, end_room_pid} -> send(end_room_pid, event)
+      nil -> Logger.error("Room #{event.data.end_room_id} doesn't exist to receive DoorEvent.")
     end
 
     context

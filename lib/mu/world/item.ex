@@ -27,6 +27,7 @@ defmodule Mu.World.Item do
   Local callbacks for `Kalevala.World.Item`
   """
   use Kalevala.World.Item
+  import Mu.Utility
 
   alias Mu.World.Items
   alias Mu.Utility.MuEnum
@@ -62,11 +63,11 @@ defmodule Mu.World.Item do
   end
 
   def fetch(item_list, item_name, ordinal) do
-    item = find(item_list, item_name, ordinal)
+    result = find(item_list, item_name, ordinal)
 
-    case !is_nil(item) do
-      true -> {:ok, item}
-      false -> {:error, "unknown"}
+    case maybe(result) do
+      {:ok, item} -> {:ok, item}
+      nil -> {:error, "unknown"}
     end
   end
 

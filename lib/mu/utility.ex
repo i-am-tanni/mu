@@ -1,7 +1,32 @@
+defmodule Mu.Utility do
+  @doc """
+  Maps value with function if condition is true
+  """
+  def then_if(val, condition, fun) do
+    if condition, do: fun.(val), else: val
+  end
+
+  @doc """
+  Wrap result with either :ok or :error
+  If there is an error, respond with {:error, error_message}
+  """
+  def if_err(result, error_message) do
+    if result, do: {:ok, result}, else: {:error, error_message}
+  end
+
+  def maybe(nil), do: nil
+  def maybe(result), do: {:ok, result}
+
+  def maybe_empty([]), do: nil
+  def maybe_empty(result), do: {:ok, result}
+end
+
 defmodule Mu.Utility.MuEnum do
   @moduledoc """
   Set of algorithms built on top of Elixir.Enum
   """
+
+  import Mu.Utility
 
   @doc """
   Like Enum.find except an ordinal is provided. Only the n-th match is returned.
@@ -50,19 +75,21 @@ defmodule Mu.Utility.MuEnum do
     end
   end
 
-  defp _find_many([], _, result, _), do: result
+  defp _find_many([], _, acc, _), do: acc
 
-  defp _find_many(list, 1, result, fun) do
-    case Enum.find(list, fun) do
-      nil -> result
-      item -> [item | result]
+  defp _find_many(list, 1, acc, fun) do
+    result = Enum.find(list, fun)
+
+    case maybe(result) do
+      {:ok, item} -> [item | acc]
+      nil -> acc
     end
   end
 
-  defp _find_many([h | t], count, result, fun) do
+  defp _find_many([h | t], count, acc, fun) do
     case fun.(h) do
-      true -> _find_many(t, count - 1, [h | result], fun)
-      false -> _find_many(t, count, result, fun)
+      true -> _find_many(t, count - 1, [h | acc], fun)
+      false -> _find_many(t, count, acc, fun)
     end
   end
 
@@ -86,7 +113,7 @@ defmodule Mu.Utility.MuEnum do
   defp _find_value([h | t], ordinal, fun) do
     result = fun.(h)
 
-    case !is_nil(result) and result != false do
+    case !!result do
       true -> find_value(t, ordinal - 1, fun)
       false -> find_value(t, ordinal, fun)
     end
@@ -98,27 +125,4 @@ defmodule Mu.Utility.MuEnum do
       true -> list
     end
   end
-end
-
-defmodule Mu.Utility do
-  @doc """
-  Maps value with function if condition is true
-  """
-  def then_if(val, condition, fun) do
-    if condition, do: fun.(val), else: val
-  end
-
-  @doc """
-  Wrap result with either :ok or :error
-  If there is an error, respond with {:error, error_message}
-  """
-  def if_err(result, error_message) do
-    if result, do: {:ok, result}, else: {:error, error_message}
-  end
-
-  def maybe(nil), do: nil
-  def maybe(result), do: {:ok, result}
-
-  def maybe_empty([]), do: nil
-  def maybe_empty(result), do: {:ok, result}
 end

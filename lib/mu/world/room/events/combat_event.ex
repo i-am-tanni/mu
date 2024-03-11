@@ -78,7 +78,7 @@ defmodule Mu.World.Room.CombatRoundEvent do
   """
 
   import Kalevala.World.Room.Context
-
+  import Mu.Utility
   alias Mu.Character
 
   @round_length_ms 3000
@@ -121,7 +121,7 @@ defmodule Mu.World.Room.CombatRoundEvent do
       [] ->
         # complete round
         next_round_queue = context.data.next_round_queue
-        if !Enum.empty?(next_round_queue), do: schedule()
+        if Enum.any?(next_round_queue), do: schedule()
 
         context
         |> put_data(:round_queue, next_round_queue)
@@ -222,11 +222,11 @@ defmodule Mu.World.Room.CombatRoundEvent do
         Character.matches?(character, id)
       end)
 
-    case !is_nil(result) do
-      true ->
-        {:ok, result}
+    case maybe(result) do
+      {:ok, attacker} ->
+        {:ok, attacker}
 
-      false ->
+      nil ->
         context
         |> cancel(event)
         |> event(self(), self(), "round/pop", %{})

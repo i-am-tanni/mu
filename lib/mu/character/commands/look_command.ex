@@ -1,5 +1,6 @@
 defmodule Mu.Character.LookCommand do
   use Kalevala.Character.Command
+  import Mu.Utility
 
   alias Mu.World.Items
   alias Mu.World.Item
@@ -28,15 +29,15 @@ defmodule Mu.Character.LookCommand do
     text = params["text"]
     ordinal = Map.get(params, "item/ordinal", 1)
 
-    item_instance = find_item(conn.character.inventory, text, ordinal)
+    result = find_item(conn.character.inventory, text, ordinal)
 
-    case !is_nil(item_instance) do
-      true ->
+    case maybe(result) do
+      {:ok, item_instance} ->
         conn
         |> assign(:item_instance, Item.load(item_instance))
         |> prompt(LookView, "item")
 
-      false ->
+      nil ->
         send_to_room(conn, text)
     end
   end

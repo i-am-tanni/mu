@@ -3,6 +3,7 @@ defmodule Mu.World.Room.CommunicationEvent do
   Room events dealing with communication
   """
   import Kalevala.World.Room.Context
+  import Mu.Utility
 
   def say(context, event) do
     name = event.data["at"]
@@ -54,9 +55,9 @@ defmodule Mu.World.Room.CommunicationEvent do
   end
 
   defp get_exit_name(room_exit) do
-    case !is_nil(room_exit) do
-      true -> Map.get(room_exit, :exit_name, "nowhere")
-      false -> "nowhere"
+    case maybe(room_exit) do
+      {:ok, room_exit} -> Map.get(room_exit, :exit_name, "nowhere")
+      nil -> "nowhere"
     end
   end
 

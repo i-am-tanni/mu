@@ -58,13 +58,10 @@ defmodule Mu.Character.SocialAction do
 
   defp matches?(string1, string2), do: String.downcase(string1) == String.downcase(string2)
 
-  defp has_auto_views?(social) do
-    !is_nil(social.char_auto) and !is_nil(social.others_auto)
-  end
+  defp has_auto_views?(social), do: !!(social.char_auto && social.others_auto)
 
   defp has_vict_views?(social) do
-    !is_nil(social.vict_found) and !is_nil(social.others_found) and
-      !is_nil(social.char_found)
+    !!(social.vict_found && social.others_found && social.char_found)
   end
 
   defp meta(character: at_character) do

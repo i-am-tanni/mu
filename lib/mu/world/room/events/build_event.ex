@@ -8,16 +8,16 @@ defmodule Mu.World.Room.BuildEvent do
   alias Mu.World.Exit
 
   def dig(context, event = %{data: data}) do
-    case !Enum.any?(context.data.exits, &Exit.matches?(&1, data.start_exit_name)) do
+    case Enum.any?(context.data.exits, &Exit.matches?(&1, data.start_exit_name)) do
       true ->
-        _dig(context, event)
-
-      false ->
         context
         |> assign(:exit_name, data.start_exit_name)
         |> render(event.from_pid, BuildView, "exit-exists")
         |> assign(:character, event.acting_character)
         |> render(event.from_pid, CommandView, "prompt")
+
+      false ->
+        _dig(context, event)
     end
   end
 

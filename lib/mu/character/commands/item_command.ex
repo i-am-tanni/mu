@@ -1,5 +1,6 @@
 defmodule Mu.Character.ItemCommand do
   use Kalevala.Character.Command
+  import Mu.Utility
 
   alias Mu.World.Items
   alias Mu.Character
@@ -223,9 +224,9 @@ defmodule Mu.Character.ItemCommand do
   defp fetch_wear_slot(item) do
     wear_slot = item.wear_slot
 
-    case !is_nil(wear_slot) do
-      true -> {:ok, wear_slot}
-      false -> {:error, "cannot-wear"}
+    case maybe(wear_slot) do
+      {:ok, wear_slot} -> {:ok, wear_slot}
+      nil -> {:error, "cannot-wear"}
     end
   end
 end

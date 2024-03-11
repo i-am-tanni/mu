@@ -1,17 +1,18 @@
 defmodule Mu.World.Room.PathFindEvent do
   import Kalevala.World.Room.Context
+  import Mu.Utility
 
   def call(context, event) do
     character = find_local_character(context, event.data.text)
 
-    case !is_nil(character) do
-      true ->
+    case maybe(character) do
+      {:ok, _} ->
         data = %{event.data | success: true}
 
         context
         |> event(event.from_pid, self(), event.topic, data)
 
-      false ->
+      nil ->
         room_exits =
           context.data.exits
           |> Enum.map(fn room_exit ->

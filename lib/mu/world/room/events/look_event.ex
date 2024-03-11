@@ -1,5 +1,6 @@
 defmodule Mu.World.Room.LookEvent do
   import Kalevala.World.Room.Context
+  import Mu.Utility
 
   alias Mu.Character.LookView
   alias Mu.World.Items
@@ -95,15 +96,15 @@ defmodule Mu.World.Room.LookEvent do
 
     room_exit = find_local_exit(context, event.data.text)
 
-    case distance > 0 and !is_nil(room_exit) do
-      true ->
+    case maybe(room_exit) do
+      {:ok, room_exit} when distance > 0 ->
         data = %{event.data | distance: distance, result: result}
         event = %{event | data: data}
 
         context
         |> propagate_or_render(room_exit, event)
 
-      false ->
+      _ ->
         context
         |> assign(:rooms, result)
         |> render(event.from_pid, LookView, "peek-exit")
@@ -154,10 +155,10 @@ defmodule Mu.World.Room.LookEvent do
     end)
   end
 
-  defp tag(data, tag) do
-    case !is_nil(data) do
-      true -> {tag, data}
-      false -> nil
+  defp tag(result, tag) do
+    case maybe(result) do
+      {:ok, data} -> {tag, data}
+      nil -> nil
     end
   end
 end

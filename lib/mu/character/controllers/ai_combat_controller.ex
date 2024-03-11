@@ -136,23 +136,19 @@ defmodule Mu.Character.AiCombatController.MoveEvent do
   end
 
   defp max_threat(threat_table, foes) do
-    threats =
+    max_threat =
       threat_table
       |> Map.values()
       |> Enum.filter(fn %{character: %{id: id}} ->
         MapSet.member?(foes, id)
       end)
+      |> Enum.max_by(& &1.value, fn -> nil end)
 
-    case !Enum.empty?(threats) do
-      true ->
-        max_threat =
-          threats
-          |> Enum.max_by(& &1.value)
-          |> Map.get(:character)
+    case max_threat do
+      %{character: character} ->
+        {:ok, character}
 
-        {:ok, max_threat}
-
-      false ->
+      nil ->
         # no threats remaining
         :error
     end
