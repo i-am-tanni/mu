@@ -19,7 +19,7 @@ defmodule Mu.Character.TeleportAction do
   def build(params, _opts \\ []) do
     %Action{
       type: __MODULE__,
-      priority: 1,
+      priority: 8,
       conditions: [:pos_standing],
       steps: [
         Action.step(__MODULE__, 500, params)

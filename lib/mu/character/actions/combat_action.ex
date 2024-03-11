@@ -10,7 +10,7 @@ defmodule Mu.Character.CombatAction do
   def build(params, _opts \\ []) do
     %Action{
       type: __MODULE__,
-      priority: 2,
+      priority: 7,
       conditions: [:pos_standing],
       steps: [
         Action.step(__MODULE__, 250, params)

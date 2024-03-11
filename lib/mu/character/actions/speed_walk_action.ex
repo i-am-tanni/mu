@@ -21,7 +21,7 @@ defmodule Mu.Character.SpeedWalkAction do
 
     %Action{
       type: __MODULE__,
-      priority: 1,
+      priority: 8,
       conditions: [:pos_standing],
       steps: steps
     }

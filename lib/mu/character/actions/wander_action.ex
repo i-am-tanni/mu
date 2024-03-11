@@ -17,7 +17,7 @@ defmodule Mu.Character.WanderAction do
 
     %Action{
       type: __MODULE__,
-      priority: 1,
+      priority: 8,
       conditions: [:pos_fleeing],
       steps: [
         Action.step(__MODULE__, delay, params)

@@ -52,8 +52,8 @@ defmodule Mu.Character.PathController do
   @impl true
   def init(conn) do
     path = get_flash(conn, :path)
-    walk_opts = [delay: 250, priority: 0]
-    final_step_opts = [pre_delay: 250, priority: 0]
+    walk_opts = [delay: 250, priority: 9]
+    final_step_opts = [pre_delay: 250, priority: 9]
 
     conn
     |> SpeedWalkAction.put(%{directions: path}, walk_opts)

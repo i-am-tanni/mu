@@ -11,7 +11,7 @@ defmodule Mu.Character.ListAction do
   def build(params, _opts \\ []) do
     %Action{
       type: __MODULE__,
-      priority: 3,
+      priority: 6,
       conditions: [:pos_standing],
       steps: [
         Action.step(__MODULE__, 0, params)

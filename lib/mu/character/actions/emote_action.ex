@@ -19,7 +19,7 @@ defmodule Mu.Character.EmoteAction do
   def build(params, _opts \\ []) do
     %Action{
       type: __MODULE__,
-      priority: 3,
+      priority: 6,
       conditions: [:pos_sitting],
       steps: [
         Action.step(__MODULE__, 0, params)

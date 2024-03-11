@@ -77,8 +77,8 @@ defmodule Mu.Character.Action do
   end
 
   @doc """
-  Queues the next action if the priority is equal or lower and character is busy.
-  Else it overrides all outstanding actions and cancels the remainder.
+  Puts the next action in the queue. Higher priority actions cancel actions in the queue.
+  Priorities are from 9 (highest and noncancellable) to 0 (lowest)
   """
   def put(conn, action, opts \\ []) do
     action =
@@ -97,11 +97,11 @@ defmodule Mu.Character.Action do
     action_queue = character.meta.action_queue
     priority = action.priority
 
-    case is_nil(processing_action) or priority < processing_action.priority do
+    case is_nil(processing_action) or priority > processing_action.priority do
       true ->
         conn
-        |> progress(action)
         |> put_meta(:action_queue, [])
+        |> progress(action)
 
       false ->
         conn
