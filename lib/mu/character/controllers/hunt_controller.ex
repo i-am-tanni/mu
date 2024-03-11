@@ -3,7 +3,7 @@ defmodule Mu.Character.HuntController.MoveEvent do
 
   alias Mu.Character.WanderAction
   alias Mu.Character.MoveAction
-  alias Mu.Character.ListAction
+  alias Mu.Character.LookAction
   alias Mu.Character.TeleportAction
   alias Mu.Character.CombatAction
 
@@ -46,7 +46,7 @@ defmodule Mu.Character.HuntController.MoveEvent do
         conn
         |> put_flash(:attempts, attempts + 1)
         |> WanderAction.put(%{})
-        |> ListAction.put(%{type: :characters})
+        |> LookAction.put(%{at: :characters})
     end
   end
 
@@ -68,13 +68,13 @@ defmodule Mu.Character.HuntController.MoveEvent do
           %{to: nil} ->
             conn
             |> WanderAction.put(%{})
-            |> ListAction.put(%{type: :characters})
+            |> LookAction.put(%{at: :characters})
 
           # or pursue
           %{to: exit_name} ->
             conn
             |> MoveAction.put(%{direction: exit_name}, pre_delay: pre_delay)
-            |> ListAction.put(%{type: :characters})
+            |> LookAction.put(%{at: :characters})
         end
 
       false ->
@@ -122,7 +122,7 @@ defmodule Mu.Character.HuntController do
 
   alias Mu.Character.Action
   alias Mu.Character.MoveAction
-  alias Mu.Character.ListAction
+  alias Mu.Character.LookAction
 
   @impl true
   def init(conn) do
@@ -133,7 +133,7 @@ defmodule Mu.Character.HuntController do
     |> put_flash(:attempts, 0)
     |> Action.stop()
     |> MoveAction.put(%{direction: exit_name}, pre_delay: pre_delay)
-    |> ListAction.put(%{type: :characters})
+    |> LookAction.put(%{at: :characters})
   end
 
   @impl true

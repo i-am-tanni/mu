@@ -13,7 +13,7 @@ defmodule Mu.Character.HuntEvent do
 
   # Actions
   alias Mu.Character.WanderAction
-  alias Mu.Character.ListAction
+  alias Mu.Character.LookAction
   alias Mu.Character.CombatAction
 
   def call(conn, event) when not in_combat(conn) do
@@ -36,7 +36,7 @@ defmodule Mu.Character.HuntEvent do
           nil ->
             conn
             |> WanderAction.put(%{}, pre_delay: 3000)
-            |> ListAction.put(%{type: :characters})
+            |> LookAction.put(%{at: :characters})
         end
 
       false ->

@@ -5,7 +5,10 @@ defmodule Mu.Character.LookCommand do
   alias Mu.World.Items
   alias Mu.World.Item
   alias Mu.World.Item.Container
+
   alias Mu.Utility.MuEnum
+
+  alias Mu.Character.LookAction
   alias Mu.Character.LookView
   alias Mu.Character.ItemView
   alias Mu.Character.InventoryView
@@ -38,7 +41,15 @@ defmodule Mu.Character.LookCommand do
         |> prompt(LookView, "item")
 
       nil ->
-        send_to_room(conn, text)
+        # max_distance: if character looks at an exit, how many rooms do they see? Default: 1
+        params = %{
+          text: text,
+          max_distance: 1
+        }
+
+        conn
+        |> LookAction.run(params)
+        |> assign(:prompt, false)
     end
   end
 
@@ -66,19 +77,6 @@ defmodule Mu.Character.LookCommand do
   def exits(conn, _params) do
     conn
     |> event("room/exits")
-    |> assign(:prompt, false)
-  end
-
-  defp send_to_room(conn, text) do
-    data = %{
-      text: text,
-      max_distance: 1
-    }
-
-    # max_distance: if character looks at an exit, how many rooms do they see? Default: 1
-
-    conn
-    |> event("room/look-arg", data)
     |> assign(:prompt, false)
   end
 
