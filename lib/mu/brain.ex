@@ -140,6 +140,33 @@ defmodule Mu.Brain.Parser do
   end
 end
 
+defmodule Mu.Brain.Action do
+  @moduledoc """
+  Node to trigger an action
+  """
+
+  defstruct [:data, :type, delay: 0]
+
+  defimpl Kalevala.Brain.Node do
+    alias Kalevala.Brain.Variable
+    alias Kalevala.Character.Conn
+
+    def run(node, conn, event) do
+      character = Conn.character(conn, trim: true)
+      event_data = Map.merge(Map.from_struct(character), event.data)
+
+      case Variable.replace(node.data, event_data) do
+        {:ok, data = %{type: callback_module, delay: pre_delay}} ->
+          action = callback_module.put(conn, data)
+          Mu.Character.Action.put(conn, action, pre_delay: pre_delay)
+
+        :error ->
+          conn
+      end
+    end
+  end
+end
+
 defmodule Mu.Brain do
   @moduledoc """
   Load and parse brain data into behavior tree structs
@@ -273,7 +300,7 @@ defmodule Mu.Brain do
       data = Map.get(node, "data", %{})
       type = Map.fetch!(node, "type")
 
-      %Kalevala.Brain.Action{
+      %Mu.Brain.Action{
         type: to_module(type),
         delay: Map.get(node, "delay", 0),
         data: keys_to_atoms(data)
