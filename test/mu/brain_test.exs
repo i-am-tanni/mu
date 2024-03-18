@@ -35,13 +35,19 @@ defmodule Mu.BrainTest do
       }
     """
 
-    brain = brain |> Mu.Brain.read() |> Mu.Brain.process_all()
+    brain =
+      brain
+      |> Mu.Brain.read()
+      |> Mu.Brain.process_all()
 
     character = %Character{
       id: Character.generate_id(),
       brain: brain["generic_hello"],
       name: "character",
-      room_id: "sammatti:town_square"
+      room_id: "sammatti:town_square",
+      meta: %Mu.Character.PlayerMeta{
+        pose: :pos_standing
+      }
     }
 
     acting_character = %Character{
@@ -79,6 +85,13 @@ defmodule Mu.BrainTest do
     }
 
     conn = Kalevala.Brain.run(conn.character.brain, conn, hi_event)
-    assert Enum.count(conn.private.actions) == 2
+    character = Kalevala.Character.Conn.character(conn)
+
+    actions =
+      [character.meta.processing_action, character.meta.actions]
+      |> List.flatten()
+      |> Enum.reject(&is_nil(&1))
+
+    assert Enum.count(actions) == 2
   end
 end

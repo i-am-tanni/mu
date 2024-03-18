@@ -36,7 +36,7 @@ defmodule Mu.Character.PlayerMeta do
     :target,
     :in_combat?,
     :processing_action,
-    action_queue: [],
+    actions: [],
     threat_table: %{},
     keywords: []
   ]
@@ -71,7 +71,7 @@ defmodule Mu.Character.NonPlayerMeta do
     :target,
     :in_combat?,
     :processing_action,
-    action_queue: [],
+    actions: [],
     threat_table: %{}
   ]
 

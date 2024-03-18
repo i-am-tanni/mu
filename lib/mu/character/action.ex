@@ -72,7 +72,7 @@ defmodule Mu.Character.Action do
   """
   def stop(conn) do
     conn
-    |> put_meta(:action_queue, [])
+    |> put_meta(:actions, [])
     |> put_meta(:processing_action, nil)
   end
 
@@ -80,7 +80,7 @@ defmodule Mu.Character.Action do
   Puts the next action in the queue. Higher priority actions cancel actions in the queue.
   Priorities are from 9 (highest and noncancellable) to 0 (lowest)
   """
-  def put(conn, action, opts \\ []) do
+  def put(conn, action = %__MODULE__{}, opts \\ []) do
     action =
       if pre_delay = Keyword.get(opts, :pre_delay),
         do: DelayAction.build(action, delay: pre_delay),
@@ -99,14 +99,14 @@ defmodule Mu.Character.Action do
     case is_nil(processing_action) or action.priority > processing_action.priority do
       true ->
         conn
-        |> put_meta(:action_queue, [])
+        |> put_meta(:actions, [])
         |> progress(action)
 
       false ->
-        action_queue = character.meta.action_queue
+        actions = character.meta.actions
 
         conn
-        |> put_meta(:action_queue, action_queue ++ [action])
+        |> put_meta(:actions, actions ++ [action])
     end
   end
 
@@ -123,7 +123,7 @@ defmodule Mu.Character.Action do
         conn
         |> assign(:reason, reason)
         |> prompt(CommandView, "error")
-        |> put_meta(:action_queue, [])
+        |> put_meta(:actions, [])
         |> put_meta(:processing_action, nil)
     end
   end
@@ -153,10 +153,10 @@ defmodule Mu.Character.Action do
     character = character(conn)
 
     # In which case, pop the next action in the queue
-    case character.meta.action_queue do
+    case character.meta.actions do
       [next | rest] ->
         conn
-        |> put_meta(:action_queue, rest)
+        |> put_meta(:actions, rest)
         |> progress(next)
 
       [] ->
