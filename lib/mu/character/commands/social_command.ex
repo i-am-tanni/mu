@@ -53,7 +53,7 @@ defmodule Mu.Character.SocialCommand do
       case Socials.get(parsed_term[:command]) do
         {:ok, social} ->
           {:dynamic, :run, social.command,
-           %{"social" => social, "at_character" => parsed_term[:character]}}
+           %{social: social, at_character: parsed_term[:character]}}
 
         {:error, :not_found} ->
           :skip
@@ -62,7 +62,7 @@ defmodule Mu.Character.SocialCommand do
   end
 
   def run(conn, params) do
-    params = Map.put(params, "channel_name", "rooms:#{conn.character.room_id}")
+    params = Map.put(params, :channel_name, "rooms:#{conn.character.room_id}")
 
     conn
     |> SocialAction.run(params)

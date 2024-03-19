@@ -7,7 +7,7 @@ defmodule Mu.Character.SocialAction do
 
   @impl true
 
-  def run(conn, params = %{"at_character" => nil, "social" => social}) do
+  def run(conn, params = %{at_character: nil, social: social}) do
     conn
     |> publish_message(
       params["channel_name"],
@@ -18,7 +18,7 @@ defmodule Mu.Character.SocialAction do
     |> assign(:prompt, false)
   end
 
-  def run(conn, params = %{"at_character" => at_character, "social" => social}) do
+  def run(conn, params = %{at_character: at_character, social: social}) do
     self? =
       matches?(String.downcase(at_character), "self") or
         Mu.Character.matches?(conn.character, at_character)
@@ -31,7 +31,7 @@ defmodule Mu.Character.SocialAction do
         send_event(conn, social, at_character)
 
       true ->
-        run(conn, %{params | "at_character" => nil})
+        run(conn, %{params | at_character: nil})
     end
   end
 

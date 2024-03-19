@@ -10,9 +10,9 @@ defmodule Mu.Character.EmoteAction do
   @impl true
   def run(conn, params) do
     conn
-    |> assign(:text, params["text"])
+    |> assign(:text, params.text)
     |> render(EmoteView, "echo")
-    |> publish_message(params["channel_name"], params["text"], [type: "emote"], &publish_error/2)
+    |> publish_message(params.channel_name, params.text, [type: "emote"], &publish_error/2)
   end
 
   @impl true
