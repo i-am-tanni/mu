@@ -6,7 +6,7 @@ defmodule Mu.World.Room.CommunicationEvent do
   import Mu.Utility
 
   def say(context, event) do
-    name = event.data["at"]
+    name = Map.fetch!(event.data, "at")
     character = find_local_character(context, name)
     data = Map.put(event.data, "at_character", character)
     event(context, event.from_pid, self(), event.topic, data)
@@ -41,8 +41,10 @@ defmodule Mu.World.Room.CommunicationEvent do
       end)
 
     exit_name =
-      reverse_find_local_exit(context, event.data.from_id)
-      |> get_exit_name()
+      case maybe(find_exit(context, event.data.from_id)) do
+        {:ok, room_exit} -> Map.get(room_exit, :exit_name, "nowhere")
+        nil -> "nowhere"
+      end
 
     data =
       event.data
@@ -54,31 +56,19 @@ defmodule Mu.World.Room.CommunicationEvent do
     |> event(event.from_pid, self(), event.topic, data)
   end
 
-  defp get_exit_name(room_exit) do
-    case maybe(room_exit) do
-      {:ok, room_exit} -> Map.get(room_exit, :exit_name, "nowhere")
-      nil -> "nowhere"
-    end
-  end
-
-  defp reverse_find_local_exit(context, end_room_id) do
+  defp find_exit(context, end_room_id) do
     Enum.find(context.data.exits, fn room_exit ->
       room_exit.end_room_id == end_room_id
     end)
   end
 
   defp find_player_character(name) do
-    characters = Mu.Character.Presence.characters()
-    find_character(characters, name)
+    Mu.Character.Presence.characters()
+    |> Enum.find(&Mu.Character.matches?(&1, name))
   end
 
   defp find_local_character(context, name) do
-    find_character(context.characters, name)
-  end
-
-  defp find_character(characters, name) do
-    Enum.find(characters, fn character ->
-      Kalevala.Character.matches?(character, name)
-    end)
+    context.characters
+    |> Enum.find(&Mu.Character.matches?(&1, name))
   end
 end

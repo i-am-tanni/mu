@@ -16,8 +16,13 @@ defmodule Mu.Character.SayEvent do
     |> prompt(CommandView, "prompt", %{})
   end
 
-  def broadcast(conn, event) do
-    params = Map.put(event.data, "channel_name", "rooms:#{conn.character.room_id}")
+  def broadcast(conn, %{data: data}) do
+    params = %SayAction{
+      text: data["text"],
+      channel_name: "rooms:#{conn.character.room_id}",
+      adverb: data["adverb"],
+      at_character: data["at_character"]
+    }
 
     conn
     |> SayAction.run(params)

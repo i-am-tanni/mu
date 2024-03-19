@@ -3,14 +3,18 @@ defmodule Mu.Character.SayCommand do
 
   alias Mu.Character.SayAction
 
-  def run(conn, params = %{"at" => _at}) do
+  def run(conn, params = %{"at" => _}) do
     conn
     |> event("say/send", params)
     |> assign(:prompt, false)
   end
 
   def run(conn, params) do
-    params = Map.put(params, "channel_name", "rooms:#{conn.character.room_id}")
+    params = %SayAction{
+      channel_name: "rooms:#{conn.character.room_id}",
+      text: params["text"],
+      adverb: params["adverb"]
+    }
 
     conn
     |> SayAction.run(params)
