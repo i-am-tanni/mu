@@ -259,6 +259,7 @@ defmodule Mu.World.Loader do
         move_delay: Map.get(character, :move_delay, 60000),
         keywords: character.keywords,
         pose: :pos_standing,
+        pronouns: Map.get(character, :pronouns, :female),
         zone_id: context.zone_id,
         initial_events: parse_initial_events(initial_events, context),
         in_combat?: false,

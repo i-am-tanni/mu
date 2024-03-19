@@ -66,6 +66,7 @@ defmodule Mu.Character.NonPlayerMeta do
     :flags,
     :vitals,
     :pose,
+    :pronouns,
     :move_delay,
     :initial_events,
     :target,
@@ -77,7 +78,7 @@ defmodule Mu.Character.NonPlayerMeta do
 
   defimpl Kalevala.Meta.Trim do
     def trim(meta) do
-      keys = [:zone_id, :vitals, :keywords, :pose, :in_combat?]
+      keys = [:zone_id, :vitals, :keywords, :pose, :in_combat?, :pronouns]
       Map.take(meta, keys)
     end
   end
