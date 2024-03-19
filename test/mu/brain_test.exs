@@ -92,6 +92,8 @@ defmodule Mu.BrainTest do
       |> List.flatten()
       |> Enum.reject(&is_nil(&1))
 
+    IO.inspect(actions)
+
     assert Enum.count(actions) == 2
   end
 end
