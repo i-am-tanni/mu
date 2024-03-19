@@ -62,7 +62,12 @@ defmodule Mu.Character.SocialCommand do
   end
 
   def run(conn, params) do
-    params = Map.put(params, :channel_name, "rooms:#{conn.character.room_id}")
+    params = %{
+      command: params["command"],
+      social: params["social"],
+      channel_name: "rooms:#{conn.character.room_id}",
+      at_character: params["at_character"]
+    }
 
     conn
     |> SocialAction.run(params)

@@ -8,11 +8,13 @@ defmodule Mu.Character.SocialAction do
   @impl true
 
   def run(conn, params = %{at_character: nil, social: social}) do
+    meta = %{at: nil}
+
     conn
     |> publish_message(
-      params["channel_name"],
+      params.channel_name,
       social,
-      [type: "social", meta: meta(character: nil)],
+      [type: "social", meta: meta],
       &publish_error/2
     )
     |> assign(:prompt, false)
@@ -62,12 +64,6 @@ defmodule Mu.Character.SocialAction do
 
   defp has_vict_views?(social) do
     !!(social.vict_found && social.others_found && social.char_found)
-  end
-
-  defp meta(character: at_character) do
-    %{
-      at: at_character
-    }
   end
 
   def publish_error(conn, _error), do: conn
