@@ -11,7 +11,8 @@ defmodule Mu.World.Loader do
 
   @paths %{
     world_path: "data/world",
-    verbs_path: "data/verbs.json"
+    verbs_path: "data/verbs.json",
+    brains_path: "data/brains"
   }
 
   @doc """
@@ -44,16 +45,25 @@ defmodule Mu.World.Loader do
   end
 
   defp load_folder(path, file_extension, merge_fun) do
-    File.ls!(path)
+    _load_folder(path)
     |> Enum.filter(fn file ->
       String.ends_with?(file, file_extension)
     end)
-    |> Enum.map(fn file ->
-      File.read!(Path.join(path, file))
-    end)
+    |> Enum.map(&File.read!/1)
     |> Enum.map(&Jason.decode!/1)
     |> Enum.flat_map(merge_fun)
     |> Enum.into(%{})
+  end
+
+  defp _load_folder(path, acc \\ []) do
+    Enum.reduce(File.ls!(path), acc, fn file, acc ->
+      path = Path.join(path, file)
+
+      case String.match?(file, ~r/\./) do
+        true -> [path | acc]
+        false -> _load_folder(path, acc)
+      end
+    end)
   end
 
   defp merge_world_data(zone_data) do
