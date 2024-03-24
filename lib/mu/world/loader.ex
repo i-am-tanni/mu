@@ -11,8 +11,7 @@ defmodule Mu.World.Loader do
 
   @paths %{
     world_path: "data/world",
-    verbs_path: "data/verbs.json",
-    brains_path: "data/brains"
+    verbs_path: "data/verbs.json"
   }
 
   @doc """
@@ -21,10 +20,11 @@ defmodule Mu.World.Loader do
   def load(paths \\ %{}) do
     paths = Map.merge(paths, @paths)
 
-    world_data = load_folder(paths.world_path, ".json", &merge_world_data/1)
+    world_data = load_world(paths.world_path)
 
     context = %{
-      verbs: parse_verbs(Jason.decode!(File.read!(paths.verbs_path)))
+      verbs: parse_verbs(Jason.decode!(File.read!(paths.verbs_path))),
+      brains: Mu.Brain.load_all()
     }
 
     zones = Enum.map(world_data, &parse_zone(&1, context))
@@ -44,31 +44,29 @@ defmodule Mu.World.Loader do
     |> Map.put(:rooms, room_ids)
   end
 
-  defp load_folder(path, file_extension, merge_fun) do
-    _load_folder(path)
+  defp load_world(path) do
+    load_folder(path)
     |> Enum.filter(fn file ->
-      String.ends_with?(file, file_extension)
+      String.match?(file, ~r/\.json$/)
     end)
     |> Enum.map(&File.read!/1)
     |> Enum.map(&Jason.decode!/1)
-    |> Enum.flat_map(merge_fun)
+    |> Enum.map(fn zone_data ->
+      %{"zone" => %{"id" => id}} = zone_data
+      {id, zone_data}
+    end)
     |> Enum.into(%{})
   end
 
-  defp _load_folder(path, acc \\ []) do
+  defp load_folder(path, acc \\ []) do
     Enum.reduce(File.ls!(path), acc, fn file, acc ->
       path = Path.join(path, file)
 
       case String.match?(file, ~r/\./) do
         true -> [path | acc]
-        false -> _load_folder(path, acc)
+        false -> load_folder(path, acc)
       end
     end)
-  end
-
-  defp merge_world_data(zone_data) do
-    %{"zone" => %{"id" => id}} = zone_data
-    [{id, zone_data}]
   end
 
   defp parse_zone({key, zone_data}, context) do
@@ -261,10 +259,17 @@ defmodule Mu.World.Loader do
       aggressive?: Map.get(character, :aggressive?, false)
     }
 
+    brains = context.brains
+
+    brain =
+      Map.get(brains, character[:brain])
+      |> Mu.Brain.process(brains)
+
     %Character{
       id: "#{context.zone_id}:#{key}",
       name: character.name,
       description: character.description,
+      brain: brain,
       meta: %Mu.Character.NonPlayerMeta{
         move_delay: Map.get(character, :move_delay, 60000),
         keywords: character.keywords,

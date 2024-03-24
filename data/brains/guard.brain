@@ -1,0 +1,7 @@
+brain("guard"){
+    FirstSelector(
+        Node{
+          ref: "generic_hello"
+        }
+    )
+}

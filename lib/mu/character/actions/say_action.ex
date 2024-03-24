@@ -13,7 +13,7 @@ defmodule Mu.Character.SayAction do
       conn,
       params.channel_name,
       params.text,
-      [meta: Map.take([:adverb, :at_character])],
+      [meta: meta(params)],
       &publish_error/2
     )
   end

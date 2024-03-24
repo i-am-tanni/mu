@@ -23,9 +23,9 @@ defmodule Mu.Character.NonPlayerController do
   def event(conn, event) do
     IO.inspect(event.topic, label: "event #{conn.character.id}")
 
-    # conn.character.brain
-    # |> Brain.run(conn, event)
-    NonPlayerEvents.call(conn, event)
+    conn.character.brain
+    |> Kalevala.Brain.run(conn, event)
+    |> NonPlayerEvents.call(event)
   end
 
   @impl true

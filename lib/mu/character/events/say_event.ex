@@ -31,7 +31,7 @@ defmodule Mu.Character.SayEvent do
 
   def echo(conn, event) do
     conn
-    |> assign(:character, event.data.character)
+    |> assign(:acting_character, event.data.character)
     |> assign(:id, event.data.id)
     |> assign(:text, event.data.text)
     |> assign(:meta, event.data.meta)

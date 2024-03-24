@@ -8,6 +8,7 @@
       "name": "A guard",
       "keywords": ["guard"],
       "description": "On patrol, this guard is suited in a coat of shining steel.",
+      "brain": "guard",
       "spawn_rules": {
         "active?": true,
         "minimum_count": 1,

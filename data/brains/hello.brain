@@ -1,0 +1,26 @@
+brain("generic_hello"){
+    ConditionalSelector(
+        MessageMatch{
+            text: "\bhi\b",
+            channel: "say"
+        },
+        Sequence(
+            Action{
+                type: "say",
+                delay: 500,
+                data: {
+                    channel_name: "${channel_name}"
+                    text: "Hello, ${character.name}!"
+                }
+            },
+            Action{
+                type: "say",
+                delay: 750,
+                data: {
+                    channel_name: "${channel_name}"
+                    text: "How are you?"
+                }
+            }
+        )
+    )
+}

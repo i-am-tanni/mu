@@ -12,6 +12,7 @@ defmodule Mu.Brain.Action do
     def run(node, conn, event) do
       character = Conn.character(conn, trim: true)
       event_data = Map.merge(Map.from_struct(character), event.data)
+      IO.inspect(event_data)
 
       case Variable.replace(node.data, event_data) do
         {:ok, data} ->
@@ -181,13 +182,34 @@ defmodule Mu.Brain do
   Defaults to `#{@brains_path}`
   """
 
-  def read(data) do
-    Mu.Brain.Parser.run(data)
+  def load_all(path \\ @brains_path) do
+    load_folder(path)
+    |> Enum.filter(fn file ->
+      String.match?(file, ~r/\.brain$/)
+    end)
+    |> Enum.map(&File.read!/1)
+    |> Enum.map(&Mu.Brain.Parser.run/1)
+    |> Enum.reduce(%{}, &Map.merge(&2, &1))
+  end
+
+  defp load_folder(path, acc \\ []) do
+    Enum.reduce(File.ls!(path), acc, fn file, acc ->
+      path = Path.join(path, file)
+
+      case String.match?(file, ~r/\./) do
+        true -> [path | acc]
+        false -> load_folder(path, acc)
+      end
+    end)
   end
 
   def process_all(brains) do
-    Enum.into(brains, %{}, fn {key, value} ->
-      {key, process(value, brains)}
+    context = Enum.reduce(brains, %{}, &Map.merge(&2, &1))
+
+    Enum.map(brains, fn brain ->
+      Enum.into(brain, %{}, fn {key, value} ->
+        {key, process(value, context)}
+      end)
     end)
   end
 

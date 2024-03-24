@@ -24,7 +24,7 @@ defmodule Mu.Character.SayView do
     }
   end
 
-  def render("listen", %{character: character, id: id, meta: meta, text: text}) do
+  def render("listen", %{acting_character: character, id: id, meta: meta, text: text}) do
     %EventText{
       topic: "Room.Say",
       data: %{

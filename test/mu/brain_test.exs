@@ -37,7 +37,7 @@ defmodule Mu.BrainTest do
 
     brain =
       brain
-      |> Mu.Brain.read()
+      |> Mu.Brain.Parser.run()
       |> Mu.Brain.process_all()
 
     character = %Character{
