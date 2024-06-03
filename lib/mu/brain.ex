@@ -12,7 +12,6 @@ defmodule Mu.Brain.Action do
     def run(node, conn, event) do
       character = Conn.character(conn, trim: true)
       event_data = Map.merge(Map.from_struct(character), event.data)
-      IO.inspect(event_data)
 
       case Variable.replace(node.data, event_data) do
         {:ok, data} ->
@@ -23,6 +22,130 @@ defmodule Mu.Brain.Action do
         :error ->
           conn
       end
+    end
+  end
+end
+
+defmodule Mu.Brain.Social do
+  alias Mu.Character.SocialAction
+  alias Kalevala.Brain.Variable
+
+  defstruct [:social, :at_character, delay: 0]
+
+  defimpl Kalevala.Brain.Node do
+    def run(node, conn, _event) when is_nil(node.at_character) do
+      data = Map.take(node, [:social, :at_character])
+      SocialAction.put(conn, data, delay: node.delay)
+    end
+
+    def run(node, conn, event) do
+      data = Map.take(node, [:at_character])
+
+      case Variable.replace(data, event) do
+        {:ok, data} ->
+          data = Map.merge(node, data)
+          SocialAction.put(conn, data, delay: node.delay)
+
+        :error ->
+          conn
+      end
+    end
+  end
+end
+
+defmodule Mu.Brain.WeightedSelector do
+  @moduledoc """
+    Processes a random node based on weighted options
+
+    Example with a 20% chance to change up the mobile's greeting:
+    ```
+    WeightedSelector(
+      Node{
+        weight: 8,
+        node: Action{
+          type: "say",
+          delay: 500,
+          data: {
+              channel_name: "${channel_name}"
+              text: "Hello, ${character.name}!"
+          }
+        },
+      },
+    },
+      Node{
+        weight: 2,
+        node: Action{
+          type: "say",
+          delay: 500,
+          data: {
+              channel_name: "${channel_name}"
+              text: "Hi, ${character.name}!"
+          },
+        },
+      }
+    )
+    ```
+
+  """
+
+  defstruct [:nodes, :weights]
+
+  defimpl Kalevala.Brain.Node do
+    alias Kalevala.Brain.Node
+
+    def run(node, conn, event) do
+      %{weights: weights, nodes: nodes} = node
+      selection = Enum.random(1..Enum.sum(weights))
+
+      weights
+      |> Enum.with_index()
+      |> Enum.reduce_while(0, fn {weight, index}, acc ->
+        acc = acc + weight
+
+        case selection > acc do
+          true -> {:cont, acc}
+          false -> {:halt, Enum.at(nodes, index)}
+        end
+      end)
+      |> Node.run(conn, event)
+    end
+  end
+end
+
+defmodule Mu.Brain.Conditions.SocialMatch do
+  @moduledoc """
+  Condition check for the message being a social and the regex matches
+  """
+
+  @behaviour Kalevala.Brain.Condition
+
+  alias Kalevala.Event.Message
+
+  @impl true
+  def match?(event = %{topic: Message}, conn, data) do
+    data.interested?.(event) and
+      self_check?(event, conn, data) and
+      at_character_check?(event, conn, data) and
+      String.match?(event.data.text.command, data.text)
+  end
+
+  defp self_check?(event, conn, %{self_trigger: self_trigger}) do
+    case event.acting_character.id == conn.character do
+      true ->
+        self_trigger
+
+      false ->
+        true
+    end
+  end
+
+  defp at_character_check?(event, conn, data) do
+    case data.at_trigger do
+      true ->
+        Mu.Character.matches?(event.data.meta.at, conn.character)
+
+      false ->
+        true
     end
   end
 end
@@ -259,6 +382,16 @@ defmodule Mu.Brain do
     }
   end
 
+  defp parse_node("WeightedSelector", %{nodes: nodes}, brains) do
+    weights = Enum.map(nodes, &Map.fetch!(&1, "weight"))
+    nodes = Enum.map(nodes, &Map.fetch!(&1, "node"))
+
+    %Mu.Brain.WeightedSelector{
+      weights: weights,
+      nodes: Enum.map(nodes, &parse_node(&1, brains))
+    }
+  end
+
   # Conditions and Actions
 
   defp parse_node("MessageMatch", node, _brains) do
@@ -304,6 +437,21 @@ defmodule Mu.Brain do
     }
   end
 
+  defp parse_node("SocialMatch", node, _brains) do
+    %{"name" => text} = node
+    {:ok, regex} = Regex.compile(text, "i")
+
+    %Kalevala.Brain.Condition{
+      type: Mu.Brain.Conditions.SocialMatch,
+      data: %{
+        interested?: &Mu.Character.SocialEvent.interested?/1,
+        text: regex,
+        at_trigger: node["at_trigger"] == true,
+        self_trigger: node["self_trigger"] == true
+      }
+    }
+  end
+
   defp parse_node("StateSet", node, _brains) do
     %Kalevala.Brain.StateSet{
       data: %{
@@ -329,6 +477,22 @@ defmodule Mu.Brain do
         data: keys_to_atoms(data)
       }
     end
+  end
+
+  defp parse_node("Social", node, _brains) do
+    command = Map.fetch!(node, "name")
+
+    social =
+      case Mu.Character.Socials.get(command) do
+        {:ok, social} -> social
+        {:error, :not_found} -> raise("Social #{command} not found!")
+      end
+
+    %Mu.Brain.Social{
+      social: social,
+      at_character: Map.get(node, "at_character"),
+      delay: Map.get(node, "delay", 0)
+    }
   end
 
   defp keys_to_atoms(map = %{}) do

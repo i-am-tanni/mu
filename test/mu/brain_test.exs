@@ -90,7 +90,89 @@ defmodule Mu.BrainTest do
     actions =
       [character.meta.processing_action, character.meta.actions]
       |> List.flatten()
-      |> Enum.reject(&is_nil(&1))
+      |> Enum.reject(&is_nil/1)
+
+    assert Enum.count(actions) == 2
+  end
+
+  test "wave" do
+    children = [
+      {Mu.Character.Socials, [name: Mu.Character.Socials]}
+    ]
+
+    opts = [strategy: :one_for_one, name: Mu.Supervisor]
+    Supervisor.start_link(children, opts)
+
+    brain = """
+      brain("react_wave"){
+        ConditionalSelector(
+          SocialMatch{
+            name: "wave",
+          },
+          Sequence(
+            Social{
+              name: "smile",
+              at_character: "${character.id},
+              delay: 500
+            },
+            Social{
+              name: "wave",
+              at_character: "${character.id},
+              delay: 500
+            }
+          )
+        )
+      }
+    """
+
+    %{"react_wave" => brain} =
+      brain
+      |> Mu.Brain.Parser.run()
+      |> Mu.Brain.process_all()
+
+    character = %Character{
+      id: Character.generate_id(),
+      brain: brain["generic_hello"],
+      name: "character",
+      room_id: "sammatti:town_square",
+      meta: %Mu.Character.PlayerMeta{
+        pose: :pos_standing
+      }
+    }
+
+    acting_character = %Character{
+      id: Kalevala.Character.generate_id(),
+      name: "acting_character",
+      room_id: "sammatti:town_square"
+    }
+
+    wave_event = %Kalevala.Event{
+      acting_character: acting_character,
+      topic: Kalevala.Event.Message,
+      data: %Kalevala.Event.Message{
+        type: "social",
+        channel_name: "rooms:sammatti:town_square",
+        character: acting_character,
+        text: %{
+          command: "wave"
+        }
+      }
+    }
+
+    conn = %Conn{
+      character: character,
+      private: %Conn.Private{
+        request_id: Conn.Private.generate_request_id()
+      }
+    }
+
+    conn = Kalevala.Brain.run(conn.character.brain, conn, wave_event)
+    character = Kalevala.Character.Conn.character(conn)
+
+    actions =
+      [character.meta.processing_action, character.meta.actions]
+      |> List.flatten()
+      |> Enum.reject(&is_nil/1)
 
     assert Enum.count(actions) == 2
   end

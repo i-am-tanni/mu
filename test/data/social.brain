@@ -1,0 +1,19 @@
+brain("react_wave"){
+    ConditionalSelector(
+        SocialMatch{
+            name: "wave",
+        },
+        WeightedSelector(
+            Social{
+                name: "smile",
+                at_character: "${character.id},
+                delay: 500
+            },
+            Social{
+                name: "wave",
+                at_character: "${character.id},
+                delay: 500
+            }
+        )
+    )
+}
