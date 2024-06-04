@@ -41,10 +41,14 @@ defmodule Mu.Brain.Social do
     def run(node, conn, event) do
       data = Map.take(node, [:at_character])
 
-      case Variable.replace(data, event) do
+      case Variable.replace(data, event.data) do
         {:ok, data} ->
-          data = Map.merge(node, data)
-          SocialAction.put(conn, data, delay: node.delay)
+          data =
+            node
+            |> Map.merge(data)
+            |> Map.put(:channel_name, event.data.channel_name)
+
+          SocialAction.put(conn, data, pre_delay: node.delay)
 
         :error ->
           conn
@@ -119,10 +123,8 @@ defmodule Mu.Brain.Conditions.SocialMatch do
 
   @behaviour Kalevala.Brain.Condition
 
-  alias Kalevala.Event.Message
-
   @impl true
-  def match?(event = %{topic: Message}, conn, data) do
+  def match?(event, conn, data) do
     data.interested?.(event) and
       self_check?(event, conn, data) and
       at_character_check?(event, conn, data) and
@@ -142,7 +144,7 @@ defmodule Mu.Brain.Conditions.SocialMatch do
   defp at_character_check?(event, conn, data) do
     case data.at_trigger do
       true ->
-        Mu.Character.matches?(event.data.meta.at, conn.character)
+        Mu.Character.matches?(conn.character, event.data.meta.at.id)
 
       false ->
         true
@@ -323,16 +325,6 @@ defmodule Mu.Brain do
         true -> [path | acc]
         false -> load_folder(path, acc)
       end
-    end)
-  end
-
-  def process_all(brains) do
-    context = Enum.reduce(brains, %{}, &Map.merge(&2, &1))
-
-    Enum.map(brains, fn brain ->
-      Enum.into(brain, %{}, fn {key, value} ->
-        {key, process(value, context)}
-      end)
     end)
   end
 

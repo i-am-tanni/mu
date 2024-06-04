@@ -3,6 +3,8 @@ defmodule Mu.BrainTest do
   alias Kalevala.Character
   alias Kalevala.Character.Conn
 
+  import Mu.Brain
+
   test "hello" do
     brain = """
       brain("generic_hello"){
@@ -35,14 +37,11 @@ defmodule Mu.BrainTest do
       }
     """
 
-    brain =
-      brain
-      |> Mu.Brain.Parser.run()
-      |> Mu.Brain.process_all()
+    %{"generic_hello" => brain} = Mu.Brain.Parser.run(brain)
 
     character = %Character{
       id: Character.generate_id(),
-      brain: brain["generic_hello"],
+      brain: Mu.Brain.process(brain, %{}),
       name: "character",
       room_id: "sammatti:town_square",
       meta: %Mu.Character.PlayerMeta{
@@ -74,16 +73,6 @@ defmodule Mu.BrainTest do
       }
     }
 
-    move_event = %Kalevala.Event{
-      acting_character: acting_character,
-      topic: Kalevala.Event.Movement.Notice,
-      data: %Kalevala.Event.Movement.Notice{
-        character: acting_character,
-        direction: :to,
-        reason: "enters"
-      }
-    }
-
     conn = Kalevala.Brain.run(conn.character.brain, conn, hi_event)
     character = Kalevala.Character.Conn.character(conn)
 
@@ -96,43 +85,37 @@ defmodule Mu.BrainTest do
   end
 
   test "wave" do
-    children = [
-      {Mu.Character.Socials, [name: Mu.Character.Socials]}
-    ]
-
-    opts = [strategy: :one_for_one, name: Mu.Supervisor]
-    Supervisor.start_link(children, opts)
-
     brain = """
-      brain("react_wave"){
+    brain("react_wave"){
+      FirstSelector(
         ConditionalSelector(
           SocialMatch{
             name: "wave",
+            at_trigger: true,
+            self_trigger: false
           },
           Sequence(
             Social{
               name: "smile",
-              at_character: "${character.id},
+              at_character: "${character.id}",
               delay: 500
             },
             Social{
               name: "wave",
-              at_character: "${character.id},
+              at_character: "${character.id}",
               delay: 500
             }
           )
         )
-      }
+      )
+    }
     """
 
-    %{"react_wave" => brain} =
-      brain
-      |> Mu.Brain.Parser.run()
-      |> Mu.Brain.process_all()
+    %{"react_wave" => brain} = Mu.Brain.Parser.run(brain)
 
     character = %Character{
       id: Character.generate_id(),
-      brain: brain["generic_hello"],
+      brain: Mu.Brain.process(brain, %{}),
       name: "character",
       room_id: "sammatti:town_square",
       meta: %Mu.Character.PlayerMeta{
@@ -155,7 +138,8 @@ defmodule Mu.BrainTest do
         character: acting_character,
         text: %{
           command: "wave"
-        }
+        },
+        meta: %{at: %{character | brain: :trimmed}}
       }
     }
 
@@ -168,6 +152,7 @@ defmodule Mu.BrainTest do
 
     conn = Kalevala.Brain.run(conn.character.brain, conn, wave_event)
     character = Kalevala.Character.Conn.character(conn)
+    IO.inspect(character, label: "character")
 
     actions =
       [character.meta.processing_action, character.meta.actions]

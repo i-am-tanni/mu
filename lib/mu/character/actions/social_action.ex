@@ -6,7 +6,6 @@ defmodule Mu.Character.SocialAction do
   use Mu.Character.Action
 
   @impl true
-
   def run(conn, params = %{at_character: nil, social: social}) do
     meta = %{at: nil}
 
