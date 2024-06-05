@@ -24,7 +24,6 @@ defmodule Mu.Character.LoginController do
   def recv(conn, data) do
     case get_flash(conn, :login_state) do
       :login -> process_username(conn, data)
-      :echo -> echo_mode(conn, data)
     end
   end
 
@@ -37,11 +36,5 @@ defmodule Mu.Character.LoginController do
       "quit" -> halt(conn)
       username -> put_controller(conn, CharacterController, %{username: username})
     end
-  end
-
-  def echo_mode(conn, data) do
-    conn
-    |> assign(:data, data)
-    |> render(LoginView, "echo")
   end
 end
