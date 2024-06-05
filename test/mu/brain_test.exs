@@ -152,7 +152,6 @@ defmodule Mu.BrainTest do
 
     conn = Kalevala.Brain.run(conn.character.brain, conn, wave_event)
     character = Kalevala.Character.Conn.character(conn)
-    IO.inspect(character, label: "character")
 
     actions =
       [character.meta.processing_action, character.meta.actions]
@@ -160,5 +159,89 @@ defmodule Mu.BrainTest do
       |> Enum.reject(&is_nil/1)
 
     assert Enum.count(actions) == 2
+  end
+
+  test "weighted" do
+    brain = """
+    brain("hello"){
+      FirstSelector(
+        ConditionalSelector(
+          SocialMatch{
+            name: "wave",
+            at_trigger: true,
+            self_trigger: false
+          },
+          WeightedSelector(
+            Node{
+              weight: 4,
+              node: Action{
+                type: "say",
+                delay: 500,
+                data: {
+                  channel_name: "${channel_name}"
+                  text: "Hello, ${character.name}!"
+                }
+              }
+            },
+            Node{
+              weight: 1,
+              node: Action{
+                type: "say",
+                delay: 500,
+                data: {
+                  channel_name: "${channel_name}"
+                  text: "Hi, ${character.name}!"
+                }
+              }
+            }
+          )
+        )
+      )
+    }
+    """
+
+    %{"hello" => brain} = Mu.Brain.Parser.run(brain)
+
+    character = %Character{
+      id: Character.generate_id(),
+      brain: Mu.Brain.process(brain, %{}),
+      name: "character",
+      room_id: "sammatti:town_square",
+      meta: %Mu.Character.PlayerMeta{
+        pose: :pos_standing
+      }
+    }
+
+    acting_character = %Character{
+      id: Kalevala.Character.generate_id(),
+      name: "acting_character",
+      room_id: "sammatti:town_square"
+    }
+
+    wave_event = %Kalevala.Event{
+      acting_character: acting_character,
+      topic: Kalevala.Event.Message,
+      data: %Kalevala.Event.Message{
+        type: "social",
+        channel_name: "rooms:sammatti:town_square",
+        character: acting_character,
+        text: %{
+          command: "wave"
+        },
+        meta: %{at: %{character | brain: :trimmed}}
+      }
+    }
+
+    conn = %Conn{
+      character: character,
+      private: %Conn.Private{
+        request_id: Conn.Private.generate_request_id()
+      }
+    }
+
+    conn = Kalevala.Brain.run(conn.character.brain, conn, wave_event)
+    character = Kalevala.Character.Conn.character(conn)
+
+    assert character.meta.processing_action != nil
   end
 end

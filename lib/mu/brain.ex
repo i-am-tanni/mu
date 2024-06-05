@@ -208,7 +208,7 @@ defmodule Mu.Brain.Parser do
 
   defcv(
     :val,
-    choice([stringliteral, boolean, int, parsec(:hashmap)])
+    choice([stringliteral, boolean, int, parsec(:hashmap), parsec(:struct)])
     |> optional(comma)
   )
 
