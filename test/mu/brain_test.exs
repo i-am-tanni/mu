@@ -3,8 +3,6 @@ defmodule Mu.BrainTest do
   alias Kalevala.Character
   alias Kalevala.Character.Conn
 
-  import Mu.Brain
-
   test "hello" do
     brain = """
       brain("generic_hello"){
@@ -244,4 +242,5 @@ defmodule Mu.BrainTest do
 
     assert character.meta.processing_action != nil
   end
+
 end
