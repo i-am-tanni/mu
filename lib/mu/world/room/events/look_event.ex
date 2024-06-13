@@ -33,7 +33,8 @@ defmodule Mu.World.Room.LookEvent do
     result =
       tag(find_local_exit(context, text), :room_exit) ||
         tag(find_local_character(context, text), :character) ||
-        tag(find_local_item(context, text), :item)
+        tag(find_local_item(context, text), :item) ||
+        tag(find_local_extra_desc(context, text), :extra_desc)
 
     case result do
       {:room_exit, room_exit} ->
@@ -58,6 +59,13 @@ defmodule Mu.World.Room.LookEvent do
         context
         |> assign(:item_instance, item_instance)
         |> render(event.from_pid, LookView, "item")
+        |> assign(:character, event.acting_character)
+        |> render(event.from_pid, CommandView, "prompt")
+
+      {:extra_desc, extra_desc} ->
+        context
+        |> assign(:extra_desc, extra_desc)
+        |> render(event.from_pid, LookView, "extra_desc")
         |> assign(:character, event.acting_character)
         |> render(event.from_pid, CommandView, "prompt")
 
@@ -152,6 +160,12 @@ defmodule Mu.World.Room.LookEvent do
     Enum.find(context.item_instances, fn item_instance ->
       item = Items.get!(item_instance.item_id)
       Item.matches?(item, keyword)
+    end)
+  end
+
+  defp find_local_extra_desc(context, keyword) do
+    Enum.find(context.data.extra_descs, fn extra_desc ->
+      keyword == extra_desc.keyword
     end)
   end
 

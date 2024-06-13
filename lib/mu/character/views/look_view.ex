@@ -1,8 +1,13 @@
+defmodule Mu.Character.LookView.HighlightText do
+  defstruct [:color, :text]
+end
+
 defmodule Mu.Character.LookView do
   use Kalevala.Character.View
 
   alias Mu.Character.CharacterView
   alias Mu.Character.ItemView
+  alias Mu.Character.LookView.HighlightText
 
   def render("look", %{room: room}) do
     ~E"""
@@ -22,6 +27,23 @@ defmodule Mu.Character.LookView do
     |> Enum.map(fn line ->
       [line, "\n"]
     end)
+  end
+
+  def render("extra_desc", %{extra_desc: extra_desc}) do
+    extra_desc.description
+  end
+
+  def render("description", %{description: description, extra_descs: extra_descs}) do
+    description =
+      extra_descs
+      |> Enum.reject(fn extra_desc -> extra_desc.hidden? end)
+      |> Enum.reduce(description, &highlight_keywords(&2, &1))
+
+    # if extra_desc keywords were highlighted
+    case is_list(description) do
+      true -> stringify_highlights(description)
+      false -> description
+    end
   end
 
   def render("exits", %{room: room}) do
@@ -114,5 +136,37 @@ defmodule Mu.Character.LookView do
       1 -> ""
       _ -> ~i(- #{distance} rooms away)
     end
+  end
+
+  defp highlight_keywords(description, extra_desc) do
+    case description do
+      iolist when is_list(iolist) ->
+        Enum.map(iolist, &highlight_keywords(&1, extra_desc))
+
+      binary when is_binary(binary) ->
+        %{keyword: keyword, highlight_color_override: color_override} = extra_desc
+        color = with nil <- color_override, do: "white"
+        highlight_text = %HighlightText{color: color, text: keyword}
+
+        binary
+        |> String.split(extra_desc.keyword)
+        |> View.join(highlight_text)
+
+      no_change ->
+        no_change
+    end
+  end
+
+  defp stringify_highlights(iolist) do
+    Enum.map(iolist, fn
+      list when is_list(list) ->
+        stringify_highlights(list)
+
+      %HighlightText{text: text, color: color} ->
+        ~i({color foreground="#{color}"}#{text}{/color})
+
+      no_change ->
+        no_change
+    end)
   end
 end
