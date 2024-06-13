@@ -2,8 +2,6 @@ defmodule Mu.Character.LookViewTest do
   use ExUnit.Case
   import Mu.Character.LookView
 
-  use Kalevala.Character.View
-
   alias Mu.World.Room.ExtraDesc
 
   test "extra desc keyword highlighting" do
@@ -25,7 +23,7 @@ defmodule Mu.Character.LookViewTest do
 
     view = render("description", assigns)
     view = :erlang.iolist_to_binary(view)
-    [desired_result] = ~i({color foreground="green"}This{/color} is a {color foreground="white"}test{/color} for {color foreground="white"}test{/color}ing purposes.)
+    desired_result = ~s({color foreground="green"}This{/color} is a {color foreground="white"}test{/color} for {color foreground="white"}test{/color}ing purposes.)
     assert view == desired_result
   end
 
