@@ -32,22 +32,14 @@ defmodule Mu.Character.Action do
 
   @moduledoc """
   Actions are a wrapper around discrete character functionality that:
-  - (optionally) takes time to complete
+  - takes some time to complete
   - consists of one or more steps
   - blocks other actions from occuring while an action is completing
   - can be cancelled by higher priority actions
   - automatically checks if all conditions are met to perform the next action or step
   - can be chained in a queue for actions with priority <= the processing_action priority
-
-  ##Action cancelling
-
-  Priority is in reverse order where higher priority is defined as the lesser of two numbers:
-  - 0:  is the highest priority (non-cancellable action)
-  - 1: can only be cancelled by priority 0 actions)
-  ..
-  - n: can only be cancelled by priority < n actions
-
-  Any error resulting from the current action cancels all remaining in the queue.
+  - higher priority actions cancel lesser priority actions in the queue
+  - any error resulting from the current action cancels all remaining in the queue.
   """
 
   import Kalevala.Character.Conn
