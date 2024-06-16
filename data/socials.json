@@ -1,14 +1,14 @@
 [
   {
-    "char_auto": "You smile at yourself.",
-    "char_found": "You smile at $M.",
+    "char_auto": "You smile knowingly to yourself.",
+    "char_found": "You smile warmly at $M.",
     "char_no_arg": "You smile happily.",
     "command": "smile",
     "group": "friendly",
-    "others_auto": "$n smiles at $mself.",
+    "others_auto": "$n smiles knowingly to $mself.",
     "others_found": "$n beams a smile at $N.",
     "others_no_arg": "$n smiles happily.",
-    "vict_Found": "$n smiles at you."
+    "vict_Found": "$n smiles warmly at you."
   },
   {
     "char_auto": "Are you going on adventures as well?",
