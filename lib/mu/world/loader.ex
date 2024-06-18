@@ -1,10 +1,10 @@
 defmodule Mu.World.Loader do
+  alias Mu.World
   alias Mu.World.Zone
   alias Mu.World.Room
   alias Mu.World.Exit
   alias Mu.World.Exit.Door
   alias Mu.World.Item
-  alias Mu.World
   alias Kalevala.Character
   alias Mu.World.Zone.Spawner.SpawnRules
   alias Mu.World.Zone.Spawner
@@ -123,6 +123,10 @@ defmodule Mu.World.Loader do
       Map.get(room, :exits, [])
       |> Enum.map(&parse_exit(&1, exit_context))
 
+    extra_descs =
+      Map.get(room, :extra_descs, [])
+      |> Enum.map(&parse_extra_desc/1)
+
     %Room{
       id: id,
       zone_id: context.zone_id,
@@ -131,7 +135,8 @@ defmodule Mu.World.Loader do
       exits: exits,
       round_queue: [],
       next_round_queue: [],
-      round_in_process?: false
+      round_in_process?: false,
+      extra_descs: extra_descs
     }
   end
 
@@ -158,6 +163,15 @@ defmodule Mu.World.Loader do
           door: door
         }
     end
+  end
+
+  defp parse_extra_desc({keyword, data}) do
+    %Room.ExtraDesc{
+      keyword: keyword,
+      description: data.description,
+      hidden?: Map.get(data, :hidden) == true,
+      highlight_color_override: Map.get(data, :highlight_color_override)
+    }
   end
 
   defp parse_door(door) do
