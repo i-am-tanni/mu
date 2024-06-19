@@ -142,7 +142,7 @@ defmodule Mu.World.Room.LookEvent do
     result = Room.whereis(room_exit.end_room_id)
 
     case maybe(result) do
-      {:ok, pid} -> send(pid, event)
+      {:ok, end_room_pid} -> send(end_room_pid, event)
       nil -> Logger.error("Cannot find room #{room_exit.end_room_id}")
     end
 
