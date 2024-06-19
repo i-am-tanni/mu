@@ -17,6 +17,7 @@ defmodule Mu.Character.LookView do
 
   def render("look.extra", %{room: room, characters: characters, item_instances: item_instances}) do
     lines = [
+      render("_description", %{description: room.description, extra_descs: room.extra_descs}),
       render("_items", %{item_instances: item_instances}),
       render("_exits", %{room: room}),
       render("_characters", %{characters: characters})
@@ -24,16 +25,14 @@ defmodule Mu.Character.LookView do
 
     lines
     |> Enum.reject(&is_nil/1)
-    |> Enum.map(fn line ->
-      [line, "\n"]
-    end)
+    |> Enum.map(&newline/1)
   end
 
   def render("extra_desc", %{extra_desc: extra_desc}) do
     extra_desc.description
   end
 
-  def render("description", %{description: description, extra_descs: extra_descs}) do
+  def render("_description", %{description: description, extra_descs: extra_descs}) do
     description =
       extra_descs
       |> Enum.reject(fn extra_desc -> extra_desc.hidden? end)
@@ -169,4 +168,6 @@ defmodule Mu.Character.LookView do
         no_change
     end)
   end
+
+  defp newline(iodata), do: [iodata, ?\n]
 end
