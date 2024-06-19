@@ -1,4 +1,7 @@
 defmodule Mu.World.Room.ListEvent do
+  @moduledoc """
+  Lists information for non-player characters gathered from the local room
+  """
   import Kalevala.World.Room.Context
 
   def characters(context, event) do
