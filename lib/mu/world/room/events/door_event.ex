@@ -4,6 +4,7 @@ defmodule Mu.World.Room.DoorEvent do
 
   require Logger
   alias Mu.World.Exit
+  alias Mu.World.Room
 
   def call(context, event) do
     name = event.data.text
@@ -63,10 +64,7 @@ defmodule Mu.World.Room.DoorEvent do
   end
 
   defp pass(context, event) when context.data.id == event.data.start_room_id do
-    result =
-      event.data.end_room_id
-      |> Kalevala.World.Room.global_name()
-      |> GenServer.whereis()
+    result = Room.whereis(event.data.end_room_id)
 
     case maybe(result) do
       {:ok, end_room_pid} -> send(end_room_pid, event)

@@ -2,11 +2,14 @@ defmodule Mu.World.Room.LookEvent do
   import Kalevala.World.Room.Context
   import Mu.Utility
 
+  require Logger
+
   alias Mu.Character.LookView
   alias Mu.World.Items
   alias Mu.World.Item
   alias Mu.World.Exit
   alias Mu.Character.CommandView
+  alias Mu.World.Room
 
   def call(context, event) do
     characters =
@@ -136,10 +139,12 @@ defmodule Mu.World.Room.LookEvent do
   end
 
   defp pass(context, room_exit, event) do
-    room_exit.end_room_id
-    |> Kalevala.World.Room.global_name()
-    |> GenServer.whereis()
-    |> send(event)
+    result = Room.whereis(room_exit.end_room_id)
+
+    case maybe(result) do
+      {:ok, pid} -> send(pid, event)
+      nil -> Logger.error("Cannot find room #{room_exit.end_room_id}")
+    end
 
     context
   end
