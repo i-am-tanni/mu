@@ -24,7 +24,7 @@ defmodule Mu.World.Room.BuildEvent do
   defp _dig(context, event = %{data: data}) do
     end_room_id = Mu.World.parse_id(data.room_id)
 
-    case GenServer.whereis(Kalevala.World.Room.global_name(end_room_id)) do
+    case Room.whereis(end_room_id) do
       nil ->
         start_exit = Exit.basic_exit(data.start_exit_name, context.data.id, end_room_id)
         end_exit = Exit.basic_exit(data.end_exit_name, end_room_id, context.data.id)
