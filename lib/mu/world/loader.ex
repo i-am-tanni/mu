@@ -254,13 +254,22 @@ defmodule Mu.World.Loader do
         false -> List.wrap(room_ids)
       end
 
+    spawn_strategy =
+      case Map.get(rules, :strategy) do
+        "random" -> :random
+        "round_robin" -> :round_robin
+        nil -> :random
+        strategy -> raise("Invalid strategy found: #{strategy}")
+      end
+
     %SpawnRules{
       minimum_count: rules.minimum_count,
       maximum_count: rules.maximum_count,
       minimum_delay: rules.minimum_delay,
       random_delay: rules.random_delay,
       expires_in: Map.get(rules, :expires_in),
-      room_ids: room_ids
+      room_ids: room_ids,
+      strategy: spawn_strategy
     }
   end
 

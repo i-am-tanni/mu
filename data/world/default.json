@@ -11,10 +11,11 @@
       "brain": "guard",
       "spawn_rules": {
         "active?": true,
-        "minimum_count": 1,
+        "minimum_count": 3,
         "maximum_count": 3,
         "minimum_delay": 3000,
         "random_delay": 3000,
+        "strategy": "random",
         "room_ids": 1
       }
     }

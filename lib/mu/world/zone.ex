@@ -1,16 +1,41 @@
 defmodule Mu.World.Zone.Spawner.SpawnRules do
+  @moduledoc """
+  Rules for spawning mobiles and items:
+  - `:minimum_count` - the minimum number of mobiles that should be available *when the zone is first loaded*
+  - `:maximum_count` - the maximum number of spawns allowed for this mobile
+  - `:minimum_delay` - the minimum spawn timer before a mobile respawns
+  - `:random_delay` - the maximum spawn timer before a mobile respawns. The time to respawn will be between the minimum and random delay.
+  - `:room_ids` - List of room ids. Can contain repeats and order matters for the round_robin strategy.
+  - `:strategy` - the strategy used to choose which room to spawn the mobile in. Options are `:random` or `:round_robin`.
+  - `:round_robin_tail` - Only used for the round robin strategy.
+
+  ######Round Robin
+  The `:round_robin` strategy cuycles through the room_ids one by one and
+    will spawn a mobile in each until the thresholds are reached.
+
+  Will keep the remaining room_ids in the current cycle until the cycle is completed. Then it will start over.
+  """
+
   defstruct [
     :minimum_count,
     :maximum_count,
     :minimum_delay,
     :random_delay,
     :expires_in,
-    :room_ids
+    :room_ids,
+    :strategy,
+    round_robin_tail: []
   ]
 end
 
 defmodule Mu.World.Zone.Spawner do
-  defstruct [:prototype_id, :active?, :type, count: 0, instances: [], rules: %{}]
+  @moduledoc """
+  Contains the information necessary to spawn an item or mobile prototype in a room.
+  Will track a count of current instances and related information. Can be turned on or off.
+  `:type` is either item or mobile.
+  """
+  alias __MODULE__.SpawnRules
+  defstruct [:prototype_id, :active?, :type, count: 0, instances: [], rules: %SpawnRules{}]
 end
 
 defmodule Mu.World.Zone do

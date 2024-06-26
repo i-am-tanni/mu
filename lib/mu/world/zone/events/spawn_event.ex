@@ -20,26 +20,43 @@ defmodule Mu.World.Zone.SpawnEvent do
   alias Kalevala.World.CharacterSupervisor
   alias Mu.World.NonPlayers
 
+  # spawn minimum number of instances for active spawners
   def call(context, event = %{topic: "init" <> _}) do
-    get_spawners(context, event)
-    |> Enum.filter(fn {_prototype_id, spawner} ->
-      spawner.active? and spawner.rules.minimum_count > 0
-    end)
-    |> Enum.reduce(context, fn {_, spawner}, context ->
-      context
-      |> spawn_instances(spawner, spawner.rules.minimum_count)
-      |> schedule_spawn(spawner)
-    end)
+    spawner_type = spawner_type(event)
+    spawners = Map.get(context.data, spawner_type)
+
+    updates =
+      spawners
+      |> Enum.filter(fn {_prototype_id, spawner} ->
+        spawner.active? and spawner.rules.minimum_count > 0
+      end)
+      |> Enum.map(fn {_, spawner} ->
+        spawn_instances(spawner, spawner.rules.minimum_count)
+      end)
+
+    spawners =
+      Enum.reduce(updates, spawners, fn spawner, acc ->
+        Map.put(acc, spawner.prototype_id, spawner)
+      end)
+
+    updates
+    |> Enum.reduce(context, &schedule_spawn(&2, &1))
+    |> put_data(spawner_type, spawners)
   end
 
   def call(context, event = %{topic: "spawn" <> _}) do
-    spawners = get_spawners(context, event)
-    spawner = Map.fetch!(spawners, event.data.prototype_id)
+    spawner_type = spawner_type(event)
+    spawners = Map.get(context.data, spawner_type)
+    prototype_id = event.data.prototype_id
+    spawner = Map.fetch!(spawners, prototype_id)
 
     case spawner.active? and spawner.count < spawner.rules.maximum_count do
       true ->
+        spawner = spawn_instances(spawner, 1)
+        spawners = Map.put(spawners, prototype_id, spawner)
+
         context
-        |> spawn_instances(spawner)
+        |> put_data(spawner_type, spawners)
         |> schedule_spawn(spawner)
 
       false ->
@@ -48,33 +65,33 @@ defmodule Mu.World.Zone.SpawnEvent do
   end
 
   def call(context, event = %{topic: "despawn" <> _}) do
-    spawners = get_spawners(context, event)
+    spawner_type = spawner_type(event)
+    spawners = Map.get(context.data, spawner_type)
     spawner = Map.fetch!(spawners, event.data.prototype_id)
     instance_id = event.data.instance_id
 
-    {[instance], instances} =
-      Enum.split_with(spawner.instances, fn instance ->
-        instance.id == instance_id
-      end)
-
+    instances = Enum.reject(spawner.instances, &(&1.id == instance_id))
     spawner = Map.put(spawner, :instances, instances)
+    spawners = Map.put(spawners, spawner.prototype_id, spawner)
 
     context
-    |> put_spawner(spawners, spawner)
+    |> put_data(spawner_type, spawners)
     # |> despawn_instance(spawner, instance)
     |> schedule_spawn(spawner)
   end
 
   def call(context, event = %{topic: "activate" <> _}) do
-    spawners = get_spawners(context, event)
+    spawner_type = spawner_type(event)
+    spawners = Map.get(context.data, spawner_type)
     spawner = Map.fetch!(spawners, event.data.prototype_id)
 
     case !spawner.rules.active? do
       true ->
         spawner = %{spawner | active?: true}
+        spawners = Map.put(spawners, spawner.prototype_id, spawner)
 
         context
-        |> put_spawner(spawners, spawner)
+        |> put_data(spawner_type, spawners)
         |> schedule_spawn(spawner)
 
       false ->
@@ -83,55 +100,70 @@ defmodule Mu.World.Zone.SpawnEvent do
   end
 
   def call(context, event = %{topic: "deactivate" <> _}) do
-    spawners = get_spawners(context, event)
+    spawner_type = spawner_type(event)
+    spawners = Map.get(context.data, spawner_type)
     spawner = Map.fetch!(spawners, event.data.prototype_id)
 
     case spawner.rules.active? do
-      true -> put_spawner(context, spawners, %{spawner | active?: false})
-      false -> context
+      true ->
+        spawner = %{spawner | active?: false}
+        spawners = Map.put(spawners, spawner.prototype_id, spawner)
+        put_data(context, spawner_type, spawners)
+
+      false ->
+        context
     end
   end
 
-  defp get_spawners(context, %{topic: topic}) do
-    cond do
-      String.match?(topic, ~r/character/) -> context.data.character_spawner
-      String.match?(topic, ~r/item/) -> context.data.item_spawner
-    end
-  end
+  # private functions
 
-  defp put_spawner(context, spawners, spawner) do
-    spawners = %{spawners | spawner.prototype_id => spawner}
-
-    spawner_type =
-      case spawner.type do
-        :character -> :character_spawner
-        :item -> :item_spawner
-      end
-
-    put_data(context, spawner_type, spawners)
-  end
-
-  defp spawn_instances(context, spawner, count \\ 1) do
-    %{type: type, prototype_id: prototype_id, rules: rules} = spawner
-
-    Enum.reduce(1..count, context, fn _, context ->
-      room_id = Enum.random(rules.room_ids)
-
-      case type do
-        :character -> spawn_character(context, prototype_id, room_id, [], rules.expires_in)
-        :item -> spawn_item(context, prototype_id, room_id)
-      end
+  defp spawn_instances(spawner, count, opts \\ []) do
+    Enum.reduce(1..count, spawner, fn _, acc ->
+      {room_id, rules} = get_room_id(acc.rules)
+      acc = Map.put(acc, :rules, rules)
+      spawn_instance(acc, room_id, opts)
     end)
   end
 
-  defp spawn_item(context, item_id, room_id) do
-    instance = build_item_instance(item_id)
-    spawners = context.data.item_spawner
-    spawner = Map.fetch!(spawners, item_id)
-    spawner = %{spawner | count: spawner.count + 1, instances: [instance | spawner.instances]}
+  defp spawn_instance(spawner, room_id, opts) when spawner.type == :character do
+    loadout_override = Keyword.get(opts, :loadout, [])
+    character = prepare_character(spawner.prototype_id, room_id, loadout_override)
 
-    put_spawner(context, spawners, spawner)
+    config = [
+      supervisor_name: CharacterSupervisor.global_name(character.meta.zone_id),
+      communication_module: Mu.Communication,
+      initial_controller: Mu.Character.SpawnController,
+      quit_view: {Mu.Character.QuitView, "disconnected"}
+    ]
+
+    case Kalevala.World.start_character(character, config) do
+      {:ok, _} ->
+        timestamp = DateTime.utc_now()
+
+        instance = %Mu.Character.Instance{
+          id: spawner.prototype_id,
+          character_id: character.id,
+          created_at: timestamp
+          # TODO: consider expires_at units
+          # expires_at: expires_in && DateTime.add(timestamp, expires_in)
+        }
+
+        instances = [instance | spawner.instances]
+
+        %{spawner | count: spawner.count + 1, instances: instances}
+
+      _ ->
+        Logger.error("Character #{spawner.prototype_id} failed to spawn.")
+        spawner
+    end
   end
+
+  defp spawn_instance(spawner, _room_id, _opts) when spawner.type == :item do
+    instance = build_item_instance(spawner.prototype_id)
+    %{spawner | count: spawner.count + 1, instances: [instance | spawner.instances]}
+  end
+
+  # item spawning functions
 
   defp build_item_instance(item_id) do
     item = Mu.World.Items.get!(item_id)
@@ -157,44 +189,12 @@ defmodule Mu.World.Zone.SpawnEvent do
     end
   end
 
-  defp spawn_character(context, character_id, room_id, loadout, _expires_in) do
-    character = prepare_character(character_id, room_id, loadout)
+  # character spawning functions
 
-    config = [
-      supervisor_name: CharacterSupervisor.global_name(character.meta.zone_id),
-      communication_module: Mu.Communication,
-      initial_controller: Mu.Character.SpawnController,
-      quit_view: {Mu.Character.QuitView, "disconnected"}
-    ]
-
-    case Kalevala.World.start_character(character, config) do
-      {:ok, _} ->
-        timestamp = DateTime.utc_now()
-
-        instance = %Mu.Character.Instance{
-          id: character.id,
-          character_id: character_id,
-          created_at: timestamp
-          # TODO: consider expires_at units
-          # expires_at: expires_in && DateTime.add(timestamp, expires_in)
-        }
-
-        spawners = context.data.character_spawner
-        spawner = Map.fetch!(spawners, character_id)
-        spawner = %{spawner | count: spawner.count + 1, instances: [instance | spawner.instances]}
-
-        put_spawner(context, spawners, spawner)
-
-      _ ->
-        Logger.error("Character #{character_id} failed to spawn.")
-        context
-    end
-  end
-
-  defp prepare_character(character_id, room_id, loadout) do
+  defp prepare_character(character_id, room_id, loadout_override) do
     character = NonPlayers.get!(character_id)
     instance_id = "#{character_id}:#{Kalevala.Character.generate_id()}"
-    loadout = loadout(character.inventory, loadout)
+    loadout = loadout(character.inventory, loadout_override)
     %{character | id: instance_id, room_id: room_id, inventory: loadout}
   end
 
@@ -211,6 +211,8 @@ defmodule Mu.World.Zone.SpawnEvent do
     end)
   end
 
+  # misc helper functions
+
   defp schedule_spawn(context, spawner) do
     case spawner.count < spawner.rules.maximum_count do
       true ->
@@ -223,4 +225,27 @@ defmodule Mu.World.Zone.SpawnEvent do
         context
     end
   end
+
+  defp get_room_id(rules) when rules.strategy == :random do
+    {Enum.random(rules.room_ids), rules}
+  end
+
+  defp get_room_id(rules) when rules.strategy == :round_robin do
+    {room_id, round_robin_tail} =
+      case {rules.room_ids, rules.round_robin_tail} do
+        {[h | t], []} -> {h, t}
+        {_, [h | t]} -> {h, t}
+      end
+
+   rules = %{rules | round_robin_tail: round_robin_tail}
+   {room_id, rules}
+  end
+
+  defp spawner_type(_event = %{topic: topic}) do
+    cond do
+      String.match?(topic, ~r/character/) -> :character_spawner
+      String.match?(topic, ~r/item/) -> :item_spawner
+    end
+  end
+
 end
