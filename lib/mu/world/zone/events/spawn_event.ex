@@ -28,8 +28,7 @@ defmodule Mu.World.Zone.SpawnEvent do
     updates =
       for {_, spawner} <- spawners,
           minimum_count = spawner.rules.minimum_count,
-          spawner.active?,
-          minimum_count > 0 do
+          spawner.active? and minimum_count > 0 do
         spawn_instances(spawner, minimum_count)
       end
 
