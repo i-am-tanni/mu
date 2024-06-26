@@ -26,13 +26,12 @@ defmodule Mu.World.Zone.SpawnEvent do
     spawners = Map.get(context.data, spawner_type)
 
     updates =
-      spawners
-      |> Enum.filter(fn {_prototype_id, spawner} ->
-        spawner.active? and spawner.rules.minimum_count > 0
-      end)
-      |> Enum.map(fn {_, spawner} ->
-        spawn_instances(spawner, spawner.rules.minimum_count)
-      end)
+      for {_, spawner} <- spawners,
+          %{rules: %{minimum_count: minimum_count}} = spawner,
+          spawner.active?,
+          minimum_count > 0 do
+        spawn_instances(spawner, minimum_count)
+      end
 
     spawners =
       Enum.reduce(updates, spawners, fn spawner, acc ->
