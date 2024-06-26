@@ -88,6 +88,12 @@ defmodule Mu.World.Zone.SpawnEvent do
     case !spawner.rules.active? do
       true ->
         spawner = %{spawner | active?: true}
+        spawner =
+          case Map.get(event.data, :spawn_minimum?) == true do
+            true -> spawn_instances(spawner, spawner.rules.minimum_count)
+            false -> spawner
+          end
+
         spawners = Map.put(spawners, spawner.prototype_id, spawner)
 
         context
