@@ -239,7 +239,9 @@ defmodule Mu.World.Zone.SpawnEvent do
   defp get_room_id(rules) when rules.strategy == :round_robin do
     {room_id, round_robin_tail} =
       case {rules.room_ids, rules.round_robin_tail} do
+        # if cycle is complete, start a new cycle from room_id list
         {[h | t], []} -> {h, t}
+        # or simply advance cycle
         {_, [h | t]} -> {h, t}
       end
 
