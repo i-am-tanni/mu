@@ -20,11 +20,12 @@ defmodule Mu.World.Zone.SpawnEvent do
   alias Kalevala.World.CharacterSupervisor
   alias Mu.World.NonPlayers
 
-  # spawn minimum number of instances for active spawners
+
   def call(context, event = %{topic: "init" <> _}) do
     spawner_type = spawner_type(event)
     spawners = Map.get(context.data, spawner_type)
 
+    # spawn minimum number of instances for active spawners
     updates =
       for {_, spawner} <- spawners,
           minimum_count = spawner.rules.minimum_count,
