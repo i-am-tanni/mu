@@ -72,8 +72,20 @@ defmodule Mu.World.Loader do
   defp parse_zone({key, zone_data}, context) do
     zone = %Zone{}
     id = key
-    context = Map.merge(context, %{zone_id: key})
     %{"zone" => %{"name" => name}} = zone_data
+
+    # prepare context
+    context = Map.merge(context, %{zone_id: key})
+
+    room_ids_by_mobile =
+      for {room_id, room_data} <- Map.get(zone_data, "rooms", []),
+          mobile_id <- Map.get(room_data, "mobiles", []),
+          room_id = World.parse_id(room_id),
+          reduce: %{} do
+        acc -> Map.update(acc, mobile_id, [room_id], &[room_id | &1])
+      end
+
+    context = Map.put(context, :spawn_locations, room_ids_by_mobile)
 
     rooms =
       Map.get(zone_data, "rooms", [])
@@ -86,16 +98,14 @@ defmodule Mu.World.Loader do
       |> Enum.map(&parse_item(&1, context))
 
     character_spawners =
-      Map.get(zone_data, "characters", [])
-      |> Enum.filter(fn {_key, val} ->
-        Map.has_key?(val, "spawn_rules")
-      end)
-      |> Enum.map(fn {key, val} ->
-        {key, Map.fetch!(val, "spawn_rules")}
-      end)
-      |> Enum.map(&keys_to_atoms/1)
-      |> Enum.map(&parse_spawner(&1, Map.put(context, :type, :character)))
-      |> Enum.into(%{})
+      for {mobile_id, character} <- Map.get(zone_data, "characters", []),
+          spawn_rules = character["spawn_rules"],
+          is_map(spawn_rules),
+          into: %{} do
+        {mobile_id, spawn_rules}
+        |> keys_to_atoms()
+        |> parse_spawner(:character, context)
+      end
 
     characters =
       Map.get(zone_data, "characters", [])
@@ -232,26 +242,30 @@ defmodule Mu.World.Loader do
     end
   end
 
-  defp parse_spawner({key, spawner}, context) do
+  defp parse_spawner({key, spawner}, type, context) do
     id = "#{context.zone_id}:#{key}"
 
     spawner = %Spawner{
       prototype_id: id,
       active?: spawner.active?,
-      type: context.type,
-      rules: parse_spawn_rules(spawner, context)
+      type: type,
+      rules: parse_spawn_rules(spawner, key, context)
     }
 
     {id, spawner}
   end
 
-  defp parse_spawn_rules(rules, _context) do
-    room_ids = rules.room_ids
-
+  defp parse_spawn_rules(rules, mobile_template_id, context) do
     room_ids =
-      case is_list(room_ids) do
-        true -> room_ids
-        false -> List.wrap(room_ids)
+      case rules[:room_ids] || context.spawn_locations[mobile_template_id] do
+        nil ->
+          raise("No spawn locations found for #{mobile_template_id}")
+
+        room_ids when is_list(room_ids) ->
+          room_ids
+
+        room_id ->
+          List.wrap(room_id)
       end
 
     spawn_strategy =
@@ -364,6 +378,7 @@ defmodule Mu.World.Loader do
     end)
   end
 
+  # atomizes keys of nested map
   defp keys_to_atoms({key, map = %{}}) do
     val =
       Enum.map(map, fn {key, value} ->
