@@ -32,6 +32,8 @@ defmodule Mu.Character.LookView do
     extra_desc.description
   end
 
+  def render("_description", %{description: description, extra_descs: []}), do: description
+
   def render("_description", %{description: description, extra_descs: extra_descs}) do
     description =
       extra_descs
@@ -169,5 +171,5 @@ defmodule Mu.Character.LookView do
     end)
   end
 
-  defp newline(iodata), do: [iodata, ?\n]
+  defp newline(iodata), do: [iodata, "\n"]
 end
