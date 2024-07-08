@@ -24,7 +24,8 @@ defmodule Mu.World.Room do
     :next_round_queue,
     :round_in_process?,
     exits: [],
-    extra_descs: []
+    extra_descs: [],
+    item_templates: []
   ]
 
   def whereis(room_id) do

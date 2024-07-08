@@ -119,8 +119,7 @@ defmodule Mu.World.Loader do
         rooms: rooms,
         items: items,
         characters: characters,
-        character_spawner: character_spawners,
-        item_spawner: %{}
+        character_spawner: character_spawners
     }
   end
 
@@ -146,7 +145,8 @@ defmodule Mu.World.Loader do
       round_queue: [],
       next_round_queue: [],
       round_in_process?: false,
-      extra_descs: extra_descs
+      extra_descs: extra_descs,
+      item_templates: Map.get(room, :items, [])
     }
   end
 

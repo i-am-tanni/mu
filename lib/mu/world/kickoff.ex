@@ -3,6 +3,7 @@ defmodule Mu.World.Kickoff do
 
   alias Kalevala.World.RoomSupervisor
   alias Mu.World.Loader
+  alias Mu.World.Item
 
   @doc false
   def start_link(opts) do
@@ -62,14 +63,7 @@ defmodule Mu.World.Kickoff do
       data: %{}
     }
 
-    items_init = %Kalevala.Event{
-      topic: "init/items",
-      from_pid: self(),
-      data: %{}
-    }
-
     send(zone_pid, characters_init)
-    send(zone_pid, items_init)
   end
 
   def start_zone(zone) do
@@ -93,8 +87,15 @@ defmodule Mu.World.Kickoff do
       callback_module: Mu.World.Room
     }
 
-    item_instances = Map.get(room, :item_instances, [])
-    room = Map.delete(room, :item_instances)
+    item_instances =
+      room
+      |> Map.get(:item_templates, [])
+      |> Enum.map(fn
+          %{item_id: item_id, opts: opts} -> Item.instance(item_id, opts)
+          item_id -> Item.instance(item_id)
+      end)
+
+    room = Map.delete(room, :item_templates)
 
     case GenServer.whereis(Kalevala.World.Room.global_name(room)) do
       nil ->

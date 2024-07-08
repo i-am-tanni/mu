@@ -10,16 +10,18 @@ defmodule Mu.Character.LookView do
   alias Mu.Character.LookView.HighlightText
 
   def render("look", %{room: room}) do
+    description = render("_description", %{description: room.description, extra_descs: room.extra_descs})
+
     ~E"""
     {room-title id="<%= to_string(room.id) %>"}<%= room.name %>{/room-title}
+      <%= description %>
     """
   end
 
   def render("look.extra", %{room: room, characters: characters, item_instances: item_instances}) do
     lines = [
-      render("_description", %{description: room.description, extra_descs: room.extra_descs}),
-      render("_items", %{item_instances: item_instances}),
       render("_exits", %{room: room}),
+      render("_items", %{item_instances: item_instances}),
       render("_characters", %{characters: characters})
     ]
 

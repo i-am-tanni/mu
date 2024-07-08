@@ -48,8 +48,7 @@ defmodule Mu.World.Zone do
     :characters,
     :rooms,
     :items,
-    character_spawner: %{},
-    item_spawner: %{}
+    character_spawner: %{}
   ]
 
   def event(context, event), do: Events.call(context, event)
@@ -77,5 +76,17 @@ defmodule Mu.World.Zone.Events do
       event("init/items", :call)
       event("spawn/character", :call)
     end
+    module(ResetEvent) do
+      event("reset", :call)
+    end
+  end
+end
+
+defmodule Mu.World.Zone.ResetEvent do
+  alias Mu.World.Kickoff
+
+  def call(context, _event) do
+    Enum.each(context.data.rooms, &Kickoff.start_room/1)
+    context
   end
 end

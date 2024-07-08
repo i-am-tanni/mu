@@ -31,7 +31,8 @@
         "south": 2
       },
       "name": "North Room",
-      "mobiles": ["guard"]
+      "mobiles": ["guard"],
+      "items": ["global:helm"]
     },
     "2": {
       "description": "It's warmer down here.",

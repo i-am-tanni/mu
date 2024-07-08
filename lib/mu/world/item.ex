@@ -187,3 +187,7 @@ defmodule Mu.World.Item.Container do
     end
   end
 end
+
+defmodule Mu.World.Item.Spawner do
+  defstruct [:respawn_frequency, :respawn_at, items: []]
+end
