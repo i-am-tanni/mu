@@ -195,21 +195,24 @@ defmodule Mu.World.Loader do
   end
 
   defp parse_verbs(verbs) do
-    for {key, verb} <- verbs,
-        {conditions, verb} = Map.pop!(verb, "conditions"),
-        into: %{} do
-      conditions = keys_to_atoms(conditions)
-      conditions = struct!(Kalevala.Verb.Conditions, conditions)
+    Enum.into(verbs, %{}, fn field = {key, _} ->
+      {key, parse_verb(field)}
+    end)
+  end
 
-      fields =
-        Enum.map(verb, fn {key, val} ->
-          {String.to_atom(key), val}
-        end)
+  defp parse_verb({key, verb}) do
+    conditions = Map.fetch!(verb, "conditions")
+    conditions =
+      %Kalevala.Verb.Conditions{
+        location: conditions["location"]
+      }
 
-      fields = [conditions: conditions, key: key] ++ fields
-
-      {key, struct!(Kalevala.Verb, fields)}
-    end
+    %Kalevala.Verb{
+      conditions: conditions,
+      key: key,
+      icon: verb["icon"],
+      text: verb["text"]
+    }
   end
 
   defp parse_item({key, item}, context) do
