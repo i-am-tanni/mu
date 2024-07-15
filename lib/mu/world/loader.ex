@@ -379,7 +379,7 @@ defmodule Mu.World.Loader do
   end
 
   # atomizes keys of nested map
-  defp keys_to_atoms({key, map = %{}}) do
+  defp keys_to_atoms({key, map}) when is_map(map) do
     val =
       Enum.into(map, %{}, fn {key, value} ->
         {String.to_atom(key), value}
