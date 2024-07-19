@@ -21,7 +21,7 @@ defmodule Mu.Character.LookViewTest do
       extra_descs: [extra_desc1, extra_desc2]
     }
 
-    view = render("description", assigns)
+    view = render("_description", assigns)
     view = :erlang.iolist_to_binary(view)
     desired_result = ~s({color foreground="green"}This{/color} is a {color foreground="white"}test{/color} for {color foreground="white"}test{/color}ing purposes.)
     assert view == desired_result
