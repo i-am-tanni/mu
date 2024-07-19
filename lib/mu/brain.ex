@@ -3,7 +3,7 @@ defmodule Mu.Brain.Action do
   Node to trigger an action
   """
 
-  defstruct [:data, :type, delay: 0]
+  defstruct [:data, :type, delay: 100]
 
   defimpl Kalevala.Brain.Node do
     alias Kalevala.Brain.Variable
@@ -27,27 +27,25 @@ defmodule Mu.Brain.Action do
 end
 
 defmodule Mu.Brain.Social do
+  @moduledoc """
+  Node to trigger a social.
+
+  Similar to an action, but excludes passing fields to Variable.replace() that result in error
+  """
   alias Mu.Character.SocialAction
   alias Kalevala.Brain.Variable
 
-  defstruct [:social, :at_character, delay: 0]
+  defstruct [:data, delay: 100]
 
   defimpl Kalevala.Brain.Node do
-    def run(node, conn, _event) when is_nil(node.at_character) do
-      data = Map.take(node, [:social, :at_character])
-      SocialAction.put(conn, data, delay: node.delay)
-    end
-
     def run(node, conn, event) do
-      data = Map.take(node, [:at_character])
+      # drop keys that will cause a problem for Variable.replace()
+      data = Map.delete(node.data, :social)
+      data = with %{at_character: nil} <- data, do: Map.delete(data, :at_character)
 
       case Variable.replace(data, event.data) do
-        {:ok, data} ->
-          data =
-            node
-            |> Map.merge(data)
-            |> Map.put(:channel_name, event.data.channel_name)
-
+        {:ok, updated_data} ->
+          data = Map.merge(node.data, updated_data)
           SocialAction.put(conn, data, pre_delay: node.delay)
 
         :error ->
@@ -481,9 +479,12 @@ defmodule Mu.Brain do
       end
 
     %Mu.Brain.Social{
-      social: social,
-      at_character: Map.get(node, "at_character"),
-      delay: Map.get(node, "delay", 100)
+      delay: Map.get(node, "delay", 100),
+      data: %{
+        social: social,
+        at_character: node["at_character"],
+        channel_name: "${channel_name}"
+      }
     }
   end
 
@@ -552,7 +553,6 @@ defmodule Mu.Brain do
   defp to_module(string) do
     case string do
       "say" -> Mu.Character.SayAction
-      "social" -> Mu.Character.SocialAction
       "wander" -> Mu.Character.WanderAction
       "delay-event" -> Mu.Character.DelayEventAction
       _ -> raise "Error! Module '#{string}' not recognized"
