@@ -465,7 +465,7 @@ defmodule Mu.Brain do
 
       %Mu.Brain.Action{
         type: to_module(type),
-        delay: Map.get(node, "delay", 0),
+        delay: Map.get(node, "delay", 100),
         data: keys_to_atoms(data)
       }
     end
@@ -483,7 +483,7 @@ defmodule Mu.Brain do
     %Mu.Brain.Social{
       social: social,
       at_character: Map.get(node, "at_character"),
-      delay: Map.get(node, "delay", 0)
+      delay: Map.get(node, "delay", 100)
     }
   end
 
