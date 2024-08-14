@@ -130,7 +130,7 @@ defmodule Mu.World.Saver.BrainPreparer do
     %{social: social, at_character: at_character} = node.data
 
     %{
-      node: "SocialMatch",
+      node: "Social",
       delay: node.delay,
       name: social.command,
       at_character: at_character
@@ -364,7 +364,7 @@ defmodule Mu.World.Saver do
     iolist =
       brain
       |> Brain.prepare()
-      |> Brain.encode()
+      |> Brain.encode(name)
 
     File.write!(Path.join(paths.brain_path), "#{file_name}.brain", iolist)
   end
