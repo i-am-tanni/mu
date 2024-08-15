@@ -120,7 +120,7 @@ defmodule Mu.Brain.BuilderHelpers do
       %Action{type: type} ->
         "Action #{from_module(type)}"
 
-      %Social{social: social} ->
+      %Social{data: %{social: social}} ->
         "Social #{social.command}"
     end
   end

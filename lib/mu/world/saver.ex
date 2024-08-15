@@ -128,11 +128,12 @@ defmodule Mu.World.Saver.BrainPreparer do
 
   defp prepare_node(%Social{} = node) do
     %{social: social, at_character: at_character} = node.data
+    social = with %Mu.Character.Social{command: command} <- social, do: command
 
     %{
       node: "Social",
       delay: node.delay,
-      name: social.command,
+      name: social,
       at_character: at_character
     }
   end
@@ -360,13 +361,15 @@ defmodule Mu.World.Saver do
     File.write!(Path.join(paths.world_path, "#{file_name}.json"), file)
   end
 
-  def save_brain(brain, name) do
+  def save_brain(brain, name, paths \\ %{}) do
+    paths = Map.merge(paths, @paths)
+
     iolist =
       brain
       |> Brain.prepare()
       |> Brain.encode(name)
 
-    File.write!(Path.join(paths.brain_path), "#{file_name}.brain", iolist)
+    File.write!(Path.join(paths.brain_path), "#{name}.brain", iolist)
   end
 
   defp prepare_zone(file, zone) do

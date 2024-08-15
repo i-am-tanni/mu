@@ -1,7 +1,7 @@
 defmodule Mu.Character.BrainView do
   use Kalevala.Character.View
 
-  @max_lines = 20
+  @max_items 20
 
   # Renders a behavioral tree list to a printable IO list
   def render("list", %{list: list} = assigns) do
