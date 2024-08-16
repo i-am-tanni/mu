@@ -378,17 +378,18 @@ defmodule Mu.World.Saver do
     case File.exists?(dest) do
       true ->
         # if file exists already, create a backup
-        temp = Path.join(path, "tmp")
-        if !File.dir?(temp), do: File.mkdir!(temp)
+        temp_path = Path.join(path, "tmp")
+        if !File.dir?(temp_path), do: File.mkdir!(temp_path)
+        temp = Path.join(temp_path, file_name)
         File.copy!(dest, temp)
 
         with {:error, error} <- File.write(dest, file) do
           # so that if an error is encountered on write, restore from backup
-          File.copy!(Path.join(temp, file_name), dest)
+          File.copy!(temp, dest)
           raise error
         end
 
-        File.rmdir!(temp)
+        File.rmdir!(temp_path)
 
       false ->
         File.write!(dest, file)
