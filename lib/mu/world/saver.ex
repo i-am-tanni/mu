@@ -1,6 +1,6 @@
 defmodule Mu.World.Saver.ZoneFile do
   @derive Jason.Encoder
-  defstruct [:zone, rooms: [], items: []]
+  defstruct [:zone, rooms: [], items: [], characters: []]
 end
 
 defmodule Mu.World.Saver.BrainPreparer do
@@ -358,18 +358,41 @@ defmodule Mu.World.Saver do
       |> prepare_items(zone)
       |> Jason.encode!(pretty: true)
 
-    File.write!(Path.join(paths.world_path, "#{file_name}.json"), file)
+    save!(paths.world_path, "#{file_name}.json", file)
   end
 
   def save_brain(brain, name, paths \\ %{}) do
     paths = Map.merge(paths, @paths)
 
-    iolist =
+    file =
       brain
       |> Brain.prepare()
       |> Brain.encode(name)
 
-    File.write!(Path.join(paths.brain_path), "#{name}.brain", iolist)
+    save!(paths.brain_path, "#{name}.brain", file)
+  end
+
+  def save!(path, file_name, file) do
+    dest = Path.join(path, file_name)
+
+    case File.exists?(dest) do
+      true ->
+        # if file exists already, create a backup
+        temp = Path.join(path, "tmp")
+        if !File.dir?(temp), do: File.mkdir!(temp)
+        File.copy!(dest, temp)
+
+        with {:error, error} <- File.write(dest, file) do
+          # so that if an error is encountered on write, restore from backup
+          File.copy!(Path.join(temp, file_name), dest)
+          raise error
+        end
+
+        File.rmdir!(temp)
+
+      false ->
+        File.write!(dest, file)
+    end
   end
 
   defp prepare_zone(file, zone) do

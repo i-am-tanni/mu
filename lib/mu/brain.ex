@@ -185,8 +185,8 @@ defmodule Mu.Brain do
   end
 
   # export functions -- see Mu.World.Saver.save_brain/2
-  defdelegate prepare, to: Mu.World.Saver.BrainPreparer, as: :run
-  defdelegate encode, to: Mu.World.Saver.BrainEncoder, as: :run
+  defdelegate prepare(brain), to: Mu.World.Saver.BrainPreparer, as: :run
+  defdelegate encode(prepared_brain, name), to: Mu.World.Saver.BrainEncoder, as: :run
 
   def process(brain, brains) when brain != nil do
     %Kalevala.Brain{
