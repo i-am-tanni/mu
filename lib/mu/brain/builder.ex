@@ -19,6 +19,10 @@ defmodule Mu.Brain.BuilderHelpers do
   alias Mu.Brain.Social
   alias Mu.Character.DelayEventAction
 
+  @moduledoc """
+  Converts a behavorial tree to a list where the level key
+    corresponds to which branch in the tree the node lives.
+  """
   def to_list(%Kalevala.Brain{root: root}) do
     {list, _} = _to_list([root])
     Enum.reverse(list)
@@ -45,7 +49,6 @@ defmodule Mu.Brain.BuilderHelpers do
 
   @doc """
   Converts a behavioral tree **list** back to a tree.
-  If a behavioral tree is converted to a list with no changes, when fed back to this function it will be converted back to the original.
   """
 
   def to_tree(list, temp \\ [], acc \\ [])
