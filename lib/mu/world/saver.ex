@@ -351,28 +351,24 @@ defmodule Mu.World.Saver do
     paths = Map.merge(paths, @paths)
     zone = ZoneCache.get!(zone_id)
 
-    file =
-      %ZoneFile{}
-      |> prepare_zone(zone)
-      |> prepare_rooms(zone)
-      |> prepare_items(zone)
-      |> Jason.encode!(pretty: true)
-
-    save!(paths.world_path, "#{file_name}.json", file)
+    %ZoneFile{}
+    |> prepare_zone(zone)
+    |> prepare_rooms(zone)
+    |> prepare_items(zone)
+    |> Jason.encode!(pretty: true)
+    |> save!(paths.world_path, "#{file_name}.json")
   end
 
   def save_brain(brain, name, paths \\ %{}) do
     paths = Map.merge(paths, @paths)
 
-    file =
-      brain
-      |> Brain.prepare()
-      |> Brain.encode(name)
-
-    save!(paths.brain_path, "#{name}.brain", file)
+    brain
+    |> Brain.prepare()
+    |> Brain.encode(name)
+    |> save!(paths.brain_path, "#{name}.brain")
   end
 
-  def save!(path, file_name, file) do
+  def save!(file, path, file_name) do
     dest = Path.join(path, file_name)
 
     case File.exists?(dest) do
