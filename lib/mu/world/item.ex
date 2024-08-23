@@ -40,6 +40,8 @@ defmodule Mu.World.Item do
     :description,
     :callback_module,
     :wear_slot,
+    :type,
+    :subtype,
     meta: %{},
     verbs: []
   ]
