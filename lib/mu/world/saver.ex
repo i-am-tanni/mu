@@ -480,7 +480,7 @@ defmodule Mu.World.Saver do
       name: mobile.name,
       keywords: mobile.keywords,
       description: mobile.description,
-      spawn_rules: Map.get(mobile, :spawn_rules)
+      spawn_rules: mobile.spawn_rules
     }
   end
 end
