@@ -464,16 +464,23 @@ defmodule Mu.World.Saver do
   end
 
   defp prepare_item(item) do
-    wear_slot = with nil <- item.wear_slot, do: "null"
-    
     %{
       description: item.description,
       dropped_name: item.dropped_name,
       keywords: item.keywords,
       name: item.name,
-      wear_slot: wear_slot,
+      wear_slot: item.wear_slot,
       type: item.type,
       sub_type: item.sub_type
+    }
+  end
+  
+  defp prepare_mobile(mobile) do
+    %{
+      name: mobile.name,
+      keywords: mobile.keywords,
+      description: mobile.description,
+      spawn_rules: Map.get(mobile, :spawn_rules)
     }
   end
 end

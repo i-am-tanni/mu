@@ -220,8 +220,6 @@ defmodule Mu.World.Loader do
       (get_verbs(item.type) ++ get_verbs(item.subtype))
       |> Enum.dedup()
       |> Enum.map(&Map.fetch!(context.verbs, &1))
-
-    wear_slot = with "null" <- Map.get(item, :wear_slot), do: nil
       
     %Item{
       id: key,
@@ -229,7 +227,7 @@ defmodule Mu.World.Loader do
       name: item.name,
       dropped_name: item.dropped_name,
       description: item.description,
-      wear_slot: wear_slot,
+      wear_slot: Map.get(item, :wear_slot),
       callback_module: Item,
       type: item.type,
       subtype: item.subtype,
