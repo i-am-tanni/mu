@@ -355,6 +355,7 @@ defmodule Mu.World.Saver do
     |> prepare_zone(zone)
     |> prepare_rooms(zone)
     |> prepare_items(zone)
+    |> prepare_characters(zone)
     |> Jason.encode!(pretty: true)
     |> save!(paths.world_path, "#{file_name}.json")
   end
@@ -424,6 +425,17 @@ defmodule Mu.World.Saver do
 
     %{file | items: items}
   end
+  
+  defp prepare_characters(file, zone) when zone.characters == [], do: file
+
+  defp prepare_characters(file, zone) do
+    characters =
+      Enum.into(zone.characters, %{}, fn character ->
+        {to_string(character.id), prepare_character(character)}
+      end)
+      
+    %{file | characters: characters}
+  end
 
   defp prepare_room(room) do
     exits =
@@ -475,7 +487,7 @@ defmodule Mu.World.Saver do
     }
   end
   
-  defp prepare_mobile(mobile) do
+  defp prepare_character(mobile) do
     %{
       name: mobile.name,
       keywords: mobile.keywords,
