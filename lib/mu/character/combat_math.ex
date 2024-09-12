@@ -13,6 +13,10 @@ defmodule Mu.Character.CombatMath do
     Enum.random(1..1000) <= hit_chance
   end
 
+  @doc """
+  Where a = the attacker's attack value and b = the defender's evasion value,
+    calculates the hit chance of 1da - 1db >= 0
+  """
   def hit_chance(atk, df) do
     case atk >= df do
       true ->
