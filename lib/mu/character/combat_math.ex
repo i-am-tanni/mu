@@ -80,7 +80,7 @@ defmodule Mu.Character.CombatMath do
   """
 
   def hit_chance(atk, df) do
-    case atk >= df do
+    case atk > df do
       true ->
         atk_2x = 2 * atk
         (atk_2x - df - 1) / atk_2x
