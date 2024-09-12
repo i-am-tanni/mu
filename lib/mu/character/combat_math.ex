@@ -7,6 +7,7 @@ defmodule Mu.Character.CombatMath do
 
     hit_chance =
       (hit_chance(atk, df) + mod_percent) * 1000
+      |> round()
       |> min(9500)
       |> max(50)
 
@@ -16,6 +17,26 @@ defmodule Mu.Character.CombatMath do
   @doc """
   Where a = the attacker's attack value and b = the defender's evasion value,
     calculates the hit chance of 1da - 1db >= 0
+
+  ## Examples
+
+      iex> Mu.Character.CombatMath.hit_chance(4, 3)
+      0.50
+
+      iex> Mu.Character.CombatMath.hit_chance(5, 3)
+      0.60
+
+      iex> Mu.Character.CombatMath.hit_chance(8, 3)
+      0.75
+
+      iex> Mu.Character.CombatMath.hit_chance(10, 3)
+      0.80
+
+      iex> Mu.Character.CombatMath.hit_chance(20, 3)
+      0.90
+
+      iex> Mu.Character.CombatMath.hit_chance(40, 3)
+      0.95
   """
   def hit_chance(atk, df) do
     case atk >= df do
