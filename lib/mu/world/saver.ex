@@ -360,6 +360,51 @@ defmodule Mu.World.Saver do
     |> save!(paths.world_path, "#{file_name}.json")
   end
 
+  def save_brains(zone, opts \\ []) do
+    paths = Map.merge(Keyword.get(opts, :paths, %{}), @paths)
+    file_name = Keyword.get(opts, :file_name, zone.id)
+
+    # Brains are loaded into a map where the keys are brain ids.
+    # Therefore brain ids must be unique to prevent strange bugs.
+
+    brain_ids =
+      Brain.load_folder(paths.brain_path)
+      |> Enum.filter(fn file ->
+        String.match?(file, ~r/\.brain$/)
+      end)
+      |> Enum.map(&File.read!/1)
+      |> Enum.map(&Mu.Brain.Parser.run/1)
+      |> Enum.map(fn brain ->
+        [brain_id] = Map.keys(brain)
+        brain_id
+      end)
+      |> MapSet.new()
+
+    {brains, _} =
+      for %{brain: %{id: id} = brain} <- zone.characters,
+          id != :brain_not_loaded,
+          reduce: {[], brain_ids} do
+        {brains, ids} ->
+          case MapSet.member?(ids, id) do
+            true ->
+              unique_id = uniqify_id(id, ids)
+              brain = %{brain | id: unique_id}
+              {[brain | brains], MapSet.put(ids, unique_id)}
+
+            false ->
+              {[brain | brains], MapSet.put(brain_ids, id)}
+          end
+      end
+
+    brains
+    |> Enum.map(fn brain ->
+      brain
+      |> Brain.prepare()
+      |> Brain.encode(brain.id)
+    end)
+    |> save!(paths.brain_path, "#{file_name}.brain")
+  end
+
   def save_brain(brain, name, paths \\ %{}) do
     paths = Map.merge(paths, @paths)
 
@@ -369,7 +414,7 @@ defmodule Mu.World.Saver do
     |> save!(paths.brain_path, "#{name}.brain")
   end
 
-  def save!(file, path, file_name) do
+  defp save!(file, path, file_name) do
     dest = Path.join(path, file_name)
 
     case File.exists?(dest) do
@@ -425,15 +470,15 @@ defmodule Mu.World.Saver do
 
     %{file | items: items}
   end
-  
+
   defp prepare_characters(file, zone) when zone.characters == [], do: file
 
   defp prepare_characters(file, zone) do
     characters =
       Enum.into(zone.characters, %{}, fn character ->
-        {to_string(character.id), prepare_character(character)}
+        {to_string(character.id), prepare_character(character, zone)}
       end)
-      
+
     %{file | characters: characters}
   end
 
@@ -486,13 +531,45 @@ defmodule Mu.World.Saver do
       sub_type: item.sub_type
     }
   end
-  
-  defp prepare_character(mobile) do
+
+  defp prepare_character(mobile, context) do
+    active? =
+      case Map.get(context.character_spawners, mobile.id) do
+        %{active?: active?} -> active?
+        nil -> false
+      end
+
+    spawn_rules = mobile.spawn_rules
+    spawn_rules = %{
+      active?: active?,
+      minimum_count: spawn_rules.minimum_count,
+      maximum_count: spawn_rules.maximum_count,
+      minimum_delay: spawn_rules.minimum_delay,
+      random_delay: spawn_rules.random_delay,
+      strategy: spawn_rules.strategy
+    }
+
+    brain_id =
+      case mobile.brain do
+        %{id: id} -> id
+        _ -> :brain_not_loaded
+      end
+
     %{
       name: mobile.name,
       keywords: mobile.keywords,
       description: mobile.description,
-      spawn_rules: mobile.spawn_rules
+      spawn_rules: spawn_rules,
+      brain: brain_id
     }
   end
+
+  defp uniqify_id(id, ids, count \\ 1) do
+    try_id = "#{id}#{count}"
+    case MapSet.member?(ids, try_id) do
+      true -> uniqify_id(id, ids, count + 1)
+      false -> try_id
+    end
+   end
+
 end

@@ -220,7 +220,7 @@ defmodule Mu.World.Loader do
       (get_verbs(item.type) ++ get_verbs(item.subtype))
       |> Enum.dedup()
       |> Enum.map(&Map.fetch!(context.verbs, &1))
-      
+
     %Item{
       id: key,
       keywords: item.keywords,
@@ -303,10 +303,19 @@ defmodule Mu.World.Loader do
     }
 
     brains = context.brains
-
     brain =
-      Map.get(brains, character[:brain])
-      |> Mu.Brain.process(brains)
+      case Map.get(character, :brain) do
+        "brain_not_loaded" ->
+          %Mu.Brain{
+            id: :brain_not_loaded,
+            root: %Kalevala.Brain.NullNode{}
+          }
+
+        brain_id ->
+          Map.get(brains, brain_id)
+          |> Mu.Brain.process(brain_id, brains)
+      end
+
 
     %Character{
       id: "#{context.zone_id}:#{key}",

@@ -155,6 +155,12 @@ defmodule Mu.Brain do
   Load and parse brain data into behavior tree structs
   """
 
+  defstruct [
+    id: :brain_not_loaded,
+    root: %Kalevala.Brain.NullNode{},
+    state: %Kalevala.Brain.State{}
+  ]
+
   @brains_path "data/brains"
 
   @doc """
@@ -173,7 +179,7 @@ defmodule Mu.Brain do
     |> Enum.reduce(%{}, &Map.merge(&2, &1))
   end
 
-  defp load_folder(path, acc \\ []) do
+  def load_folder(path, acc \\ []) do
     Enum.reduce(File.ls!(path), acc, fn file, acc ->
       path = Path.join(path, file)
 
@@ -188,14 +194,16 @@ defmodule Mu.Brain do
   defdelegate prepare(brain), to: Mu.World.Saver.BrainPreparer, as: :run
   defdelegate encode(prepared_brain, name), to: Mu.World.Saver.BrainEncoder, as: :run
 
-  def process(brain, brains) when brain != nil do
-    %Kalevala.Brain{
+  def process(brain, id, brains) when brain != nil do
+    %Mu.Brain{
+      id: id,
       root: parse_node(brain, brains)
     }
   end
 
-  def process(_, _brains) do
-    %Kalevala.Brain{
+  def process(_, _, _) do
+    %Mu.Brain{
+      id: :brain_not_loaded,
       root: %Kalevala.Brain.NullNode{}
     }
   end
