@@ -33,10 +33,10 @@ defmodule Mu.Character.CombatMath do
 
   ## Examples
 
-      iex> CombatMath.atk_to_df(20, 0.75)
+      iex> Mu.Character.CombatMath.atk_to_df(20, 0.75)
       9
 
-      iex> CombatMath.atk_to_df(5, 0.20)
+      iex> Mu.Character.CombatMath.atk_to_df(5, 0.20)
       10
 
   """
@@ -65,10 +65,10 @@ defmodule Mu.Character.CombatMath do
 
   ## Examples
 
-      iex> CombatMath.df_to_atk(9, 0.75)
+      iex> Mu.Character.CombatMath.df_to_atk(9, 0.75)
       20
 
-      iex> CombatMath.df_to_atk(10, 0.20)
+      iex> Mu.Character.CombatMath.df_to_atk(10, 0.20)
       5
 
   """
@@ -97,10 +97,10 @@ defmodule Mu.Character.CombatMath do
 
   ## Examples
 
-      iex> CombatMath.modified_atk(10, 5, 0.10)
+      iex> Mu.Character.CombatMath.modified_atk(10, 5, 0.10)
       15
 
-      iex> CombatMath.modified_atk(5, 10, 0.05)
+      iex> Mu.Character.CombatMath.modified_atk(5, 10, 0.05)
       6
 
   """
@@ -128,10 +128,10 @@ defmodule Mu.Character.CombatMath do
 
   ## Examples
 
-      iex> CombatMath.modified_df(10, 5, -0.10)
+      iex> Mu.Character.CombatMath.modified_df(10, 5, -0.10)
       7
 
-      iex> CombatMath.modified_df(10, 25, 0.12)
+      iex> Mu.Character.CombatMath.modified_df(10, 25, 0.12)
       15
 
   """
