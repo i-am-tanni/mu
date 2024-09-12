@@ -18,6 +18,9 @@ defmodule Mu.Character.CombatMath do
   Where a = the attacker's attack value and b = the defender's evasion value,
     calculates the hit chance of 1da - 1db >= 0
 
+  When attack exceeds defense, increases in attack have depreciating returns.
+  Otherwise, increases in attack scale linearly.
+
   ## Examples
 
       iex> Mu.Character.CombatMath.hit_chance(4, 3)
@@ -37,6 +40,34 @@ defmodule Mu.Character.CombatMath do
 
       iex> Mu.Character.CombatMath.hit_chance(40, 3)
       0.95
+
+  When defense exceeds attack, increases in defense have depreciating returns.
+  Otherwise, increases in defense scale linearly.
+
+  ## Examples
+
+      iex> Mu.Character.CombatMath.hit_chance(100, 19)
+      0.90
+
+      iex> Mu.Character.CombatMath.hit_chance(100, 39)
+      0.80
+
+      iex> Mu.Character.CombatMath.hit_chance(100, 59)
+      0.70
+
+      iex> Mu.Character.CombatMath.hit_chance(100, 110)
+      0.45
+
+      iex> Mu.Character.CombatMath.hit_chance(100, 198)
+      0.25
+
+      iex> Mu.Character.CombatMath.hit_chance(100, 495)
+      0.10
+
+  If defense == attack, the defender has a slight edge:
+
+      iex> Mu.Character.CombatMath.hit_chance(10, 10)
+      0.45
   """
   def hit_chance(atk, df) do
     case atk >= df do
