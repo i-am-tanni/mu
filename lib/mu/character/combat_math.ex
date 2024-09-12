@@ -1,9 +1,13 @@
 defmodule Mu.Character.CombatMath do
   def hit?(atk, df, xl_diff) do
+    # bonus or penalty applied if attacker's level doesn't match defender's
     mod_percent =
       xl_diff * 0.05
       |> min(0.25)
       |> max(-0.25)
+
+    # While this could be attack roll less evade roll, it's easier and faster
+    #   to convert to a raw percentage and roll on that.
 
     hit_chance =
       (hit_chance(atk, df) + mod_percent) * 1000
