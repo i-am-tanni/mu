@@ -8,7 +8,6 @@ defmodule Mu.Character.CombatMath do
 
     # While this could be attack roll less evade roll, it's easier and faster
     #   to convert to a raw percentage and roll on that.
-
     hit_chance =
       (hit_chance(atk, df) + mod_percent) * 1000
       |> round()
