@@ -179,7 +179,8 @@ defmodule Mu.Character.CombatMath do
     result =
       cond do
         modded_hit_chance >= 0.50 ->
-          (df + 1) / (2 * (1 - modded_hit_chance))
+          miss_chance = 1 - modded_hit_chance
+          (df + 1) / (2 * miss_chance)
 
         modded_hit_chance >= 0.05 ->
           2 * df * modded_hit_chance + 1
