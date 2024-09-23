@@ -33,7 +33,7 @@ defmodule Mu.World.Saver.BrainPreparer do
       %WeightedSelector{} = node ->
         nodes =
           for weight <- node.weights, node <- node.nodes do
-            %{node: "WeightedNode", weight: weight, node: prepare_node(node)}
+            %{node: "WeightedNode", weight: weight, data: prepare_node(node)}
           end
 
         %{node: "WeightedSelector", nodes: nodes}
@@ -192,13 +192,13 @@ defmodule Mu.World.Saver.BrainEncoder do
   end
 
   defp encode("WeightedNode", node, level) do
-    %{node: node, weight: weight} = node
+    %{data: data, weight: weight} = node
     indents = indent(level)
 
     ~E"""
     <%=indents%>Node{
     <%=indents%>    weight: <%= weight %>,
-    <%=indents%>    node: <%= encode(node.type, node) %>
+    <%=indents%>    node: <%= encode(data.node, data) %>
     <%=indents%>},
     """
 
