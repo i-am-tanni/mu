@@ -129,7 +129,7 @@ defmodule Mu.World.WorldMap.Helpers do
 
     case Map.get(nodes, room_id, :uncharted) do
       %MapNode{x: x, y: y, z: z} = center ->
-        map_data =
+        render_data =
           for room_id <- neighbors({graph, nodes, z}, room_id),
               node = Map.fetch!(nodes, room_id),
               x = node.x - x + @center_x,
@@ -143,7 +143,7 @@ defmodule Mu.World.WorldMap.Helpers do
           end
 
         Enum.map(0..@index_max, fn i ->
-          case Map.get(map_data, i, :substrate) do
+          case Map.get(render_data, i, :substrate) do
             %MapNode{symbol: symbol} ->
               symbol
 
@@ -181,6 +181,7 @@ defmodule Mu.World.WorldMap.Helpers do
     to_visit =
       room_ids
       |> Enum.flat_map(fn room_id ->
+        # get all unvisited neighbors on the same z-plane
         for room_id <- :digraph.out_neighbours(graph, room_id),
             match?(%MapNode{z: ^z}, nodes[room_id]),
             not MapSet.member?(visited, room_id) do
