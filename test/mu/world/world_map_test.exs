@@ -145,8 +145,6 @@ defmodule Mu.World.WorldMapTest do
     |> Enum.intersperse("\n")
     |> to_string()
 
-  #IO.inspect(result, label: "RESULT")
-
   assert expect == result
 
   end
