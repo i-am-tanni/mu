@@ -6,7 +6,7 @@ defmodule Mu.World.WorldMap do
 
   defstruct [
     :graph,
-    nodes: %{},
+    vertices: %{},
     loaded_zones: MapSet.new()
   ]
 
@@ -22,6 +22,10 @@ defmodule Mu.World.WorldMap do
     GenServer.call(__MODULE__, {:mini_map, room_id})
   end
 
+  def reset() do
+    GenServer.cast(__MODULE__, :reset)
+  end
+
   # private
 
   @impl true
@@ -35,6 +39,12 @@ defmodule Mu.World.WorldMap do
   end
 
   @impl true
+  def handle_cast(:reset, state) do
+    :digraph.delete(state.graph)
+    {:noreply, %WorldMap{graph: :digraph.new()}}
+  end
+
+  @impl true
   def handle_cast({:add_zone, zone}, state) do
     state = Helpers.add_zone(state, zone)
     {:noreply, state}
@@ -44,16 +54,17 @@ defmodule Mu.World.WorldMap do
   def handle_call({:mini_map, room_id}, _from, state) do
     {:reply, Helpers.mini_map(state, room_id), state}
   end
+
 end
 
-defmodule Mu.World.WorldMap.MapNode do
+defmodule Mu.World.WorldMap.Vertex do
   defstruct [:id, :symbol, :x, :y, :z]
 end
 
 defmodule Mu.World.WorldMap.Helpers do
 
   alias Mu.World.WorldMap
-  alias Mu.World.WorldMap.MapNode
+  alias Mu.World.WorldMap.Vertex
   alias Mu.World.Zone
 
   @xsize 5
@@ -88,10 +99,10 @@ defmodule Mu.World.WorldMap.Helpers do
           :digraph.add_edge(graph, from, to)
         end
 
-        updated_nodes =
-          Enum.reduce(rooms, world_map.nodes, fn %{id: room_id} = room, acc ->
-            node =
-              %MapNode{
+        updated_vertices =
+          Enum.reduce(rooms, world_map.vertices, fn %{id: room_id} = room, acc ->
+            vertex =
+              %Vertex{
                 id: room_id,
                 symbol: room.symbol,
                 x: room.x,
@@ -99,12 +110,12 @@ defmodule Mu.World.WorldMap.Helpers do
                 z: room.z
               }
 
-            Map.put(acc, room_id, node)
+            Map.put(acc, room_id, vertex)
           end)
 
         loaded_zones = MapSet.put(world_map.loaded_zones, zone_id)
 
-        %{world_map | nodes: updated_nodes, loaded_zones: loaded_zones}
+        %{world_map | vertices: updated_vertices, loaded_zones: loaded_zones}
 
       false ->
         world_map
@@ -125,26 +136,26 @@ defmodule Mu.World.WorldMap.Helpers do
   ```
   """
   def mini_map(world_map, room_id) do
-    %WorldMap{nodes: nodes, graph: graph} = world_map
+    %WorldMap{vertices: vertices, graph: graph} = world_map
 
-    case Map.get(nodes, room_id, :uncharted) do
-      %MapNode{x: x, y: y, z: z} = center ->
+    case Map.get(vertices, room_id, :uncharted) do
+      %Vertex{x: x, y: y, z: z} = center ->
         render_data =
-          for room_id <- neighbors({graph, nodes, z}, room_id),
-              node = Map.fetch!(nodes, room_id),
-              x = node.x - x + @center_x,
-              y = y - node.y + @center_y,
+          for room_id <- neighbors({graph, vertices, z}, room_id),
+              vertex = Map.fetch!(vertices, room_id),
+              x = vertex.x - x + @center_x,
+              y = y - vertex.y + @center_y,
               x <= @xmax and x >= @xmin,
               y <= @ymax and y >= @ymin,
               reduce: %{@center_index => %{center | symbol: @you_are_here}} do
             acc ->
               index2d = y * @xsize + x
-              Map.put(acc, index2d, node)
+              Map.put(acc, index2d, vertex)
           end
 
         Enum.map(0..@index_max, fn i ->
           case Map.get(render_data, i, :substrate) do
-            %MapNode{symbol: symbol} ->
+            %Vertex{symbol: symbol} ->
               symbol
 
             :substrate ->
@@ -172,9 +183,11 @@ defmodule Mu.World.WorldMap.Helpers do
 
   defp _neighbors(map_data, room_ids, visited \\ MapSet.new(), depth \\ 0)
 
+  defp _neighbors(_, [], _, _), do: []
+
   defp _neighbors(_, _, _, @max_depth), do: []
 
-  defp _neighbors({graph, nodes, z} = map_data, room_ids, visited, depth) do
+  defp _neighbors({graph, vertices, z} = map_data, room_ids, visited, depth) do
     visited = MapSet.new(room_ids) |> MapSet.union(visited)
 
     # remove duplicates as multiple nodes can share the same neighbor in the same pass
@@ -183,7 +196,7 @@ defmodule Mu.World.WorldMap.Helpers do
       |> Enum.flat_map(fn room_id ->
         # get all unvisited neighbors on the same z-plane
         for room_id <- :digraph.out_neighbours(graph, room_id),
-            match?(%MapNode{z: ^z}, nodes[room_id]),
+            match?(%Vertex{z: ^z}, vertices[room_id]),
             not MapSet.member?(visited, room_id) do
           room_id
         end
