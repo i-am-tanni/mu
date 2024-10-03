@@ -45,17 +45,13 @@ defmodule Mu.World.Loader do
   end
 
   defp load_world(path) do
-    load_folder(path)
-    |> Enum.filter(fn file ->
-      String.match?(file, ~r/\.json$/)
-    end)
-    |> Enum.map(&File.read!/1)
-    |> Enum.map(&Jason.decode!/1)
-    |> Enum.map(fn zone_data ->
-      %{"zone" => %{"id" => id}} = zone_data
+    for file <- load_folder(path),
+        String.match?(file, ~r/\.json$/),
+        zone_data = Jason.decode!(File.read!(file)),
+        %{"zone" => %{"id" => id}} = zone_data,
+        into: %{} do
       {id, zone_data}
-    end)
-    |> Enum.into(%{})
+    end
   end
 
   defp load_folder(path, acc \\ []) do
