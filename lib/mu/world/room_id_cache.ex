@@ -1,6 +1,7 @@
 defmodule Mu.World.RoomIdCache do
   @moduledoc """
-  Cache for looking up integer ids generated from string identifiers sourced from the room data
+  Cache for looking up integer room ids generated from string identifiers sourced from the room data.
+  Ids are generated from a hash provided the room string identifier.
   """
 
   defstruct [ids: MapSet.new(), collisions: %{}]
