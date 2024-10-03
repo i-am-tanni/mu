@@ -48,9 +48,9 @@ defmodule Mu.World.Loader do
     for file <- load_folder(path),
         String.match?(file, ~r/\.json$/),
         zone_data = Jason.decode!(File.read!(file)),
-        %{"zone" => %{"id" => id}} = zone_data,
+        %{"zone" => %{"id" => zone_id}} = zone_data,
         into: %{} do
-      {id, zone_data}
+      {zone_id, zone_data}
     end
   end
 
