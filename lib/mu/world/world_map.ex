@@ -153,6 +153,12 @@ defmodule Mu.World.WorldMap.Helpers do
               Map.put(acc, index2d, vertex)
           end
 
+        # index reference:
+        #   00 01 02 03 04
+        #   05 06 07 08 09
+        #   10 11 12 13 14
+        #   15 16 17 18 19
+        #   20 21 22 23 24
         Enum.map(0..@index_max, fn i ->
           case Map.get(render_data, i, :substrate) do
             %Vertex{symbol: symbol} ->
@@ -192,8 +198,7 @@ defmodule Mu.World.WorldMap.Helpers do
 
     # remove duplicates as multiple nodes can share the same neighbor in the same pass
     to_visit =
-      room_ids
-      |> Enum.flat_map(fn room_id ->
+      Enum.flat_map(room_ids, fn room_id ->
         # get all unvisited neighbors on the same z-plane
         for room_id <- :digraph.out_neighbours(graph, room_id),
             match?(%Vertex{z: ^z}, vertices[room_id]),
