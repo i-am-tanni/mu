@@ -191,17 +191,15 @@ defmodule Mu.World.WorldMap.Helpers do
         _, {room_ids, visited} ->
           visited = MapSet.new(room_ids) |> MapSet.union(visited)
 
-          # for each room id, make a list of unique neighbors and flatten the result
+          # for each room id, make a list of unique unvisited neighbors on the same z plane
           to_visit =
-            Enum.flat_map(room_ids, fn room_id ->
-              # get all unvisited neighbors on the same z-plane
-              for room_id <- :digraph.out_neighbours(graph, room_id),
-                  match?(%Vertex{z: ^z}, vertices[room_id]),
-                  not MapSet.member?(visited, room_id) do
-                room_id
-              end
-            end)
-            |> Enum.uniq()
+            for room_id <- room_ids,
+                room_id <- :digraph.out_neighbours(graph, room_id),
+                match?(%Vertex{z: ^z}, vertices[room_id]),
+                not MapSet.member?(visited, room_id),
+                uniq: true do
+              room_id
+            end
 
           {to_visit, {to_visit, visited}}
       end)
