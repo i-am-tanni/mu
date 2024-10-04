@@ -142,7 +142,7 @@ defmodule Mu.World.WorldMap.Helpers do
       %Vertex{x: x, y: y, z: z} = center ->
         render_data =
           for room_id <- neighbors(graph, vertices, z, room_id),
-              vertex = Map.fetch!(vertices, room_id),
+              vertex = vertices[room_id],
               x = vertex.x - x + @center_x,
               y = y - vertex.y + @center_y,
               x <= @xmax and x >= @xmin,
