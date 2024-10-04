@@ -194,11 +194,11 @@ defmodule Mu.World.WorldMap.Helpers do
           # for each room id, make a list of unique unvisited neighbors on the same z plane
           to_visit =
             for room_id <- room_ids,
-                room_id <- :digraph.out_neighbours(graph, room_id),
-                match?(%Vertex{z: ^z}, vertices[room_id]),
-                not MapSet.member?(visited, room_id),
+                neighbor_id <- :digraph.out_neighbours(graph, room_id),
+                match?(%Vertex{z: ^z}, vertices[neighbor_id]),
+                not MapSet.member?(visited, neighbor_id),
                 uniq: true do
-              room_id
+              neighbor_id
             end
 
           {to_visit, {to_visit, visited}}
