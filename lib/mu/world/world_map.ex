@@ -77,7 +77,7 @@ defmodule Mu.World.WorldMap.Helpers do
   @center_x 2
   @center_y 2
   @center_index 12
-  @max_depth 5
+  @max_depth 4
   @you_are_here "<>"
 
   @doc """
@@ -141,7 +141,7 @@ defmodule Mu.World.WorldMap.Helpers do
     case Map.get(vertices, room_id, :uncharted) do
       %Vertex{x: x, y: y, z: z} = center ->
         render_data =
-          for room_id <- neighbors({graph, vertices, z}, room_id),
+          for room_id <- neighbors(graph, vertices, z, room_id),
               vertex = Map.fetch!(vertices, room_id),
               x = vertex.x - x + @center_x,
               y = y - vertex.y + @center_y,
@@ -181,34 +181,32 @@ defmodule Mu.World.WorldMap.Helpers do
     end
   end
 
-  defp neighbors(map_data, room_id) do
-    map_data
-    |> _neighbors(List.wrap(room_id))
-    |> List.flatten()
-  end
+  defp neighbors(graph, vertices, z, room_id) do
+    {neighbors, _} =
+      Enum.flat_map_reduce(0..@max_depth, {[room_id], MapSet.new()}, fn
+        _, {[], _} = acc ->
+          # nothing left to visit
+          {[], acc}
 
-  defp _neighbors(map_data, room_ids, visited \\ MapSet.new(), depth \\ 0)
+        _, {room_ids, visited} ->
+          visited = MapSet.new(room_ids) |> MapSet.union(visited)
 
-  defp _neighbors(_, [], _, _), do: []
+          # for each room id, make a list of unique neighbors and flatten the result
+          to_visit =
+            Enum.flat_map(room_ids, fn room_id ->
+              # get all unvisited neighbors on the same z-plane
+              for room_id <- :digraph.out_neighbours(graph, room_id),
+                  match?(%Vertex{z: ^z}, vertices[room_id]),
+                  not MapSet.member?(visited, room_id) do
+                room_id
+              end
+            end)
+            |> Enum.uniq()
 
-  defp _neighbors(_, _, _, @max_depth), do: []
-
-  defp _neighbors({graph, vertices, z} = map_data, room_ids, visited, depth) do
-    visited = MapSet.new(room_ids) |> MapSet.union(visited)
-
-    # remove duplicates as multiple nodes can share the same neighbor in the same pass
-    to_visit =
-      Enum.flat_map(room_ids, fn room_id ->
-        # get all unvisited neighbors on the same z-plane
-        for room_id <- :digraph.out_neighbours(graph, room_id),
-            match?(%Vertex{z: ^z}, vertices[room_id]),
-            not MapSet.member?(visited, room_id) do
-          room_id
-        end
+          {to_visit, {to_visit, visited}}
       end)
-      |> Enum.uniq()
 
-    [to_visit | _neighbors(map_data, to_visit, visited, depth + 1)]
+    neighbors
   end
 
   defp loaded?(%WorldMap{loaded_zones: loaded_zones}, zone_id) do
