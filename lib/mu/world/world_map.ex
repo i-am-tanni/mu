@@ -50,18 +50,14 @@ defmodule Mu.World.WorldMap do
   def handle_continue({:load, world_path}, _) do
     graph = :digraph.new()
 
-    # load zones
     zones =
       for path <- load_folder(world_path),
-          String.match?(path, ~r/\.json$/) do
-        Jason.decode!(File.read!(path))
-      end
-
-    # intermediate step to pull zone data for vertices and loaded_zones
-    #  and reject any invalid zones
-    zones =
-      for %{"zone" => %{"id" => zone_id}, "rooms" => rooms} <- zones, do:
+          String.match?(path, ~r/\.json$/),
+          zone = Jason.decode!(File.read!(path)),
+          match?(%{"zone" => %{"id" => _}, "rooms" => _}, zone),
+          %{"zone" => %{"id" => zone_id}, "rooms" => rooms} = zone do
         {zone_id, rooms}
+      end
 
     vertices =
       for {zone_id, rooms} <- zones,
