@@ -1,28 +1,32 @@
-defmodule Mu.World.RoomIdCache do
+defmodule Mu.World.RoomIds do
   @moduledoc """
   Cache for looking up integer room ids generated from string identifiers sourced from the room data.
   Ids are generated from a hash provided the room string identifier.
   """
 
+  use GenServer
+
   defstruct [ids: MapSet.new(), collisions: %{}]
 
   @i32_max Integer.pow(2, 31) - 1
-
   @default_path "data/world"
 
   # public interface
 
-  def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
+  def start_link(opts) do
+    GenServer.start_link(__MODULE__, opts, opts)
   end
 
   def init(opts) do
+    :ets.new(__MODULE__, [:named_table])
+
     world_path = Keyword.get(opts, :world_path, @default_path)
 
     keys =
       for path <- load_folder(world_path),
           String.match?(path, ~r/\.json$/),
           zone_data = Jason.decode!(File.read!(path)),
+          match?(%{"zone" => %{"id" => _}, "rooms" => _}, zone_data),
           %{"zone" => %{"id" => zone_id}, "rooms" => rooms} = zone_data,
           room_id <- Map.keys(rooms) do
         # key that we use to generate the room id
@@ -44,7 +48,6 @@ defmodule Mu.World.RoomIdCache do
         end
       end)
 
-    :ets.new(__MODULE__, [:set, :named_table])
     Enum.each(key_vals, &:ets.insert(__MODULE__, &1))
 
     state = %__MODULE__{
@@ -55,7 +58,7 @@ defmodule Mu.World.RoomIdCache do
     {:ok, state}
   end
 
-  def get!(key) do
+  def get(key) do
     with :error <- unwrap(lookup(key)) do
       # restart RoomIdCache process if there is an issue
       #   and raise an error in the calling process

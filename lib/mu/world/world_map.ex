@@ -1,17 +1,21 @@
+defmodule Mu.World.WorldMap.Vertex do
+  defstruct [:id, :symbol, :x, :y, :z]
+end
+
 defmodule Mu.World.WorldMap do
   use GenServer
 
+  defstruct [:graph, vertices: %{}, loaded_zones: MapSet.new()]
+
+  @default_path "data/world"
+
   alias Mu.World.WorldMap
   alias Mu.World.WorldMap.Helpers
-
-  defstruct [
-    :graph,
-    vertices: %{},
-    loaded_zones: MapSet.new()
-  ]
+  alias Mu.World.WorldMap.Vertex
+  alias Mu.World.RoomIds
 
   def start_link(opts) do
-    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
+    GenServer.start_link(__MODULE__, opts, opts)
   end
 
   def add_zone(zone) do
@@ -26,22 +30,71 @@ defmodule Mu.World.WorldMap do
     GenServer.cast(__MODULE__, :reset)
   end
 
+  def delete_path(from, to) do
+    GenServer.cast(__MODULE__, {:delete_path, from, to})
+  end
+
+  def add_path(from, to) do
+    GenServer.cast(__MODULE__, {:add_path, from, to})
+  end
+
   # private
 
   @impl true
-  def init(_) do
+  def init(opts) do
+    world_path = Keyword.get(opts, :path, @default_path)
+    graph = :digraph.new()
 
-    state = %WorldMap{
-      graph: :digraph.new()
-    }
+    # load zones
+    zones =
+      for path <- load_folder(world_path),
+          String.match?(path, ~r/\.json$/) do
+        Jason.decode!(File.read!(path))
+      end
+
+    # intermediate step to pull zone data for vertices and loaded_zones
+    #  and reject any invalid zones
+    zones =
+      for %{"zone" => %{"id" => zone_id}, "rooms" => rooms} <- zones, do:
+        {zone_id, rooms}
+
+    vertices =
+      for {zone_id, rooms} <- zones,
+          %{"id" => room_id, "x" => x, "y" => y, "z" => z, "symbol" => symbol, "exits" => exits} <- rooms,
+          into: %{} do
+        room_id = RoomIds.get("#{zone_id}:#{room_id}")
+
+        :digraph.add_vertex(graph, room_id)
+
+        Enum.each(exits, fn %{to: to} ->
+          :digraph.add_edge(graph, room_id, to)
+        end)
+
+        vertex =
+          %Vertex{
+            id: room_id,
+            x: x,
+            y: y,
+            z: z,
+            symbol: symbol
+          }
+
+        {room_id, vertex}
+      end
+
+    loaded_zones =
+      Enum.into(zones, MapSet.new(), fn {zone_id, _} ->
+        zone_id
+      end)
+
+    state = %__MODULE__{graph: graph, vertices: vertices, loaded_zones: loaded_zones}
 
     {:ok, state}
   end
 
   @impl true
-  def handle_cast(:reset, state) do
-    :digraph.delete(state.graph)
-    {:noreply, %WorldMap{graph: :digraph.new()}}
+  def handle_call({:mini_map, room_id}, _from, state) do
+    {:reply, Helpers.mini_map(state, room_id), state}
   end
 
   @impl true
@@ -51,14 +104,38 @@ defmodule Mu.World.WorldMap do
   end
 
   @impl true
-  def handle_call({:mini_map, room_id}, _from, state) do
-    {:reply, Helpers.mini_map(state, room_id), state}
+  def handle_cast({:del_path, from, to}, state) do
+    :digraph.del_path(state.graph, from, to)
+    {:noreply, state}
   end
 
-end
+  @impl true
+  def handle_cast({:add_path, from, to}, state) do
+    :digraph.add_edge(state.graph, from, to)
+    {:noreply, state}
+  end
 
-defmodule Mu.World.WorldMap.Vertex do
-  defstruct [:id, :symbol, :x, :y, :z]
+  @impl true
+  def handle_cast(:reset, state) do
+    # only used by tests
+    :digraph.delete(state.graph)
+    {:noreply, %WorldMap{graph: :digraph.new()}}
+  end
+
+
+  # helpers
+
+  defp load_folder(path, acc \\ []) do
+    Enum.reduce(File.ls!(path), acc, fn file, acc ->
+      path = Path.join(path, file)
+
+      case String.match?(file, ~r/\./) do
+        true -> [path | acc]
+        false -> load_folder(path, acc)
+      end
+    end)
+  end
+
 end
 
 defmodule Mu.World.WorldMap.Helpers do
@@ -84,8 +161,13 @@ defmodule Mu.World.WorldMap.Helpers do
   Given a zone, if not already, loads rooms into the graph.
   """
   def add_zone(world_map, %Zone{id: zone_id, rooms: rooms}) do
-    case not loaded?(world_map, zone_id) do
+    case MapSet.member?(world_map.loaded_zones, zone_id) do
       true ->
+        # if already loaded, do nothing
+        world_map
+
+      false ->
+        # otherwise load
         %{graph: graph} = world_map
 
         # add vertexes
@@ -116,9 +198,6 @@ defmodule Mu.World.WorldMap.Helpers do
         loaded_zones = MapSet.put(world_map.loaded_zones, zone_id)
 
         %{world_map | vertices: updated_vertices, loaded_zones: loaded_zones}
-
-      false ->
-        world_map
     end
   end
 
@@ -205,9 +284,5 @@ defmodule Mu.World.WorldMap.Helpers do
       end)
 
     neighbors
-  end
-
-  defp loaded?(%WorldMap{loaded_zones: loaded_zones}, zone_id) do
-    MapSet.member?(loaded_zones, zone_id)
   end
 end
