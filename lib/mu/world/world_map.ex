@@ -43,6 +43,11 @@ defmodule Mu.World.WorldMap do
   @impl true
   def init(opts) do
     world_path = Keyword.get(opts, :path, @default_path)
+    {:ok, [], {:continue, {:load, world_path}}}
+  end
+
+  @impl true
+  def handle_continue({:load, world_path}, _) do
     graph = :digraph.new()
 
     # load zones
@@ -88,8 +93,7 @@ defmodule Mu.World.WorldMap do
       end)
 
     state = %__MODULE__{graph: graph, vertices: vertices, loaded_zones: loaded_zones}
-
-    {:ok, state}
+    {:noreply, state}
   end
 
   @impl true
