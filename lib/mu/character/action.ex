@@ -7,7 +7,7 @@ end
 
 defmodule Mu.Character.Action do
   @type t() :: %__MODULE__{}
-  @callback run(Conn.t(), map()) :: Conn.t()
+  @callback run(Kalevala.Character.Conn.t(), map()) :: Kalevala.Character.Conn.t()
   @callback build(map(), list()) :: t()
 
   defstruct [:id, :type, :priority, :conditions, :steps]
