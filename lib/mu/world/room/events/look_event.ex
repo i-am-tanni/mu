@@ -34,10 +34,13 @@ defmodule Mu.World.Room.LookEvent do
 
   def arg(context, event = %{data: %{text: text}}) do
     result =
-      tag(find_local_exit(context, text), :room_exit) ||
-        tag(find_local_character(context, text), :character) ||
-        tag(find_local_item(context, text), :item) ||
-        tag(find_local_extra_desc(context, text), :extra_desc)
+      cond do
+        result = find_local_exit(context, text) -> {:room_exit, result}
+        result = find_local_character(context, text) -> {:character, result}
+        result = find_local_item(context, text) -> {:item, result}
+        result = find_local_extra_desc(context, text) -> {:extra_desc, result}
+        true -> nil
+      end
 
     case result do
       {:room_exit, room_exit} ->
@@ -174,10 +177,4 @@ defmodule Mu.World.Room.LookEvent do
     end)
   end
 
-  defp tag(result, tag) do
-    case maybe(result) do
-      {:ok, data} -> {tag, data}
-      nil -> nil
-    end
-  end
 end
