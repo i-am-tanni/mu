@@ -39,7 +39,7 @@ defmodule Mu.World.Room.LookEvent do
         result = find_local_character(context, text) -> {:character, result}
         result = find_local_item(context, text) -> {:item, result}
         result = find_local_extra_desc(context, text) -> {:extra_desc, result}
-        true -> nil
+        true -> :not_found
       end
 
     case result do
@@ -75,7 +75,7 @@ defmodule Mu.World.Room.LookEvent do
         |> assign(:character, event.acting_character)
         |> render(event.from_pid, CommandView, "prompt")
 
-      nil ->
+      :not_found ->
         context
         |> assign(:text, text)
         |> render(event.from_pid, LookView, "unknown")
