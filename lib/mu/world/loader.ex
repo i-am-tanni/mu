@@ -8,6 +8,7 @@ defmodule Mu.World.Loader do
   alias Kalevala.Character
   alias Mu.World.Zone.Spawner.SpawnRules
   alias Mu.World.Zone.Spawner
+  alias Mu.World.RoomIds
 
   @paths %{
     world_path: "data/world",
@@ -65,18 +66,22 @@ defmodule Mu.World.Loader do
     end)
   end
 
-  defp parse_zone({key, zone_data}, context) do
-    zone = %Zone{}
-    id = key
+  defp parse_zone({zone_id, zone_data}, context) do
     %{"zone" => %{"name" => name}} = zone_data
 
+    rooms =
+      Map.get(zone_data, "rooms", [])
+      |> Enum.map(fn {local_id, room_data} ->
+        room_id = RoomIds.get("#{zone_id}:#{local_id}")
+        {room_id, room_data}
+      end)
+
     # prepare context
-    context = Map.merge(context, %{zone_id: key})
+    context = Map.merge(context, %{zone_id: zone_id})
 
     room_ids_by_mobile =
-      for {room_id, room_data} <- Map.get(zone_data, "rooms", []),
+      for {room_id, room_data} <- rooms,
           mobile_id <- Map.get(room_data, "mobiles", []),
-          room_id = World.parse_id(room_id),
           reduce: %{} do
         acc -> Map.update(acc, mobile_id, [room_id], &[room_id | &1])
       end
@@ -84,7 +89,7 @@ defmodule Mu.World.Loader do
     context = Map.put(context, :spawn_locations, room_ids_by_mobile)
 
     rooms =
-      Map.get(zone_data, "rooms", [])
+      rooms
       |> Enum.map(&keys_to_atoms/1)
       |> Enum.map(&parse_room(&1, context))
 
@@ -108,21 +113,19 @@ defmodule Mu.World.Loader do
       |> Enum.map(&keys_to_atoms/1)
       |> Enum.map(&parse_character(&1, context))
 
-    %{
-      zone
-      | id: id,
-        name: name,
-        rooms: rooms,
-        items: items,
-        characters: characters,
-        character_spawner: character_spawners
+    %Zone{
+      id: zone_id,
+      name: name,
+      rooms: rooms,
+      items: items,
+      characters: characters,
+      character_spawner: character_spawners
     }
   end
 
   defp parse_room({key, room}, context) do
     doors = Map.get(room, :doors, %{})
-    id = World.parse_id(key)
-    exit_context = %{doors: doors, room_id: id}
+    exit_context = %{doors: doors, room_id: key}
 
     exits =
       Map.get(room, :exits, [])
@@ -133,7 +136,7 @@ defmodule Mu.World.Loader do
       |> Enum.map(&parse_extra_desc/1)
 
     %Room{
-      id: id,
+      id: key,
       zone_id: context.zone_id,
       name: room.name,
       description: room.description,
@@ -245,7 +248,19 @@ defmodule Mu.World.Loader do
   end
 
   defp parse_spawner({key, spawner}, type, context) do
-    id = "#{context.zone_id}:#{key}"
+    zone_id = context.zone_id
+
+    spawner =
+      with %{room_ids: room_ids} <- spawner do
+        room_ids =
+          Enum.map(room_ids, fn local_id ->
+            RoomIds.get("#{zone_id}:#{local_id}")
+          end)
+
+        %{spawner | room_ids: room_ids}
+      end
+
+    id = "#{zone_id}:#{key}"
 
     spawner = %Spawner{
       prototype_id: id,
@@ -259,7 +274,7 @@ defmodule Mu.World.Loader do
 
   defp parse_spawn_rules(rules, mobile_template_id, context) do
     room_ids =
-      case rules[:room_ids] || context.spawn_locations[mobile_template_id] do
+      case Map.get(rules, :rooms, context.spawn_locations[mobile_template_id]) do
         nil ->
           raise("No spawn locations found for #{mobile_template_id}")
 
@@ -383,7 +398,7 @@ defmodule Mu.World.Loader do
     %{world | characters: characters}
   end
 
-  defp keys_to_atoms(map = %{}) do
+  defp keys_to_atoms(map) when is_map(map) do
     Enum.into(map, %{}, fn {key, value} ->
       {String.to_atom(key), value}
     end)
@@ -391,11 +406,7 @@ defmodule Mu.World.Loader do
 
   # atomizes keys of nested map
   defp keys_to_atoms({key, map}) when is_map(map) do
-    val =
-      Enum.into(map, %{}, fn {key, value} ->
-        {String.to_atom(key), value}
-      end)
-
-    {key, val}
+    map = keys_to_atoms(map)
+    {key, map}
   end
 end
