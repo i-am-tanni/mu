@@ -30,6 +30,7 @@ defmodule Mu.World.Room.LookEvent do
     |> assign(:mini_map, WorldMap.mini_map(room.id))
     |> assign(:characters, characters)
     |> assign(:item_instances, item_instances)
+    |> assign(:self, event.acting_character)
     |> render(event.from_pid, LookView, "look")
     |> render(event.from_pid, LookView, "look.extra")
     |> prompt(event.from_pid, CommandView, "prompt")
