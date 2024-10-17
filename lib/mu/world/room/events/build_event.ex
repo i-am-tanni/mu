@@ -12,8 +12,8 @@ defmodule Mu.World.Room.BuildEvent do
       true ->
         context
         |> assign(:exit_name, data.start_exit_name)
+        |> assign(:self, event.acting_character)
         |> render(event.from_pid, BuildView, "exit-exists")
-        |> assign(:character, event.acting_character)
         |> render(event.from_pid, CommandView, "prompt")
 
       false ->
@@ -46,8 +46,8 @@ defmodule Mu.World.Room.BuildEvent do
       _ ->
         context
         |> assign(:room_id, end_room_id)
+        |> assign(:self, event.acting_character)
         |> render(event.from_pid, BuildView, "room-id-taken")
-        |> assign(:character, event.acting_character)
         |> render(event.from_pid, CommandView, "prompt")
     end
   end

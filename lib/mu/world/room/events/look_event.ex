@@ -32,8 +32,7 @@ defmodule Mu.World.Room.LookEvent do
     |> assign(:item_instances, item_instances)
     |> render(event.from_pid, LookView, "look")
     |> render(event.from_pid, LookView, "look.extra")
-    |> assign(:character, event.acting_character)
-    |> prompt(event.from_pid, CommandView, "prompt", %{})
+    |> prompt(event.from_pid, CommandView, "prompt")
   end
 
   def arg(context, event = %{data: %{text: text}}) do
@@ -61,29 +60,29 @@ defmodule Mu.World.Room.LookEvent do
       {:character, character} ->
         context
         |> assign(:character, character)
+        |> assign(:self, event.acting_character)
         |> render(event.from_pid, LookView, "character")
-        |> assign(:character, event.acting_character)
         |> render(event.from_pid, CommandView, "prompt")
 
       {:item, item_instance} ->
         context
         |> assign(:item_instance, item_instance)
+        |> assign(:self, event.acting_character)
         |> render(event.from_pid, LookView, "item")
-        |> assign(:character, event.acting_character)
         |> render(event.from_pid, CommandView, "prompt")
 
       {:extra_desc, extra_desc} ->
         context
         |> assign(:extra_desc, extra_desc)
+        |> assign(:self, event.acting_character)
         |> render(event.from_pid, LookView, "extra_desc")
-        |> assign(:character, event.acting_character)
         |> render(event.from_pid, CommandView, "prompt")
 
       :not_found ->
         context
         |> assign(:text, text)
+        |> assign(:self, event.acting_character)
         |> render(event.from_pid, LookView, "unknown")
-        |> assign(:character, event.acting_character)
         |> render(event.from_pid, CommandView, "prompt")
     end
   end
@@ -91,7 +90,7 @@ defmodule Mu.World.Room.LookEvent do
   def exits(context, event) do
     context
     |> assign(:room, context.data)
-    |> assign(:character, event.acting_character)
+    |> assign(:self, event.acting_character)
     |> render(event.from_pid, LookView, "exits")
     |> render(event.from_pid, CommandView, "prompt")
   end
@@ -125,8 +124,8 @@ defmodule Mu.World.Room.LookEvent do
       _ ->
         context
         |> assign(:rooms, result)
+        |> assign(:self, event.acting_character)
         |> render(event.from_pid, LookView, "peek-exit")
-        |> assign(:character, event.acting_character)
         |> render(event.from_pid, CommandView, "prompt")
     end
   end

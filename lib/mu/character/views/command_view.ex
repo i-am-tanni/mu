@@ -3,8 +3,8 @@ defmodule Mu.Character.CommandView do
 
   alias Kalevala.Character.Conn.EventText
 
-  def render("prompt", %{character: character}) do
-    %{vitals: vitals} = character.meta
+  def render("prompt", %{self: self}) do
+    %{vitals: vitals} = self.meta
 
     %EventText{
       topic: "Character.Prompt",

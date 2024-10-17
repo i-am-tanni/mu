@@ -48,7 +48,6 @@ defmodule Mu.Character.CombatEvent.Attacker do
     conn
     |> assign(:reason, event.data.reason)
     |> render(CombatView, "error")
-    |> assign(:character, conn.character)
     |> prompt(CommandView, "prompt")
   end
 end
