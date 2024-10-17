@@ -72,7 +72,7 @@ defmodule Mu.World.Loader do
     rooms =
       Map.get(zone_data, "rooms", [])
       |> Enum.map(fn {local_id, room_data} ->
-        room_id = RoomIds.get("#{zone_id}:#{local_id}")
+        room_id = RoomIds.get("#{zone_id}.#{local_id}")
         {room_id, room_data}
       end)
 
@@ -125,7 +125,7 @@ defmodule Mu.World.Loader do
 
   defp parse_room({key, room}, context) do
     doors = Map.get(room, :doors, %{})
-    exit_context = %{doors: doors, room_id: key}
+    exit_context = %{doors: doors, room_id: key, zone_id: context.zone_id}
 
     exits =
       Map.get(room, :exits, [])
@@ -150,28 +150,34 @@ defmodule Mu.World.Loader do
   end
 
   defp parse_exit({key, room_exit}, context) do
-    door = Map.get(context.doors, key)
+    to_room =
+      case is_binary(room_exit) and String.match?(room_exit, ~r/([^.]+).([^.]+)/) do
+        true ->
+          # if '.' separator is found in room_exit name, assume this is in "ZoneId.room_id" format
+          RoomIds.get(room_exit)
 
-    case room_exit do
-      %{} ->
-        %Exit{
-          # TODO
-        }
+        false ->
+          # else, assume this exit refers to a local id, so combine with current zone id
+          RoomIds.get("#{context.zone_id}.#{room_exit}")
+      end
 
-      to_room ->
-        door = parse_door(door)
-        type = if is_nil(door), do: :normal, else: :door
+    door = parse_door(context.doors[key])
 
-        %Exit{
-          type: type,
-          exit_name: key,
-          start_room_id: context.room_id,
-          end_room_id: to_room,
-          hidden?: false,
-          secret?: false,
-          door: door
-        }
-    end
+    type =
+      cond do
+        door -> :door
+        true -> :normal
+      end
+
+    %Exit{
+      type: type,
+      exit_name: key,
+      start_room_id: context.room_id,
+      end_room_id: to_room,
+      hidden?: false,
+      secret?: false,
+      door: door
+    }
   end
 
   defp parse_extra_desc({keyword, data}) do
@@ -184,9 +190,9 @@ defmodule Mu.World.Loader do
   end
 
   defp parse_door(door) do
-    with %{} <- door do
+    with %{"id" => id} <- door do
       %Door{
-        id: Map.fetch!(door, "id"),
+        id: id,
         closed?: true,
         locked?: Map.has_key?(door, :key_id)
       }
@@ -254,7 +260,7 @@ defmodule Mu.World.Loader do
       with %{room_ids: room_ids} <- spawner do
         room_ids =
           Enum.map(room_ids, fn local_id ->
-            RoomIds.get("#{zone_id}:#{local_id}")
+            RoomIds.get("#{zone_id}.#{local_id}")
           end)
 
         %{spawner | room_ids: room_ids}

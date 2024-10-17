@@ -63,7 +63,7 @@ defmodule Mu.World.WorldMap do
       for {zone_id, rooms} <- zones,
           %{"id" => room_id, "x" => x, "y" => y, "z" => z, "symbol" => symbol, "exits" => exits} <- rooms,
           into: %{} do
-        room_id = RoomIds.get("#{zone_id}:#{room_id}")
+        room_id = RoomIds.get("#{zone_id}.#{room_id}")
 
         :digraph.add_vertex(graph, room_id)
 

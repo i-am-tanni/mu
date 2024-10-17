@@ -30,7 +30,7 @@ defmodule Mu.World.RoomIds do
           %{"zone" => %{"id" => zone_id}, "rooms" => rooms} = zone_data,
           room_id <- Map.keys(rooms) do
         # key that we use to generate the room id
-        "#{zone_id}:#{room_id}"
+        "#{zone_id}.#{room_id}"
       end
 
     {key_vals, {collisions, used_ids}} =
