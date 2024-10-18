@@ -110,11 +110,11 @@ defmodule Mu.Character.Commands do
     parse("@dig", :dig, fn command ->
       command
       |> spaces()
+      |> word(:new_room_id)
+      |> spaces()
       |> word(:start_exit_name)
       |> spaces()
       |> word(:end_exit_name)
-      |> spaces()
-      |> word(:new_room_id)
     end)
   end
 

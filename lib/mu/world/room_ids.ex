@@ -69,6 +69,13 @@ defmodule Mu.World.RoomIds do
 
   def put(data), do: GenServer.call(__MODULE__, {:put, data})
 
+  def has_key?(key) do
+    case lookup(key) do
+      {:ok, _} -> true
+      :error -> false
+    end
+  end
+
   # private
 
   def handle_call({:put, key}, _from, state) when is_binary(key) do
