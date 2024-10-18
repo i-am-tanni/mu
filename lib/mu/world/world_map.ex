@@ -68,6 +68,17 @@ defmodule Mu.World.WorldMap do
         :digraph.add_vertex(graph, room_id)
 
         Enum.each(exits, fn %{to: to} ->
+          to =
+            case is_binary(to) and String.match?(to, ~r/([^.]+).([^.]+)/) do
+              true ->
+                # if '.' separator is found in room exit id, assume this is in "ZoneId.room_id" format
+                RoomIds.get(to)
+
+              false ->
+                # else, assume this exit refers to a local id, so combine with current zone id
+                RoomIds.get("#{zone_id}.#{to}")
+            end
+
           :digraph.add_edge(graph, room_id, to)
         end)
 
