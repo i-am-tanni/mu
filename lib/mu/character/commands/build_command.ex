@@ -19,7 +19,7 @@ defmodule Mu.Character.BuildCommand do
       end
 
     cond do
-      start_exit_name not in @valid_exit_names or is_nil(end_exit_name) ->
+      start_exit_name not in @valid_exit_names ->
         conn
         |> assign(:prompt, true)
         |> assign(:exit_name, start_exit_name)
