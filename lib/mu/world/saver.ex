@@ -494,16 +494,16 @@ defmodule Mu.World.Saver do
       |> Enum.reject(&is_nil/1)
       |> Enum.into(%{})
 
-    room = %{
+    %{
       name: room.name,
       description: room.description,
-      exits: exits
+      exits: exits,
+      doors: doors,
+      x: room.x,
+      y: room.y,
+      z: room.z,
+      symbol: room.symbol
     }
-
-    case doors != %{} do
-      true -> Map.put(room, :doors, doors)
-      false -> room
-    end
   end
 
   defp prepare_exit(room_exit) do

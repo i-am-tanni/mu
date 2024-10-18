@@ -21,6 +21,10 @@
   },
   "rooms": {
     "1": {
+      "x": 0,
+      "y": 1,
+      "z": 0,
+      "symbol": "[]",
       "description": "It's cold up here.",
       "doors": {
         "south": {
@@ -35,6 +39,10 @@
       "items": ["global:helm"]
     },
     "2": {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "symbol": "[]",
       "description": "It's warmer down here.",
       "doors": {
         "north": {
