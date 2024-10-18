@@ -7,6 +7,7 @@ defmodule Mu.World.Room.BuildEvent do
   alias Mu.World.Room
   alias Mu.World.Exit
   alias Mu.World.RoomIds
+  alias Mu.World.WorldMap
 
   @default_symbol "[]"
 
@@ -34,10 +35,10 @@ defmodule Mu.World.Room.BuildEvent do
         |> render(event.from_pid, CommandView, "prompt")
 
       true ->
-        local_id = local.id
+        start_room_id = local.id
         end_room_id = RoomIds.put(room_string)
-        start_exit = Exit.basic_exit(data.start_exit_name, local_id, end_room_id)
-        end_exit = Exit.basic_exit(data.end_exit_name, end_room_id, local_id)
+        start_exit = Exit.basic_exit(data.start_exit_name, start_room_id, end_room_id)
+        end_exit = Exit.basic_exit(data.end_exit_name, end_room_id, start_room_id)
         {x, y, z} = destination_coords(data.start_exit_name, local.x, local.y, local.z)
 
         room = %Room{
@@ -53,6 +54,9 @@ defmodule Mu.World.Room.BuildEvent do
         }
 
         Kickoff.start_room(room)
+        WorldMap.put(room)
+        WorldMap.add_path(start_room_id, end_room_id)
+        WorldMap.add_path(end_room_id, start_room_id)
 
         context
         |> put_data(:exits, [start_exit | context.data.exits])

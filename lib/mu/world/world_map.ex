@@ -38,6 +38,10 @@ defmodule Mu.World.WorldMap do
     GenServer.cast(__MODULE__, {:add_path, from, to})
   end
 
+  def put(room) when is_struct(room, Mu.World.Room) do
+    GenServer.cast(__MODULE__, {:put, room})
+  end
+
   # private
 
   @impl true
@@ -116,6 +120,22 @@ defmodule Mu.World.WorldMap do
   def handle_cast({:add_zone, zone}, state) do
     state = Helpers.add_zone(state, zone)
     {:noreply, state}
+  end
+
+  @impl true
+  def handle_cast({:put, %{id: id} = room}, state) do
+    :digraph.add_vertex(state.graph, id)
+
+    vertex_data =
+      %Vertex{
+        id: id,
+        x: room.x,
+        y: room.y,
+        z: room.z,
+        symbol: room.symbol
+      }
+
+    {:noreply, %{state | vertices: Map.put(state.vertices, id, vertex_data)}}
   end
 
   @impl true
