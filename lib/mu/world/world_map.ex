@@ -64,6 +64,7 @@ defmodule Mu.World.WorldMap do
           %{"id" => room_id, "x" => x, "y" => y, "z" => z, "symbol" => symbol, "exits" => exits} <- rooms,
           into: %{} do
         room_id = RoomIds.get("#{zone_id}.#{room_id}")
+        # While we populate the vertices map, lets also add each vertex and its edges to the graph
 
         # add vertex to graph
         :digraph.add_vertex(graph, room_id)
@@ -84,7 +85,7 @@ defmodule Mu.World.WorldMap do
           :digraph.add_edge(graph, room_id, to)
         end)
 
-        # store data for this vertex key'd by its room id
+        # finally, store data for this vertex key'd by its room id
         vertex =
           %Vertex{
             id: room_id,
