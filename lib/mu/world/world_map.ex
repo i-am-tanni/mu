@@ -68,7 +68,7 @@ defmodule Mu.World.WorldMap do
         # add vertex to graph
         :digraph.add_vertex(graph, room_id)
 
-        # add edges for this vertex to graph
+        # add edges to graph for this vertex
         Enum.each(exits, fn %{to: to} ->
           to =
             case is_binary(to) and String.match?(to, ~r/([^.]+).([^.]+)/) do
@@ -84,7 +84,7 @@ defmodule Mu.World.WorldMap do
           :digraph.add_edge(graph, room_id, to)
         end)
 
-        # data for this vertex
+        # store data for this vertex key'd by its room id
         vertex =
           %Vertex{
             id: room_id,
