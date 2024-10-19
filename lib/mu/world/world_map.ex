@@ -4,6 +4,7 @@ end
 
 defmodule Mu.World.WorldMap do
   use GenServer
+  require Logger
 
   defstruct [:graph, vertices: %{}, loaded_zones: MapSet.new()]
 
@@ -60,34 +61,19 @@ defmodule Mu.World.WorldMap do
           zone = Jason.decode!(File.read!(path)),
           match?(%{"zone" => %{"id" => _}, "rooms" => _}, zone),
           %{"zone" => %{"id" => zone_id}, "rooms" => rooms} = zone do
+        rooms =
+          Enum.map(rooms, fn {room_id, room_data} ->
+            {RoomIds.get("#{zone_id}.#{room_id}"), room_data}
+          end)
         {zone_id, rooms}
       end
 
     vertices =
-      for {zone_id, rooms} <- zones,
-          %{"id" => room_id, "x" => x, "y" => y, "z" => z, "symbol" => symbol, "exits" => exits} <- rooms,
+      for {_, rooms} <- zones,
+          {room_id, %{"x" => x, "y" => y, "z" => z, "symbol" => symbol}} <- rooms,
           into: %{} do
-        room_id = RoomIds.get("#{zone_id}.#{room_id}")
-        # While we populate the vertices map, lets also add each vertex and its edges to the graph
-
         # add vertex to graph
         :digraph.add_vertex(graph, room_id)
-
-        # add edges to graph for this vertex
-        Enum.each(exits, fn %{to: to} ->
-          to =
-            case is_binary(to) and String.match?(to, ~r/([^.]+).([^.]+)/) do
-              true ->
-                # if '.' separator is found in room exit id, assume this is in "ZoneId.room_id" format
-                RoomIds.get(to)
-
-              false ->
-                # else, assume this exit refers to a local id, so combine with current zone id
-                RoomIds.get("#{zone_id}.#{to}")
-            end
-
-          :digraph.add_edge(graph, room_id, to)
-        end)
 
         # finally, store data for this vertex key'd by its room id
         vertex =
@@ -101,6 +87,30 @@ defmodule Mu.World.WorldMap do
 
         {room_id, vertex}
       end
+
+    # add edges to graph. Cannot be done until all vertices are added.
+    for {zone_id, rooms} <- zones,
+        {room_id, %{"exits" => exits}} <- rooms,
+        {_, to} <- exits do
+      to =
+        case is_binary(to) and String.match?(to, ~r/([^\.]+)\.([^\.]+)/) do
+          true ->
+            # if '.' separator is found in room exit id, assume this is in "ZoneId.room_id" format
+            RoomIds.get(to)
+
+          false ->
+            # else, assume this exit refers to a local id, so combine with current zone id
+            RoomIds.get("#{zone_id}.#{to}")
+        end
+
+      case :digraph.add_edge(graph, room_id, to) do
+        {:error, {:bad_vertex, room_id}} ->
+          Logger.warning("Missing room id referenced in exit: #{room_id}. Check all rooms referenced in exits exist.")
+
+        _ ->
+          :ok
+      end
+    end
 
     loaded_zones =
       Enum.into(zones, MapSet.new(), fn {zone_id, _} ->

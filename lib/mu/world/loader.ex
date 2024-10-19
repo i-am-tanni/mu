@@ -155,7 +155,7 @@ defmodule Mu.World.Loader do
 
   defp parse_exit({key, room_exit}, context) do
     to_room =
-      case is_binary(room_exit) and String.match?(room_exit, ~r/([^.]+).([^.]+)/) do
+      case is_binary(room_exit) and String.match?(room_exit, ~r/([^\.]+)\.([^\.]+)/) do
         true ->
           # if '.' separator is found in room_exit name, assume this is in "ZoneId.room_id" format
           RoomIds.get(room_exit)

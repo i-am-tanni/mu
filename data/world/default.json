@@ -20,7 +20,7 @@
     }
   },
   "rooms": {
-    "1": {
+    "north_room": {
       "x": 0,
       "y": 1,
       "z": 0,
@@ -32,13 +32,13 @@
         }
       },
       "exits": {
-        "south": 2
+        "south": "south_room"
       },
       "name": "North Room",
       "mobiles": ["guard"],
       "items": ["global:helm"]
     },
-    "2": {
+    "south_room": {
       "x": 0,
       "y": 0,
       "z": 0,
@@ -50,7 +50,7 @@
         }
       },
       "exits": {
-        "north": 1
+        "north": "north_room"
       },
       "name": "South Room"
     }
