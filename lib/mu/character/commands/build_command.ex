@@ -44,7 +44,7 @@ defmodule Mu.Character.BuildCommand do
     end
   end
 
-  defp to_long(exit_name) when byte_size(exit_name) == 1 do
+  defp to_long(exit_name) when byte_size(exit_name) <= 2 do
     case exit_name do
       "n" -> "north"
       "s" -> "south"
