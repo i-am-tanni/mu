@@ -44,26 +44,26 @@ defmodule Mu.Character.MoveView do
   end
 
   def render("notice", %{direction: :to, reason: reason}) do
-    [reason, "\n"]
+    [reason, "\r\n"]
   end
 
   def render("notice", %{direction: :from, reason: reason}) do
-    [reason, "\n"]
+    [reason, "\r\n"]
   end
 
   def render("fail", %{reason: "no-exits"}) do
-    ~i(You diligently search for an exit, but fail to find one.\n)
+    ~i(You diligently search for an exit, but fail to find one.\r\n)
   end
 
   def render("fail", %{reason: :no_exit, exit_name: exit_name}) do
-    ~i(There is no exit #{exit_name}.\n)
+    ~i(There is no exit #{exit_name}.\r\n)
   end
 
   def render("fail", %{reason: :door_locked, exit_name: exit_name}) do
-    ~i(The door #{exit_name} is closed and locked.\n)
+    ~i(The door #{exit_name} is closed and locked.\r\n)
   end
 
   def render("fail", %{reason: :door_closed, exit_name: exit_name}) do
-    ~i(The door #{exit_name} is closed.\n)
+    ~i(The door #{exit_name} is closed.\r\n)
   end
 end

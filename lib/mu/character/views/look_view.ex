@@ -38,7 +38,7 @@ defmodule Mu.Character.LookView do
   end
 
   def render("exits", %{room: room}) do
-    [render("_exits", %{room: room}), "\n"]
+    [render("_exits", %{room: room}), "\r\n"]
   end
 
   def render("peek-exit", %{rooms: rooms}) do
@@ -52,13 +52,13 @@ defmodule Mu.Character.LookView do
           false ->
             characters = render("_characters", %{characters: room.characters})
 
-            [~i(#{room.name} #{render("_distance", %{distance: room.distance})}\n), characters]
+            [~i(#{room.name} #{render("_distance", %{distance: room.distance})}\r\n), characters]
             |> Enum.reject(&is_nil(&1))
         end
       end)
-      |> View.join("\n")
+      |> View.join("\r\n")
 
-    [~i(You see:\n), lines]
+    [~i(You see:\r\n), lines]
   end
 
   def render("_exits", %{room: room}) do
@@ -81,9 +81,9 @@ defmodule Mu.Character.LookView do
     characters =
       characters
       |> Enum.map(&render("_character", %{character: &1}))
-      |> View.join("\n")
+      |> View.join("\r\n")
 
-    View.join(["You see:", characters], "\n")
+    View.join(["You see:", characters], "\r\n")
   end
 
   def render("_character", %{character: character}) do
@@ -119,7 +119,7 @@ defmodule Mu.Character.LookView do
   end
 
   def render("unknown", %{}) do
-    ~i(Nothing special there\n)
+    ~i(Nothing special there\r\n)
   end
 
   def render("_distance", %{distance: distance}) do
@@ -148,5 +148,5 @@ defmodule Mu.Character.LookView do
     end
   end
 
-  defp newline(iodata), do: [iodata, "\n"]
+  defp newline(iodata), do: [iodata, "\r\n"]
 end

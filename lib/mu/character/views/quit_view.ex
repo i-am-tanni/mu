@@ -13,6 +13,6 @@ defmodule Mu.Character.QuitView do
   end
 
   def render("goodbye", _assigns) do
-    "Goodbye!\n"
+    "Goodbye!\r\n"
   end
 end
