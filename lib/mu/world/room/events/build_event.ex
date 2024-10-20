@@ -43,6 +43,7 @@ defmodule Mu.World.Room.BuildEvent do
 
         room = %Room{
           id: end_room_id,
+          template_id: data.room_id,
           zone_id: zone_id,
           x: x,
           y: y,

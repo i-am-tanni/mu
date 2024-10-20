@@ -17,6 +17,7 @@ defmodule Mu.World.Room do
 
   defstruct [
     :id,
+    :template_id,
     :zone_id,
     :name,
     :x,

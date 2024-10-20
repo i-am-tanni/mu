@@ -453,7 +453,7 @@ defmodule Mu.World.Saver do
     rooms =
       zone.rooms
       |> Enum.map(fn room ->
-        {to_string(room.id), prepare_room(room)}
+        {room.template_id, prepare_room(room)}
       end)
       |> Enum.into(%{})
 

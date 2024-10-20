@@ -73,6 +73,7 @@ defmodule Mu.World.Loader do
       Map.get(zone_data, "rooms", [])
       |> Enum.map(fn {local_id, room_data} ->
         room_id = RoomIds.get("#{zone_id}.#{local_id}")
+        room_data = Map.put(room_data, "template_id", local_id)
         {room_id, room_data}
       end)
 
@@ -138,6 +139,7 @@ defmodule Mu.World.Loader do
 
     %Room{
       id: key,
+      template_id: room.template_id,
       zone_id: context.zone_id,
       name: room.name,
       x: room.x,
