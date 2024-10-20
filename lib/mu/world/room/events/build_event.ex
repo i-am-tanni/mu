@@ -57,9 +57,12 @@ defmodule Mu.World.Room.BuildEvent do
         WorldMap.put(room)
         WorldMap.add_path(start_room_id, end_room_id)
         WorldMap.add_path(end_room_id, start_room_id)
+        sorted_exits =
+          [start_exit | context.data.exits]
+          |> Enum.sort(&(exit_sort_order(&1) <= exit_sort_order(&2)))
 
         context
-        |> put_data(:exits, [start_exit | context.data.exits])
+        |> put_data(:exits, sorted_exits)
         |> event(event.from_pid, self(), event.topic, %{exit_name: data.start_exit_name})
     end
   end
@@ -77,5 +80,21 @@ defmodule Mu.World.Room.BuildEvent do
   end
 
   defp destination_coords(_, _, _, _), do: {nil, nil, nil}
+
+  defp exit_sort_order(%Exit{exit_name: exit_name}) do
+    case exit_name do
+      "north"     -> 0
+      "northeast" -> 1
+      "east"      -> 2
+      "southeast" -> 3
+      "south"     -> 4
+      "southwest" -> 5
+      "west"      -> 6
+      "northwest" -> 7
+      "up"        -> 8
+      "down"      -> 9
+      _           -> 10
+    end
+  end
 
 end

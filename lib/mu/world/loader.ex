@@ -130,6 +130,7 @@ defmodule Mu.World.Loader do
     exits =
       Map.get(room, :exits, [])
       |> Enum.map(&parse_exit(&1, exit_context))
+      |> Enum.sort(&(exit_sort_order(&1) <= exit_sort_order(&2)))
 
     extra_descs =
       Map.get(room, :extra_descs, [])
@@ -406,6 +407,22 @@ defmodule Mu.World.Loader do
       end)
 
     %{world | characters: characters}
+  end
+
+  defp exit_sort_order(%{exit_name: exit_name}) do
+    case exit_name do
+      "north"     -> 0
+      "northeast" -> 1
+      "east"      -> 2
+      "southeast" -> 3
+      "south"     -> 4
+      "southwest" -> 5
+      "west"      -> 6
+      "northwest" -> 7
+      "up"        -> 8
+      "down"      -> 9
+      _           -> 10
+    end
   end
 
   defp keys_to_atoms(map) when is_map(map) do
