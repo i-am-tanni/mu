@@ -335,11 +335,11 @@ end
 
 defmodule Mu.World.Saver do
   @moduledoc """
-  The opposite of the loader. Saves files to disk
+  Saves files to disk
   """
 
-  alias Mu.World.ZoneCache
   alias Mu.World.Saver.ZoneFile
+  alias Mu.World.Zone
   alias Mu.Brain
 
   @paths %{
@@ -347,9 +347,8 @@ defmodule Mu.World.Saver do
     brain_path: "data/brains"
   }
 
-  def save_area(zone_id, file_name, paths \\ %{}) do
+  def save_zone(%Zone{} = zone, file_name, paths \\ %{}) do
     paths = Map.merge(paths, @paths)
-    zone = ZoneCache.get!(zone_id)
 
     %ZoneFile{}
     |> prepare_zone(zone)
