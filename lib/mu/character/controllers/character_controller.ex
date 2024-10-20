@@ -33,7 +33,7 @@ defmodule Mu.Character.CharacterController do
   def recv(conn, ""), do: conn
 
   defp build_character(name) do
-    starting_room_id = Mu.World.RoomIds.get("1.1")
+    starting_room_id = Mu.World.RoomIds.get("1.north_room")
 
     %Character{
       id: Character.generate_id(),

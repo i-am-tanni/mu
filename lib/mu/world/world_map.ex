@@ -3,6 +3,11 @@ defmodule Mu.World.WorldMap.Vertex do
 end
 
 defmodule Mu.World.WorldMap do
+  @moduledoc """
+  Loads vertex and edge information from area files concurrently and puts them in a directed graph.
+  Remaining information for each vertex is stored in a map.
+  Mu.World.WorldMap.Helpers.mini_map() outputs the mini map based on the room_id.
+  """
   use GenServer
   require Logger
 

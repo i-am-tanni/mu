@@ -25,6 +25,12 @@ defmodule Mu.Character.LookView do
     |> Enum.map(&newline/1)
   end
 
+  def render("mini_map", %{mini_map: mini_map}) do
+    Enum.map(mini_map, fn line ->
+      [line, "\r\n"]
+    end)
+  end
+
   def render("extra_desc", %{extra_desc: extra_desc}) do
     extra_desc.description
   end
