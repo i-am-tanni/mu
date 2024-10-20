@@ -3,7 +3,6 @@ defmodule Mu.Character.LookView do
 
   alias Mu.Character.CharacterView
   alias Mu.Character.ItemView
-  alias Mu.Character.LookView.HighlightText
 
   def render("look", %{room: room}) do
     description = render("_description", %{description: room.description, extra_descs: room.extra_descs})
