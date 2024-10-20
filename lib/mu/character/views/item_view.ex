@@ -26,21 +26,21 @@ defmodule Mu.Character.ItemView do
   end
 
   def render("drop-commit", %{item_instance: item_instance}) do
-    ~i(You dropped #{render("name", %{item_instance: item_instance, context: :room})}.\n)
+    ~i(You dropped #{render("name", %{item_instance: item_instance, context: :room})}.\r\n)
   end
 
   def render("pickup-abort", %{reason: :missing_verb, item: item}) do
-    ~i(You cannot pick up #{render("name", %{item: item})}\n)
+    ~i(You cannot pick up #{render("name", %{item: item})}\r\n)
   end
 
   def render("pickup-commit", %{item_instance: item_instance}) do
-    ~i(You picked up #{render("name", %{item_instance: item_instance, context: :inventory})}.\n)
+    ~i(You picked up #{render("name", %{item_instance: item_instance, context: :inventory})}.\r\n)
   end
 
   def render("wear-item", %{wear_slot: wear_slot, item_instance: item_instance}) do
     wear_slot = render("wear_slot", %{wear_slot: wear_slot})
     item_name = render("name", %{item_instance: item_instance})
-    ~i(You equip #{item_name} on your #{wear_slot}.\n)
+    ~i(You equip #{item_name} on your #{wear_slot}.\r\n)
   end
 
   def render("wear_slot", %{wear_slot: wear_slot}) do
@@ -48,11 +48,11 @@ defmodule Mu.Character.ItemView do
   end
 
   def render("remove", %{item_instance: item_instance}) do
-    ~i(You remove #{render("name", %{item_instance: item_instance})}.\n)
+    ~i(You remove #{render("name", %{item_instance: item_instance})}.\r\n)
   end
 
   def render("unequip-to-drop", %{item_instance: item_instance}) do
-    ~i(You are wearing #{render("name", %{item_instance: item_instance})}. You must {emphasize}remove{/emphasize} to drop.\n)
+    ~i(You are wearing #{render("name", %{item_instance: item_instance})}. You must {emphasize}remove{/emphasize} to drop.\r\n)
   end
 
   def render("put", assigns) do
@@ -71,37 +71,37 @@ defmodule Mu.Character.ItemView do
 
   def render("cannot-wear", %{item_instance: instance}) do
     item_name = render("name", %{item_instance: instance})
-    ~i(#{item_name} cannot be equipped.\n)
+    ~i(#{item_name} cannot be equipped.\r\n)
   end
 
   def render("unknown", %{item_name: item_name}) do
-    ~i(Cannot find item {color foreground="white"}"#{item_name}"{/color}.\n)
+    ~i(Cannot find item {color foreground="white"}"#{item_name}"{/color}.\r\n)
   end
 
   def render("unknown", _) do
-    ~i(Cannot find that item.\n)
+    ~i(Cannot find that item.\r\n)
   end
 
   def render("unknown-container", %{item_name: _item_name}) do
-    ~i(Cannot find that container\n)
+    ~i(Cannot find that container\r\n)
   end
 
   def render({"not-container"}, %{item_instance: instance}) do
-    ~i(#{render("name", %{item_instance: instance})} is not a container.\n)
+    ~i(#{render("name", %{item_instance: instance})} is not a container.\r\n)
   end
 
   def render("empty", %{item_instance: instance}) do
-    ~i(#{render("name", %{item_instance: instance})} is empty.\n)
+    ~i(#{render("name", %{item_instance: instance})} is empty.\r\n)
   end
 
   def render("cannot-wear", %{}) do
-    ~i(That cannot be equipped.\n)
+    ~i(That cannot be equipped.\r\n)
   end
 
   def render("unknown-inventory", %{item_name: item_name}) do
     [
       ~i(Cannot find item {color foreground="white"}"#{item_name}"{/color} in inventory. ),
-      ~i(Item must be in inventory to be equipped.\n)
+      ~i(Item must be in inventory to be equipped.\r\n)
     ]
   end
 end

@@ -28,13 +28,13 @@ defmodule Mu.Character.CombatView do
   def render("damage/attacker", assigns) do
     victim = CharacterView.render("name", %{character: assigns.victim})
     feedback = damage_feedback(assigns)
-    ~i(Your #{assigns.verb} #{feedback} #{victim}! \(#{assigns.damage}\)\n)
+    ~i(Your #{assigns.verb} #{feedback} #{victim}! \(#{assigns.damage}\)\r\n)
   end
 
   def render("damage/victim", assigns) do
     attacker = CharacterView.render("name-possessive", %{character: assigns.attacker})
     feedback = damage_feedback(assigns)
-    ~i(#{attacker} #{assigns.verb} #{feedback} you!\n)
+    ~i(#{attacker} #{assigns.verb} #{feedback} you!\r\n)
   end
 
   def render("damage/witness", assigns) do
@@ -42,7 +42,7 @@ defmodule Mu.Character.CombatView do
     victim = CharacterView.render("name", %{character: assigns.victim})
     feedback = damage_feedback(assigns)
 
-    ~i(#{attacker} #{assigns.verb} #{feedback} #{victim}! \(#{assigns.damage}\)\n)
+    ~i(#{attacker} #{assigns.verb} #{feedback} #{victim}! \(#{assigns.damage}\)\r\n)
   end
 
   def render("miss/attacker", assigns) do
@@ -66,31 +66,31 @@ defmodule Mu.Character.CombatView do
     attacker = CharacterView.render("name", %{character: attacker})
     victim = CharacterView.render("name", %{character: victim})
 
-    [~i(#{victim} #{death_cry}!\n), ~i(#{attacker} kills #{victim}!)]
+    [~i(#{victim} #{death_cry}!\r\n), ~i(#{attacker} kills #{victim}!)]
   end
 
   def render("death/victim", assigns) do
     attacker = CharacterView.render("name", %{character: assigns.attacker})
-    [~i(#{attacker} has killed you!\n), ~i(You are DEAD!!!\n)]
+    [~i(#{attacker} has killed you!\r\n), ~i(You are DEAD!!!\r\n)]
   end
 
   def render("death/attacker", %{victim: victim, death_cry: death_cry}) do
     victim = CharacterView.render("name", %{character: victim})
-    [~i(#{victim} #{death_cry}!\n), ~i(You have killed #{victim}!)]
+    [~i(#{victim} #{death_cry}!\r\n), ~i(You have killed #{victim}!)]
   end
 
   def render("flee/attempt", %{}) do
-    ~i(You make a desparate attempt at escape!\n)
+    ~i(You make a desparate attempt at escape!\r\n)
   end
 
   def render("error", %{reason: reason}) do
     case reason do
-      "not-found" -> ~i(There's no one matching that keyword here.\n)
-      "pvp" -> ~i(Player vs player combat isn't allowed.\n)
-      "forbidden" -> ~i(You are not allowed to attack that.\n)
-      "already-fighting" -> ~i(You are already fighting!\n)
-      "peaceful" -> ~i(Violence is not allowed here.\n)
-      "not-in-combat" -> ~i(You aren't in combat. Use the kill command to start combat.\n)
+      "not-found" -> ~i(There's no one matching that keyword here.\r\n)
+      "pvp" -> ~i(Player vs player combat isn't allowed.\r\n)
+      "forbidden" -> ~i(You are not allowed to attack that.\r\n)
+      "already-fighting" -> ~i(You are already fighting!\r\n)
+      "peaceful" -> ~i(Violence is not allowed here.\r\n)
+      "not-in-combat" -> ~i(You aren't in combat. Use the kill command to start combat.\r\n)
     end
   end
 

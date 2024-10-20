@@ -23,22 +23,22 @@ defmodule Mu.Character.SocialView do
 
   def render("char-no-arg", %{text: social, acting_character: acting_character}) do
     text = EEx.eval_string(social.char_no_arg, acting_character: acting_character)
-    ~i(#{text}\n)
+    ~i(#{text}\r\n)
   end
 
   def render("char-auto", %{text: social, acting_character: acting_character}) do
     text = EEx.eval_string(social.char_auto, acting_character: acting_character)
-    ~i(#{text}\n)
+    ~i(#{text}\r\n)
   end
 
   def render("others-no-arg", %{text: social, acting_character: acting_character}) do
     text = EEx.eval_string(social.others_no_arg, acting_character: acting_character)
-    ~i(#{text}\n)
+    ~i(#{text}\r\n)
   end
 
   def render("others-auto", %{text: social, acting_character: acting_character}) do
     text = EEx.eval_string(social.others_auto, acting_character: acting_character)
-    ~i(#{text}\n)
+    ~i(#{text}\r\n)
   end
 
   def render("char-found", %{
@@ -52,7 +52,7 @@ defmodule Mu.Character.SocialView do
         at_character: at_character
       )
 
-    ~i(#{text}\n)
+    ~i(#{text}\r\n)
   end
 
   def render("others-found", %{
@@ -66,7 +66,7 @@ defmodule Mu.Character.SocialView do
         at_character: at_character
       )
 
-    ~i(#{text}\n)
+    ~i(#{text}\r\n)
   end
 
   def render("vict-found", %{
@@ -80,10 +80,10 @@ defmodule Mu.Character.SocialView do
         at_character: at_character
       )
 
-    ~i(#{text}\n)
+    ~i(#{text}\r\n)
   end
 
   def render("character-not-found", %{name: name}) do
-    ~i(Character {color foreground="white"}#{name}{/color} could not be found.\n)
+    ~i(Character {color foreground="white"}#{name}{/color} could not be found.\r\n)
   end
 end

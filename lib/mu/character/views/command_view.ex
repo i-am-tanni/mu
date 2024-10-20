@@ -10,7 +10,7 @@ defmodule Mu.Character.CommandView do
       topic: "Character.Prompt",
       data: vitals,
       text: [
-        "\n",
+        "\r\n",
         "[",
         ~i({hp}#{vitals.health_points}/#{vitals.max_health_points}hp{/hp} ),
         ~i({sp}#{vitals.skill_points}/#{vitals.max_skill_points}sp{/sp} ),
@@ -25,6 +25,6 @@ defmodule Mu.Character.CommandView do
   end
 
   def render("unknown", _assigns) do
-    "huh?\n"
+    "huh?\r\n"
   end
 end

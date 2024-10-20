@@ -35,6 +35,6 @@ defmodule Mu.Character.BrainView do
         false -> ""
       end
 
-    ~i(#{index}: #{indents}#{node.text}\n)
+    ~i(#{index}: #{indents}#{node.text}\r\n)
   end
 end

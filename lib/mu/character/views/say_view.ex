@@ -19,7 +19,7 @@ defmodule Mu.Character.SayView do
         "You say",
         render("_adverb", %{meta: meta}),
         render("_at", %{meta: meta}),
-        ~i(, #{render("text", %{text: text})}\n)
+        ~i(, #{render("text", %{text: text})}\r\n)
       ]
     }
   end
@@ -38,13 +38,13 @@ defmodule Mu.Character.SayView do
         " says",
         render("_adverb", %{meta: meta}),
         render("_at", %{meta: meta}),
-        ~i(, #{render("text", %{text: text})}\n)
+        ~i(, #{render("text", %{text: text})}\r\n)
       ]
     }
   end
 
   def render("character-not-found", %{name: name}) do
-    ~i(Character {color foreground="white"}#{name}{/color} could not be found.\n)
+    ~i(Character {color foreground="white"}#{name}{/color} could not be found.\r\n)
   end
 
   def render("_adverb", %{meta: %{adverb: adverb}}) do

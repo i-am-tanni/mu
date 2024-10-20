@@ -7,14 +7,14 @@ defmodule Mu.Character.WhisperView do
     [
       "You whisper to ",
       CharacterView.render("name", %{character: character}),
-      ~i(, {color foreground="green"}"#{text}"{/color}\n)
+      ~i(, {color foreground="green"}"#{text}"{/color}\r\n)
     ]
   end
 
   def render("listen", %{whispering_character: character, text: text}) do
     [
       CharacterView.render("name", %{character: character}),
-      ~i( whispers to you, {color foreground="green"}"#{text}"{/color}\n)
+      ~i( whispers to you, {color foreground="green"}"#{text}"{/color}\r\n)
     ]
   end
 
@@ -23,11 +23,11 @@ defmodule Mu.Character.WhisperView do
       CharacterView.render("name", %{character: whispering_character}),
       " whispers to ",
       CharacterView.render("name", %{character: character}),
-      ".\n"
+      ".\r\n"
     ]
   end
 
   def render("character-not-found", %{name: name}) do
-    ~i(Character {color foreground="white"}#{name}{/color} could not be found.\n)
+    ~i(Character {color foreground="white"}#{name}{/color} could not be found.\r\n)
   end
 end

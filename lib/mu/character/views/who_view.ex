@@ -10,7 +10,7 @@ defmodule Mu.Character.WhoView do
 
     lines
     |> Enum.reject(&is_nil/1)
-    |> View.join("\n")
+    |> View.join("\r\n")
     |> newline()
   end
 
@@ -24,14 +24,14 @@ defmodule Mu.Character.WhoView do
   def render("_characters", %{characters: characters}) do
     characters
     |> Enum.map(&render("_character", %{character: &1}))
-    |> View.join("\n")
+    |> View.join("\r\n")
   end
 
   def render("_character", %{character: character}) do
     ~i(  #{CharacterView.render("name", %{character: character})})
   end
 
-  def newline(lines), do: [lines, "\n"]
+  def newline(lines), do: [lines, "\r\n"]
 
   def pluralize(word, 1), do: word
   def pluralize(word, _), do: ~i(#{word}s)
