@@ -15,4 +15,9 @@ defmodule Mu.Character.BuildView do
   def render("room-id-taken", %{room_id: room_id}) do
     ~i(The room id "#{room_id}" is already assigned. Please choose a different room id.\r\n)
   end
+
+  def render("invalid-exit-name", %{exit_name: exit_name}) do
+    ~i(Exit keyword #{exit_name} is invalid.\r\n)
+  end
+
 end
