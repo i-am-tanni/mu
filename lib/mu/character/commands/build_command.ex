@@ -3,6 +3,7 @@ defmodule Mu.Character.BuildCommand do
   Commands for building areas.
   """
   use Kalevala.Character.Command
+  alias Mu.Character.BuildView
 
   @valid_exit_names ~w(north south east west up down)
 
