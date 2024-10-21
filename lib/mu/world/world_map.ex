@@ -278,11 +278,11 @@ defmodule Mu.World.WorldMap.Helpers do
               y = y - vertex.y + @center_y,
               x <= @xmax and x >= @xmin,
               y <= @ymax and y >= @ymin,
-              reduce: %{@center_index => %{center | symbol: @you_are_here}} do
-            acc ->
-              index2d = y * @xsize + x
-              Map.put(acc, index2d, vertex)
+              into: %{} do
+            index2d = y * @xsize + x
+            {index2d, vertex}
           end
+          |> Map.put(@center_index, %{center | symbol: @you_are_here})
 
         # index reference:
         #   00 01 02 03 04
