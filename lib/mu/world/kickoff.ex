@@ -43,11 +43,6 @@ defmodule Mu.World.Kickoff do
     |> Enum.map(&Loader.strip_zone/1)
     |> Enum.each(&start_zone/1)
 
-    world.zones
-    |> Enum.each(fn zone ->
-      Mu.World.ZoneCache.put(zone.id, zone)
-    end)
-
     Enum.each(world.rooms, &start_room/1)
     Enum.each(world.zones, &start_spawners/1)
 
