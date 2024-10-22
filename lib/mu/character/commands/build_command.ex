@@ -45,6 +45,35 @@ defmodule Mu.Character.BuildCommand do
     end
   end
 
+  def set(conn, %{"type" => "room"} = params), do: set_room(conn, params)
+
+  defp set_room(conn, params) do
+    key = params["key"]
+
+    case to_room_key(key) do
+      {:ok, key} ->
+        val = params["val"]
+        val =
+          if key in [:x, :y, :z],
+          do: String.to_integer(val),
+        else: val
+
+        params = %{key: key, val: val}
+
+        conn
+        |> event("room/set", params)
+        |> assign(:prompt, false)
+
+      :error ->
+        # error: invalid room field
+        conn
+        |> assign(:prompt, true)
+        |> assign(:field, key)
+        |> render(BuildView, {:room, "invalid-field"})
+
+    end
+  end
+
   defp to_long(exit_name) when byte_size(exit_name) == 1 do
     case exit_name do
       "n" -> "north"
@@ -80,4 +109,17 @@ defmodule Mu.Character.BuildCommand do
       _ -> nil
     end
   end
+
+  defp to_room_key(string) do
+    case string do
+      "name" -> {:ok, :name}
+      "description" -> {:ok, :description}
+      "x" -> {:ok, :x}
+      "y" -> {:ok, :y}
+      "z" -> {:ok, :z}
+      "symbol" -> {:ok, :symbol}
+      _ -> :error
+    end
+  end
+
 end

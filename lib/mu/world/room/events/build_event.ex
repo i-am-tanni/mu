@@ -68,6 +68,15 @@ defmodule Mu.World.Room.BuildEvent do
     end
   end
 
+  def set(context, %{data: %{key: key, val: val}} = event) do
+    context
+    |> assign(:key, key)
+    |> assign(:self, event.acting_character)
+    |> prompt(event.from_pid, BuildView, "set")
+    |> render(event.from_pid, CommandView, "prompt")
+    |> put_data(key, val)
+  end
+
   defp destination_coords(start_exit_name, x, y, z) when is_integer(x) when is_integer(y) when is_integer(z) do
     case start_exit_name do
       "north" -> {x, y + 1, z}

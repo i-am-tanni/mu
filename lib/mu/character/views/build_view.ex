@@ -5,6 +5,10 @@ defmodule Mu.Character.BuildView do
     ~i(You dig #{exit_name}.\r\n)
   end
 
+  def render("set", %{key: key}) do
+    ~i(Room #{key} updated.)
+  end
+
   def render("exit-exists", %{exit_name: exit_name}) do
     ~E"""
     There is already an exit with exit name "<%= exit_name %>".
@@ -18,6 +22,10 @@ defmodule Mu.Character.BuildView do
 
   def render("invalid-exit-name", %{exit_name: exit_name}) do
     ~i(Exit keyword #{exit_name} is invalid.\r\n)
+  end
+
+  def render({:room, "invalid-field"}, %{field: field}) do
+    ~i(Room field #{field} is invalid.\r\n)
   end
 
 end

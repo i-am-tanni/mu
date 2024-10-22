@@ -143,6 +143,7 @@ defmodule Mu.World.Room.Events do
   scope(Mu.World.Room) do
     module(BuildEvent) do
       event("room/dig", :dig)
+      event("room/set", :set)
     end
 
     module(CombatEvent) do

@@ -116,6 +116,16 @@ defmodule Mu.Character.Commands do
       |> spaces()
       |> word(:end_exit_name)
     end)
+
+    parse("@set", :set, fn command ->
+      command
+      |> spaces()
+      |> unwrap_and_tag(string("room"), "type")
+      |> spaces()
+      |> word(:key)
+      |> spaces()
+      |> text(:val)
+    end)
   end
 
   module(EmoteCommand) do
