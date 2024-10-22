@@ -50,7 +50,7 @@ defmodule Mu.Character.BuildCommand do
   defp set_room(conn, params) do
     key = params["key"]
 
-    case to_room_key(key) do
+    case maybe(to_room_key(key)) do
       {:ok, key} ->
         val = params["val"]
         val =
@@ -112,14 +112,17 @@ defmodule Mu.Character.BuildCommand do
 
   defp to_room_key(string) do
     case string do
-      "name" -> {:ok, :name}
-      "description" -> {:ok, :description}
-      "x" -> {:ok, :x}
-      "y" -> {:ok, :y}
-      "z" -> {:ok, :z}
-      "symbol" -> {:ok, :symbol}
+      "name" -> :name
+      "description" -> :description
+      "x" -> :x
+      "y" -> :y
+      "z" -> :z
+      "symbol" -> :symbol
       _ -> :error
     end
   end
+
+  def maybe(:error), do: :error
+  def maybe(result), do: {:ok, result}
 
 end
