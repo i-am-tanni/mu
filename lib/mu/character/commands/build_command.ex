@@ -11,14 +11,15 @@ defmodule Mu.Character.BuildCommand.Room do
         conn
         |> assign(:prompt, true)
         |> assign(:field, key)
-        |> render(BuildView, {:room, "invalid-field"})
+        |> prompt(BuildView, {:room, "invalid-field"})
 
       val == :error ->
         # error: could not validate room value
         conn
         |> assign(:prompt, true)
+        |> assign(:key, key)
         |> assign(:val, val)
-        |> render(BuildView, {:room, "invalid-val"})
+        |> prompt(BuildView, {:room, "invalid-val"})
 
       true ->
         params = %{key: key, val: val}

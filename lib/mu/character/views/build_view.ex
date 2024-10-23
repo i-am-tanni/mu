@@ -24,8 +24,12 @@ defmodule Mu.Character.BuildView do
     ~i(Exit keyword #{exit_name} is invalid.\r\n)
   end
 
-  def render({:room, "invalid-field"}, %{field: field}) do
-    ~i(Room field #{field} is invalid.\r\n)
+  def render({:room, "invalid-field"}, %{key: key}) do
+    ~i(Room field #{key} is invalid.)
+  end
+
+  def render({:room, "invalid-field"}, %{key: key, val: val}) do
+    ~i(Input #{val} is invalid for room #{key})
   end
 
 end
