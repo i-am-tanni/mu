@@ -1,9 +1,74 @@
+defmodule Mu.Character.BuildCommand.Room do
+  use Kalevala.Character.Command
+
+  def set(conn, params) do
+    key = key_to_atom(params["key"])
+    val = prepare(params["val"], key)
+
+    cond do
+      key == :error ->
+        # error: invalid room field
+        conn
+        |> assign(:prompt, true)
+        |> assign(:field, key)
+        |> render(BuildView, {:room, "invalid-field"})
+
+      val == :error ->
+        # error: could not validate room value
+        conn
+        |> assign(:prompt, true)
+        |> assign(:val, val)
+        |> render(BuildView, {:room, "invalid-val"})
+
+      true ->
+        params = %{key: key, val: val}
+
+        conn
+        |> event("room/set", params)
+        |> assign(:prompt, false)
+    end
+  end
+
+  defp key_to_atom(key) do
+    case key do
+      "name" -> :name
+      "description" -> :description
+      "x" -> :x
+      "y" -> :y
+      "z" -> :z
+      "symbol" -> :symbol
+      _ -> :error
+    end
+  end
+
+  defp prepare(_, :error), do: :error
+
+  defp prepare(val, key) when key not in [:x, :y, :z, :symbol], do: val
+
+  defp prepare(val, key) when key in [:x, :y, :z] do
+    case Integer.parse(val) do
+      {val, _} -> val
+      :error -> :error
+    end
+  end
+
+  defp prepare(val, :symbol) do
+    case String.length(val) >= 2 do
+      true -> String.slice(val, 0..1)
+      false -> :error
+    end
+  end
+
+  defp prepare(_, _), do: :error
+end
+
 defmodule Mu.Character.BuildCommand do
   @moduledoc """
   Commands for building areas.
   """
   use Kalevala.Character.Command
   alias Mu.Character.BuildView
+  alias __MODULE__
 
   @valid_exit_names ~w(north south east west up down)
 
@@ -45,34 +110,7 @@ defmodule Mu.Character.BuildCommand do
     end
   end
 
-  def set(conn, %{"type" => "room"} = params), do: set_room(conn, params)
-
-  defp set_room(conn, params) do
-    key = params["key"]
-
-    case maybe(to_room_key(key)) do
-      {:ok, key} ->
-        val = params["val"]
-        val =
-          if key in [:x, :y, :z],
-          do: String.to_integer(val),
-        else: val
-
-        params = %{key: key, val: val}
-
-        conn
-        |> event("room/set", params)
-        |> assign(:prompt, false)
-
-      :error ->
-        # error: invalid room field
-        conn
-        |> assign(:prompt, true)
-        |> assign(:field, key)
-        |> render(BuildView, {:room, "invalid-field"})
-
-    end
-  end
+  def set(conn, %{"type" => "room"} = params), do: BuildCommand.Room.set(conn, params)
 
   defp to_long(exit_name) when byte_size(exit_name) == 1 do
     case exit_name do
@@ -109,20 +147,5 @@ defmodule Mu.Character.BuildCommand do
       _ -> nil
     end
   end
-
-  defp to_room_key(string) do
-    case string do
-      "name" -> :name
-      "description" -> :description
-      "x" -> :x
-      "y" -> :y
-      "z" -> :z
-      "symbol" -> :symbol
-      _ -> :error
-    end
-  end
-
-  def maybe(:error), do: :error
-  def maybe(result), do: {:ok, result}
 
 end

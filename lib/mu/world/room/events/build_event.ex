@@ -10,6 +10,7 @@ defmodule Mu.World.Room.BuildEvent do
   alias Mu.World.WorldMap
 
   @default_symbol "[]"
+  @world_map_keys [:x, :y, :z, :symbol]
 
   def dig(context, event = %{data: data}) do
     start_exit_name = data.start_exit_name
@@ -69,12 +70,15 @@ defmodule Mu.World.Room.BuildEvent do
   end
 
   def set(context, %{data: %{key: key, val: val}} = event) do
+    if key in @world_map_keys do
+      context.data |> Map.put(key, val) |> WorldMap.put()
+    end
+
     context
     |> assign(:key, key)
-    |> assign(:self, event.acting_character)
     |> prompt(event.from_pid, BuildView, "set")
-    |> render(event.from_pid, CommandView, "prompt")
     |> put_data(key, val)
+    |> event(event.from_pid, self(), "room/look", %{})
   end
 
   defp destination_coords(start_exit_name, x, y, z) when is_integer(x) when is_integer(y) when is_integer(z) do
