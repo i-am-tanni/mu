@@ -120,6 +120,12 @@ defmodule Mu.Character.Action do
     end
   end
 
+  def cancel(conn) do
+    conn
+    |> put_meta(:actions, [])
+    |> put_meta(:processing_action, nil)
+  end
+
   # private functions
 
   defp perform(conn, action = %{steps: [head | rest]}) do
