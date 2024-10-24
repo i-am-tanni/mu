@@ -111,7 +111,7 @@ defmodule Mu.Character.BuildCommand do
     end
   end
 
-  def set(conn, %{"type" => "room"} = params), do: BuildCommand.Room.set(conn, params)
+  def set_room(conn, params), do: BuildCommand.Room.set(conn, params)
 
   defp to_long(exit_name) when byte_size(exit_name) == 1 do
     case exit_name do

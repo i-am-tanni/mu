@@ -117,7 +117,7 @@ defmodule Mu.Character.Commands do
       |> word(:end_exit_name)
     end)
 
-    parse("@set_room", :set, fn command ->
+    parse("@set_room", :set_room, fn command ->
       command
       |> spaces()
       |> word(:key)

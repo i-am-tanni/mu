@@ -5,7 +5,7 @@ defmodule Mu.Character.CommandController.PreParser do
   """
 
   import NimbleParsec
-  @downcase_exceptions ~w(say tell whisper emote ooc yell)
+  @downcase_exceptions ~w(say tell whisper emote ooc yell @set_room)
 
   word = utf8_string([not: ?\s, not: ?\r, not: ?\n, not: ?\t, not: ?\d], min: 1)
 
