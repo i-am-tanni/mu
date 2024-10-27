@@ -430,6 +430,9 @@ defmodule Mu.World.Saver do
           raise error
         end
 
+        Enum.each(File.ls!(temp_path), fn file ->
+          File.rm!(Path.join(temp_path, file))
+        end)
         File.rmdir!(temp_path)
 
       false ->
