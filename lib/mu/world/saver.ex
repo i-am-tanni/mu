@@ -350,16 +350,12 @@ defmodule Mu.World.Saver do
   def save_zone(%Zone{} = zone, file_name, paths \\ %{}) do
     paths = Map.merge(paths, @paths)
 
-    #IO.inspect(zone, label: "Zone")
     %ZoneFile{}
     |> prepare_zone(zone)
-    |> tap(fn x -> IO.inspect(x, label: "SO FAR1") end)
     |> prepare_rooms(zone)
-    |> tap(fn x -> IO.inspect(x, label: "SO FAR2") end)
     #|> prepare_items(zone)
     #|> prepare_characters(zone)
     |> Jason.encode!(pretty: true)
-    |> tap(fn x -> IO.inspect(x, label: "FILE") end)
     |> save!(paths.world_path, "#{file_name}.json")
   end
 
@@ -456,7 +452,6 @@ defmodule Mu.World.Saver do
   defp prepare_rooms(file, zone) when zone.rooms == [], do: file
 
   defp prepare_rooms(file, zone) do
-        IO.inspect(zone.rooms, label: "ROOMS")
     rooms =
       zone.rooms
       |> Enum.map(fn room ->
