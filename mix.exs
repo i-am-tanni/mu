@@ -25,7 +25,8 @@ defmodule Mu.MixProject do
       {:kalevala, git: "https://github.com/i-am-tanni/kalevala"},
       #{:kalevala, path: "~/Documents/Elixir/kalevala"}, # for testing
       {:ranch, "~> 1.7"},
-      {:jason, "~> 1.4"}
+      {:jason, "~> 1.4"},
+      {:inflex, "~> 2.1"}
     ]
   end
 end

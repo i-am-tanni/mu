@@ -177,6 +177,10 @@ defmodule Mu.World.Room.Events do
       event("npc/wander", :call)
     end
 
+    module(ZoneForwardEvent) do
+      event("zone/save", :call)
+    end
+
     module(ItemEvent) do
       event("room/get-from", :get_from)
       event("room/put-in", :put)
@@ -219,5 +223,16 @@ defmodule Mu.World.Room.ForwardEvent do
 
   def call(context, event) do
     event(context, event.from_pid, self(), event.topic, event.data)
+  end
+end
+
+defmodule Mu.World.Room.ZoneForwardEvent do
+  import Kalevala.World.Room.Context
+  alias Mu.World.Zone
+
+  def call(context, event) do
+    zone_id = context.data.zone_id
+    zone_pid = Zone.whereis(zone_id)
+    event(context, zone_pid, event.from_pid, event.topic, event.data)
   end
 end

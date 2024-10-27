@@ -1,6 +1,6 @@
 {
   "zone": {
-    "id": 1,
+    "id": "DefaultZone",
     "name": "DefaultZone"
   },
   "characters": {

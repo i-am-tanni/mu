@@ -69,7 +69,17 @@ defmodule Mu.Character.BuildCommand do
   """
   use Kalevala.Character.Command
   alias Mu.Character.BuildView
-  alias __MODULE__
+  alias Mu.Character.BuildCommand
+
+  # for new_zone()
+  alias Mu.World.Zone
+  alias Mu.World.Room
+  alias Mu.World.RoomIds
+  alias Mu.World.WorldMap
+  alias Mu.World.Kickoff
+  alias Mu.Character.TeleportAction
+  alias Mu.Character.Action
+
 
   @valid_exit_names ~w(north south east west up down)
 
@@ -112,6 +122,62 @@ defmodule Mu.Character.BuildCommand do
   end
 
   def set_room(conn, params), do: BuildCommand.Room.set(conn, params)
+
+  def new_zone(conn, params) do
+    zone_id = Inflex.camelize(params["zone_id"])
+    room_id = Inflex.underscore(params["room_id"])
+    room_string = "#{zone_id}.#{room_id}"
+
+    case Mu.World.RoomIds.has_key?(room_string) do
+      true ->
+        # error: room id is unavailable
+        conn
+        |> assign(:prompt, true)
+        |> assign(:room_id, room_string)
+        |> render(BuildView, "room-id-taken")
+
+      false ->
+        end_room_id = RoomIds.put(room_string)
+
+        room = %Room{
+          id: end_room_id,
+          template_id: room_id,
+          zone_id: zone_id,
+          x: 0,
+          y: 0,
+          z: 0,
+          symbol: "[]",
+          exits: [],
+          name: "Default Room",
+          description: "Default Description"
+        }
+
+        zone = %Zone{
+          id: zone_id,
+          name: "Default Zone Name",
+          characters: [],
+          items: [],
+          rooms: MapSet.new([end_room_id])
+        }
+
+        Kickoff.start_zone(zone)
+        Kickoff.start_room(room)
+        WorldMap.put(room)
+
+        conn
+        |> Action.cancel()
+        |> TeleportAction.run(%{room_id: end_room_id})
+    end
+  end
+
+  @doc """
+  Write zone file to disk
+  """
+  def zone_save(conn, _params) do
+    conn
+    |> assign(:prompt, :false)
+    |> event("zone/save", %{})
+  end
 
   defp to_long(exit_name) when byte_size(exit_name) == 1 do
     case exit_name do

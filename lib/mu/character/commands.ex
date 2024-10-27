@@ -117,13 +117,23 @@ defmodule Mu.Character.Commands do
       |> word(:end_exit_name)
     end)
 
-    parse("@set_room", :set_room, fn command ->
+    parse("@room_set", :set_room, fn command ->
       command
       |> spaces()
       |> word(:key)
       |> spaces()
       |> text(:val)
     end)
+
+    parse("@zone_new", :new_zone, fn command ->
+      command
+      |> spaces()
+      |> word(:zone_id)
+      |> spaces()
+      |> word(:room_id)
+    end)
+
+    parse("@zone_save", :zone_save)
   end
 
   module(EmoteCommand) do

@@ -53,6 +53,10 @@ defmodule Mu.World.Zone do
 
   def event(context, event), do: Events.call(context, event)
 
+  def whereis(zone_id) do
+    GenServer.whereis(Kalevala.World.Zone.global_name(zone_id))
+  end
+
   defimpl Kalevala.World.Zone.Callbacks do
     alias Mu.World.Zone
 
@@ -76,8 +80,14 @@ defmodule Mu.World.Zone.Events do
       event("init/items", :call)
       event("spawn/character", :call)
     end
+
     module(ResetEvent) do
       event("reset", :call)
+    end
+
+    module(BuildEvent) do
+      event("put/room", :put_room)
+      event("zone/save", :save)
     end
   end
 end
