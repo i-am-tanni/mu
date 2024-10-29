@@ -32,4 +32,8 @@ defmodule Mu.Character.BuildView do
     ~i(Input #{val} is invalid for room #{key})
   end
 
+  def render("save/success", _) do
+    ~i(Zone saved successfully!)
+  end
+
 end

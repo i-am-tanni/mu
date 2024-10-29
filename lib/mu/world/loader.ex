@@ -235,6 +235,7 @@ defmodule Mu.World.Loader do
 
     %Item{
       id: key,
+      zone_id: context.zone_id,
       keywords: item.keywords,
       name: item.name,
       dropped_name: item.dropped_name,

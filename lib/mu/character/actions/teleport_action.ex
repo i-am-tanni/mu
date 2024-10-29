@@ -9,7 +9,6 @@ defmodule Mu.Character.TeleportAction do
     from = conn.character.room_id
 
     conn
-    |> assign(:character, character(conn))
     |> move(:from, from, MoveView, "teleport/leave", %{to: nil})
     |> move(:to, to, MoveView, "teleport/enter", %{from: nil})
     |> put_character(%{conn.character | room_id: to})

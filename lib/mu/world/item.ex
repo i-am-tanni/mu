@@ -36,6 +36,7 @@ defmodule Mu.World.Item do
     :id,
     :keywords,
     :name,
+    :zone_id,
     :dropped_name,
     :description,
     :callback_module,
