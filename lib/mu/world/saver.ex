@@ -509,7 +509,7 @@ defmodule Mu.World.Saver do
   end
 
   defp prepare_exit(room_exit) do
-    {room_exit.exit_name, room_exit.end_room_id}
+    {room_exit.exit_name, room_exit.end_template_id}
   end
 
   defp prepare_door(%{door: door}) when is_nil(door), do: nil

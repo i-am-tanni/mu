@@ -5,10 +5,11 @@ defmodule Mu.World.Zone.BuildEvent do
   alias Mu.World.Room
   alias Mu.World.NonPlayers
   alias Mu.World.Items
+  alias Mu.Character.BuildView
 
-  def put_room(context, %{data: %{room: %{id: room_id}}}) do
-    zone = context.data
-    put_data(context, :rooms, MapSet.put(zone.rooms, room_id))
+  def put_room(context, %{data: %{room_id: room_id}}) do
+    updated_rooms = MapSet.put(context.data.rooms, room_id)
+    put_data(context, :rooms, updated_rooms)
   end
 
   def save(context, event) do
@@ -48,7 +49,7 @@ defmodule Mu.World.Zone.BuildEvent do
     file_name = Inflex.underscore(zone.id)
     Saver.save_zone(zone, file_name)
 
-    event(context, event.from_pid, self(), "save/success", %{})
+    prompt(context, event.from_pid, BuildView, "save/success", %{})
 
   end
 

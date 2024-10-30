@@ -8,6 +8,7 @@ defmodule Mu.World.Room.BuildEvent do
   alias Mu.World.Exit
   alias Mu.World.RoomIds
   alias Mu.World.WorldMap
+  alias Mu.World.Zone
 
   @default_symbol "[]"
   @world_map_keys [:x, :y, :z, :symbol]
@@ -16,7 +17,9 @@ defmodule Mu.World.Room.BuildEvent do
     start_exit_name = data.start_exit_name
     local = context.data
     zone_id = local.zone_id
-    room_string = "#{zone_id}.#{data.room_id}"
+    to_room_template_id = data.room_id
+    room_string = "#{zone_id}.#{to_room_template_id}"
+    zone_pid = Zone.whereis(context.data.zone_id)
 
     cond do
       Enum.any?(context.data.exits, &Exit.matches?(&1, start_exit_name)) ->
@@ -35,11 +38,18 @@ defmodule Mu.World.Room.BuildEvent do
         |> render(event.from_pid, BuildView, "room-id-taken")
         |> render(event.from_pid, CommandView, "prompt")
 
+      is_nil(zone_pid) ->
+        context
+        |> assign(:zone_id, context.data.zone_id)
+        |> assign(:self, event.acting_character)
+        |> render(event.from_pid, BuildView, "zone-process-missing")
+        |> render(event.from_pid, CommandView, "prompt")
+
       true ->
         start_room_id = local.id
         end_room_id = RoomIds.put(room_string)
-        start_exit = Exit.basic_exit(data.start_exit_name, start_room_id, end_room_id)
-        end_exit = Exit.basic_exit(data.end_exit_name, end_room_id, start_room_id)
+        start_exit = Exit.basic_exit(data.start_exit_name, start_room_id, end_room_id, to_room_template_id)
+        end_exit = Exit.basic_exit(data.end_exit_name, end_room_id, start_room_id, context.data.template_id)
         {x, y, z} = destination_coords(data.start_exit_name, local.x, local.y, local.z)
 
         room = %Room{
@@ -66,6 +76,7 @@ defmodule Mu.World.Room.BuildEvent do
         context
         |> put_data(:exits, sorted_exits)
         |> event(event.from_pid, self(), event.topic, %{exit_name: data.start_exit_name})
+        |> event(zone_pid, self(), "put/room", %{room_id: room.id})
     end
   end
 

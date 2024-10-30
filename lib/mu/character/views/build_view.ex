@@ -36,4 +36,8 @@ defmodule Mu.Character.BuildView do
     ~i(Zone saved successfully!)
   end
 
+  def render("zone-process-missing", _) do
+    ~i(Error: Zone process cannot be found!)
+  end
+
 end

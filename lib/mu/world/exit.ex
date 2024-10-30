@@ -3,18 +3,29 @@ defmodule Mu.World.Exit.Door do
 end
 
 defmodule Mu.World.Exit do
-  defstruct [:id, :type, :exit_name, :start_room_id, :end_room_id, :door, :hidden?, :secret?]
+  defstruct [
+    :id,
+    :type,
+    :exit_name,
+    :start_room_id,
+    :end_room_id,
+    :end_template_id,
+    :door,
+    :hidden?,
+    :secret?
+    ]
 
   def matches?(room_exit, keyword) do
     room_exit.id == keyword || keyword_match?(room_exit.exit_name, keyword)
   end
 
-  def basic_exit(exit_name, start_room_id, end_room_id) do
+  def basic_exit(exit_name, start_room_id, end_room_id, end_template_id) do
     %__MODULE__{
       id: exit_name,
       type: :normal,
       exit_name: exit_name,
       start_room_id: start_room_id,
+      end_template_id: end_template_id,
       end_room_id: end_room_id,
       hidden?: false,
       secret?: false,

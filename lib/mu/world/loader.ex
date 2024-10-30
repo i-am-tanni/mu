@@ -181,6 +181,7 @@ defmodule Mu.World.Loader do
       exit_name: key,
       start_room_id: context.room_id,
       end_room_id: to_room,
+      end_template_id: room_exit,
       hidden?: false,
       secret?: false,
       door: door
