@@ -5,10 +5,12 @@ defmodule Mu.World.Room.BuildEvent do
   alias Mu.Character.CommandView
   alias Mu.World.Kickoff
   alias Mu.World.Room
+  alias Mu.World.Zone
   alias Mu.World.Exit
+  alias Mu.World.Exit.Door
   alias Mu.World.RoomIds
   alias Mu.World.WorldMap
-  alias Mu.World.Zone
+  alias Mu.World.Item
 
   @default_symbol "[]"
   @world_map_keys [:x, :y, :z, :symbol]
@@ -48,8 +50,8 @@ defmodule Mu.World.Room.BuildEvent do
       true ->
         start_room_id = local.id
         end_room_id = RoomIds.put(room_string)
-        start_exit = Exit.basic_exit(data.start_exit_name, start_room_id, end_room_id, to_room_template_id)
-        end_exit = Exit.basic_exit(data.end_exit_name, end_room_id, start_room_id, context.data.template_id)
+        start_exit = Exit.new(data.start_exit_name, start_room_id, end_room_id, to_room_template_id)
+        end_exit = Exit.new(data.end_exit_name, end_room_id, start_room_id, context.data.template_id)
         {x, y, z} = destination_coords(data.start_exit_name, local.x, local.y, local.z)
 
         room = %Room{
@@ -69,9 +71,7 @@ defmodule Mu.World.Room.BuildEvent do
         WorldMap.put(room)
         WorldMap.add_path(start_room_id, end_room_id)
         WorldMap.add_path(end_room_id, start_room_id)
-        sorted_exits =
-          [start_exit | context.data.exits]
-          |> Enum.sort(&(exit_sort_order(&1) <= exit_sort_order(&2)))
+        sorted_exits = Exit.sort([start_exit | context.data.exits])
 
         context
         |> put_data(:exits, sorted_exits)
@@ -105,21 +105,5 @@ defmodule Mu.World.Room.BuildEvent do
   end
 
   defp destination_coords(_, _, _, _), do: {nil, nil, nil}
-
-  defp exit_sort_order(%Exit{exit_name: exit_name}) do
-    case exit_name do
-      "north"     -> 0
-      "northeast" -> 1
-      "east"      -> 2
-      "southeast" -> 3
-      "south"     -> 4
-      "southwest" -> 5
-      "west"      -> 6
-      "northwest" -> 7
-      "up"        -> 8
-      "down"      -> 9
-      _           -> 10
-    end
-  end
 
 end

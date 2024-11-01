@@ -21,7 +21,15 @@ defmodule Mu.Character.BuildView do
   end
 
   def render("invalid-exit-name", %{exit_name: exit_name}) do
-    ~i(Exit keyword #{exit_name} is invalid.\r\n)
+    ~i(Exit keyword #{exit_name} is invalid.)
+  end
+
+  def render("room-id-missing", %{room_id: room_id}) do
+    ~i(The room id "#{room_id}" is missing.)
+  end
+
+  def render("room-pid-missing", %{room_id: room_id}) do
+    ~i(Cannot find pid for "#{room_id}".)
   end
 
   def render({:room, "invalid-field"}, %{key: key}) do

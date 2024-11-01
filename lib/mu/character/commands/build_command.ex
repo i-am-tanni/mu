@@ -100,13 +100,13 @@ defmodule Mu.Character.BuildCommand do
         conn
         |> assign(:prompt, true)
         |> assign(:exit_name, start_exit_name)
-        |> render(BuildView, "invalid-exit-name")
+        |> prompt(BuildView, "invalid-exit-name")
 
       end_exit_name not in @valid_exit_names ->
         conn
         |> assign(:prompt, true)
         |> assign(:exit_name, end_exit_name)
-        |> render(BuildView, "invalid-exit-name")
+        |> prompt(BuildView, "invalid-exit-name")
 
       true ->
         params = %{

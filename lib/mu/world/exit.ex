@@ -19,7 +19,7 @@ defmodule Mu.World.Exit do
     room_exit.id == keyword || keyword_match?(room_exit.exit_name, keyword)
   end
 
-  def basic_exit(exit_name, start_room_id, end_room_id, end_template_id) do
+  def new(exit_name, start_room_id, end_room_id, end_template_id) do
     %__MODULE__{
       id: exit_name,
       type: :normal,
@@ -31,6 +31,26 @@ defmodule Mu.World.Exit do
       secret?: false,
       door: nil
     }
+  end
+
+  def sort(exits) do
+    Enum.sort(exits, & exit_sort_order(&1) < exit_sort_order(&2))
+  end
+
+  defp exit_sort_order(%{exit_name: exit_name}) do
+    case exit_name do
+      "north"     -> 0
+      "northeast" -> 1
+      "east"      -> 2
+      "southeast" -> 3
+      "south"     -> 4
+      "southwest" -> 5
+      "west"      -> 6
+      "northwest" -> 7
+      "up"        -> 8
+      "down"      -> 9
+      _           -> 10
+    end
   end
 
   defp keyword_match?(exit_name, keyword) when is_binary(keyword) do
