@@ -58,7 +58,7 @@ defmodule Mu.World.RoomIds do
     {:ok, state}
   end
 
-  def get(key) do
+  def get!(key) do
     with :error <- unwrap(lookup(key)) do
       # restart RoomIdCache process if there is an issue
       #   and raise an error in the calling process

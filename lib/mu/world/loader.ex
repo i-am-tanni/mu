@@ -72,7 +72,7 @@ defmodule Mu.World.Loader do
     rooms =
       Map.get(zone_data, "rooms", [])
       |> Enum.map(fn {local_id, room_data} ->
-        room_id = RoomIds.get("#{zone_id}.#{local_id}")
+        room_id = RoomIds.get!("#{zone_id}.#{local_id}")
         room_data = Map.put(room_data, "template_id", local_id)
         {room_id, room_data}
       end)
@@ -161,11 +161,11 @@ defmodule Mu.World.Loader do
       case is_binary(room_exit) and String.match?(room_exit, ~r/([^\.]+)\.([^\.]+)/) do
         true ->
           # if '.' separator is found in room_exit name, assume this is in "ZoneId.room_id" format
-          RoomIds.get(room_exit)
+          RoomIds.get!(room_exit)
 
         false ->
           # else, assume this exit refers to a local id, so combine with current zone id
-          RoomIds.get("#{context.zone_id}.#{room_exit}")
+          RoomIds.get!("#{context.zone_id}.#{room_exit}")
       end
 
     door = parse_door(context.doors[key])
@@ -269,7 +269,7 @@ defmodule Mu.World.Loader do
       with %{room_ids: room_ids} <- spawner do
         room_ids =
           Enum.map(room_ids, fn local_id ->
-            RoomIds.get("#{zone_id}.#{local_id}")
+            RoomIds.get!("#{zone_id}.#{local_id}")
           end)
 
         %{spawner | room_ids: room_ids}

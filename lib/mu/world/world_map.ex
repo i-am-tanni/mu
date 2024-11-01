@@ -70,7 +70,7 @@ defmodule Mu.World.WorldMap do
           %{"zone" => %{"id" => zone_id}, "rooms" => rooms} = zone do
         rooms =
           Enum.map(rooms, fn {room_id, room_data} ->
-            {RoomIds.get("#{zone_id}.#{room_id}"), room_data}
+            {RoomIds.get!("#{zone_id}.#{room_id}"), room_data}
           end)
         {zone_id, rooms}
       end
@@ -103,11 +103,11 @@ defmodule Mu.World.WorldMap do
         case is_binary(to) and String.match?(to, ~r/([^\.]+)\.([^\.]+)/) do
           true ->
             # if '.' separator is found in room exit id, assume this is in "ZoneId.room_id" format
-            RoomIds.get(to)
+            RoomIds.get!(to)
 
           false ->
             # else, assume this exit refers to a local id, so combine with current zone id
-            RoomIds.get("#{zone_id}.#{to}")
+            RoomIds.get!("#{zone_id}.#{to}")
         end
 
       case :digraph.add_edge(graph, room_id, to) do
