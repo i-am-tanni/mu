@@ -67,6 +67,8 @@ defmodule Mu.World.RoomIds do
     end
   end
 
+  def get(key), do: lookup(key)
+
   def put(data), do: GenServer.call(__MODULE__, {:put, data})
 
   def has_key?(key) do
