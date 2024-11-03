@@ -106,36 +106,6 @@ defmodule Mu.Character.Commands do
 
   defp negate(n), do: n * -1
 
-  module(BuildCommand) do
-    parse("@dig", :dig, fn command ->
-      command
-      |> spaces()
-      |> word(:new_room_id)
-      |> spaces()
-      |> word(:start_exit_name)
-      |> spaces()
-      |> word(:end_exit_name)
-    end)
-
-    parse("@room_set", :set_room, fn command ->
-      command
-      |> spaces()
-      |> word(:key)
-      |> spaces()
-      |> text(:val)
-    end)
-
-    parse("@zone_new", :new_zone, fn command ->
-      command
-      |> spaces()
-      |> word(:zone_id)
-      |> spaces()
-      |> word(:room_id)
-    end)
-
-    parse("@zone_save", :zone_save)
-  end
-
   module(EmoteCommand) do
     parse("emote", :broadcast, fn command ->
       command |> spaces() |> text(:text)
@@ -305,6 +275,46 @@ defmodule Mu.Character.Commands do
   module(RandomExitCommand) do
     parse("wander", :call, aliases: ["wa"])
     parse("flee", :call)
+  end
+
+  module(StaffCommand) do
+    parse("@teleport", :teleport, fn command ->
+      command
+      |> spaces()
+      |> word(:zone_id)
+      |> spaces()
+      |> word(:room_id)
+    end)
+  end
+
+  module(BuildCommand) do
+    parse("@dig", :dig, fn command ->
+      command
+      |> spaces()
+      |> word(:new_room_id)
+      |> spaces()
+      |> word(:start_exit_name)
+      |> spaces()
+      |> word(:end_exit_name)
+    end)
+
+    parse("@set_room", :set_room, fn command ->
+      command
+      |> spaces()
+      |> word(:key)
+      |> spaces()
+      |> text(:val)
+    end)
+
+    parse("@new_zone", :new_zone, fn command ->
+      command
+      |> spaces()
+      |> word(:zone_id)
+      |> spaces()
+      |> word(:room_id)
+    end)
+
+    parse("@save_zone", :zone_save)
   end
 
   dynamic(SocialCommand, :social, [])
