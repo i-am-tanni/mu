@@ -5,7 +5,7 @@ defmodule Mu.Character.CommandController.PreParser do
   """
 
   import NimbleParsec
-  @downcase_exceptions ~w(say tell whisper emote ooc yell @set_room)
+  @downcase_exceptions ~w(say tell whisper emote ooc yell)
 
   word = utf8_string([not: ?\s, not: ?\r, not: ?\n, not: ?\t, not: ?\d], min: 1)
 
@@ -47,7 +47,7 @@ defmodule Mu.Character.CommandController.PreParser do
   defp to_binary_and_downcase(term) do
     case term do
       %{command: command, text: text} ->
-        case command not in @downcase_exceptions do
+        case downcase?(command) do
           true -> command <> String.downcase(text)
           false -> command <> text
         end
@@ -55,6 +55,10 @@ defmodule Mu.Character.CommandController.PreParser do
       %{command: command} ->
         command
     end
+  end
+
+  defp downcase?(command) do
+    not String.match?(command, ~r/^@/) and command not in @downcase_exceptions
   end
 end
 
