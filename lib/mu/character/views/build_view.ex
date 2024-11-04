@@ -9,6 +9,16 @@ defmodule Mu.Character.BuildView do
     ~i(Room #{key} updated.)
   end
 
+  def render("save/success", _) do
+    ~i(Zone saved successfully!)
+  end
+
+  def render("exit-added", %{exit_name: exit_name, room_template_id: room_template_id}) do
+    ~i(Exit to #{room_template_id} added #{exit_name}.)
+  end
+
+  # errors
+
   def render("exit-exists", %{exit_name: exit_name}) do
     ~E"""
     There is already an exit with exit name "<%= exit_name %>".
@@ -28,20 +38,16 @@ defmodule Mu.Character.BuildView do
     ~i(The room id "#{room_id}" is missing.)
   end
 
-  def render("room-pid-missing", %{room_id: room_id}) do
-    ~i(Cannot find pid for "#{room_id}".)
-  end
-
-  def render({:room, "invalid-field"}, %{key: key}) do
-    ~i(Room field #{key} is invalid.)
+  def render("room-not-found", %{room_id: room_id}) do
+    ~i(Cannot find "#{room_id}".)
   end
 
   def render({:room, "invalid-field"}, %{key: key, val: val}) do
     ~i(Input #{val} is invalid for room #{key})
   end
 
-  def render("save/success", _) do
-    ~i(Zone saved successfully!)
+  def render({:room, "invalid-field"}, %{key: key}) do
+    ~i(Room field #{key} is invalid.)
   end
 
   def render("zone-process-missing", _) do

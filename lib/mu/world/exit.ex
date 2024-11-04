@@ -3,6 +3,8 @@ defmodule Mu.World.Exit.Door do
 end
 
 defmodule Mu.World.Exit do
+  @valid_exit_names ~w(north south east west up down)
+
   defstruct [
     :id,
     :type,
@@ -33,8 +35,44 @@ defmodule Mu.World.Exit do
     }
   end
 
-  def sort(exits) do
-    Enum.sort(exits, & exit_sort_order(&1) < exit_sort_order(&2))
+  def sort(exits), do: Enum.sort(exits, & exit_sort_order(&1) < exit_sort_order(&2))
+
+  def valid?(exit_name), do: exit_name in @valid_exit_names
+
+  def to_long(exit_name) when byte_size(exit_name) == 1 do
+    case exit_name do
+      "n" -> "north"
+      "s" -> "south"
+      "e" -> "east"
+      "w" -> "west"
+      "u" -> "up"
+      "d" -> "down"
+      _ -> exit_name
+    end
+  end
+
+  def to_long(exit_name) when byte_size(exit_name) == 2 do
+    case exit_name do
+      "nw" -> "northwest"
+      "ne" -> "northeast"
+      "sw" -> "southwest"
+      "se" -> "southeast"
+      _ -> exit_name
+    end
+  end
+
+  def to_long(exit_name), do: exit_name
+
+  def opposite(exit_name) do
+    case exit_name do
+      "north" -> "south"
+      "south" -> "north"
+      "east" -> "west"
+      "west" -> "east"
+      "up" -> "down"
+      "down" -> "up"
+      _ -> nil
+    end
   end
 
   defp exit_sort_order(%{exit_name: exit_name}) do

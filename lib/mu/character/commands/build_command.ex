@@ -70,6 +70,7 @@ defmodule Mu.Character.BuildCommand do
   use Kalevala.Character.Command
   alias Mu.Character.BuildView
   alias Mu.Character.BuildCommand
+  alias Mu.World.Exit
 
   # for new_zone()
   alias Mu.World.Zone
@@ -80,29 +81,28 @@ defmodule Mu.Character.BuildCommand do
   alias Mu.Character.TeleportAction
   alias Mu.Character.Action
 
-
-  @valid_exit_names ~w(north south east west up down)
-
   @doc """
-  Sends the room a request to dig an exit from the current room
+  Syntax: @dig <destination_id> <start_exit_keyword> <end_exit_keyword>
+
+  Sends the room a request to dig a two-way exit to the destination id.
   """
   def dig(conn, params) do
-    start_exit_name = to_long(params["start_exit_name"])
+    start_exit_name = Exit.to_long(params["start_exit_name"])
 
     end_exit_name =
       case params["end_exit_name"] do
-        nil -> opposite(start_exit_name)
-        exit_name -> to_long(exit_name)
+        nil -> Exit.opposite(start_exit_name)
+        exit_name -> Exit.to_long(exit_name)
       end
 
     cond do
-      start_exit_name not in @valid_exit_names ->
+      not Exit.valid?(start_exit_name) ->
         conn
         |> assign(:prompt, true)
         |> assign(:exit_name, start_exit_name)
         |> prompt(BuildView, "invalid-exit-name")
 
-      end_exit_name not in @valid_exit_names ->
+      not Exit.valid?(end_exit_name) ->
         conn
         |> assign(:prompt, true)
         |> assign(:exit_name, end_exit_name)
@@ -123,12 +123,17 @@ defmodule Mu.Character.BuildCommand do
 
   def set_room(conn, params), do: BuildCommand.Room.set(conn, params)
 
+  @doc """
+  Syntax: @new_zone <zone_id> <room_id>
+
+  Creates a new room (room_id) in new or existing zone_id.
+  """
   def new_zone(conn, params) do
     zone_id = Inflex.camelize(params["zone_id"])
-    room_id = Inflex.underscore(params["room_id"])
-    room_string = "#{zone_id}.#{room_id}"
+    template_id = Inflex.underscore(params["room_id"])
+    room_string = "#{zone_id}.#{template_id}"
 
-    case Mu.World.RoomIds.has_key?(room_string) do
+    case RoomIds.has_key?(room_string) do
       true ->
         # error: room id is unavailable
         conn
@@ -141,14 +146,14 @@ defmodule Mu.Character.BuildCommand do
 
         room = %Room{
           id: end_room_id,
-          template_id: room_id,
+          template_id: template_id,
           zone_id: zone_id,
           x: 0,
           y: 0,
           z: 0,
           symbol: "[]",
           exits: [],
-          name: "Default Room",
+          name: template_id,
           description: "Default Description"
         }
 
@@ -171,7 +176,9 @@ defmodule Mu.Character.BuildCommand do
   end
 
   @doc """
-  Write zone file to disk
+  Syntax: @save_zone
+
+  Write current zone to a file on disk.
   """
   def zone_save(conn, _params) do
     conn
@@ -179,39 +186,44 @@ defmodule Mu.Character.BuildCommand do
     |> event("zone/save", %{})
   end
 
-  defp to_long(exit_name) when byte_size(exit_name) == 1 do
-    case exit_name do
-      "n" -> "north"
-      "s" -> "south"
-      "e" -> "east"
-      "w" -> "west"
-      "u" -> "up"
-      "d" -> "down"
-      _ -> exit_name
-    end
-  end
+  @doc """
+  Syntax: @put_exit <exit_keyword> <destination_id>
 
-  defp to_long(exit_name) when byte_size(exit_name) == 2 do
-    case exit_name do
-      "nw" -> "northwest"
-      "ne" -> "northeast"
-      "sw" -> "southwest"
-      "se" -> "southeast"
-      _ -> exit_name
-    end
-  end
+  Note: destination_id is in "Zone.room_template_id" or "template_id" format
+  If no Zone destination is supplied, the current zone is assumed.
 
-  defp to_long(exit_name), do: exit_name
+  Places an exit to destination_id usable with the supplied exit_keyword
+  in the current room.
+  """
+  def put_exit(conn, params) do
+    exit_name = Exit.to_long(params["exit_name"])
+    case Exit.valid?(exit_name) do
+      true ->
+        to_template_id = params["destination_id"]
+        [room_template_id | zone_id] = String.split(to_template_id, ".") |> Enum.reverse()
+        room_template_id = Inflex.underscore(room_template_id)
+        zone_template_id =
+          case Enum.reverse(zone_id) do
+            [] -> :current
+            items -> Enum.join(items, ".") |> Inflex.camelize()
+          end
 
-  defp opposite(exit_name) do
-    case exit_name do
-      "north" -> "south"
-      "south" -> "north"
-      "east" -> "west"
-      "west" -> "east"
-      "up" -> "down"
-      "down" -> "up"
-      _ -> nil
+        params = %{
+          zone_template_id: zone_template_id,
+          room_template_id: room_template_id,
+          exit_name: exit_name
+        }
+
+      conn
+      |> assign(:prompt, :false)
+      |> event("put-exit", params)
+
+    false ->
+      # Error: Invalid Exit Name
+      conn
+      |> assign(:exit_name, exit_name)
+      |> assign(:prompt, true)
+      |> prompt(BuildView, "invalid-exit-name")
     end
   end
 

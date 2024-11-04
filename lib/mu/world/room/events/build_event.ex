@@ -63,7 +63,7 @@ defmodule Mu.World.Room.BuildEvent do
           z: z,
           symbol: @default_symbol,
           exits: [end_exit],
-          name: "Default Room",
+          name: data.room_id,
           description: "Default Description"
         }
 
@@ -82,7 +82,9 @@ defmodule Mu.World.Room.BuildEvent do
 
   def set(context, %{data: %{key: key, val: val}} = event) do
     if key in @world_map_keys do
-      context.data |> Map.put(key, val) |> WorldMap.put()
+      context.data
+      |> Map.put(key, val)
+      |> WorldMap.put()
     end
 
     context
@@ -90,6 +92,40 @@ defmodule Mu.World.Room.BuildEvent do
     |> prompt(event.from_pid, BuildView, "set")
     |> put_data(key, val)
     |> event(event.from_pid, self(), "room/look", %{})
+  end
+
+  def put_exit(context, event) do
+    data = event.data
+    end_template_id = data.room_template_id
+    zone_id = with :current <- data.zone_template_id, do: context.data.zone_id
+    room_string = "#{zone_id}.#{end_template_id}"
+
+    case RoomIds.get(room_string) do
+      {:ok, end_room_id} ->
+        exit_name = data.exit_name
+        start_room_id = context.data.id
+        new_exit = Exit.new(exit_name, start_room_id, end_room_id, end_template_id)
+        WorldMap.add_path(start_room_id, end_room_id)
+        sorted_exits =
+          [new_exit | Enum.reject(context.data.exits, &Exit.matches?(&1, exit_name))]
+          |> Exit.sort()
+
+        context
+        |> put_data(:exits, sorted_exits)
+        |> assign(:exit_name, exit_name)
+        |> assign(:room_template_id, room_string)
+        |> assign(:self, event.acting_character)
+        |> prompt(event.from_pid, BuildView, "exit-added")
+        |> render(event.from_pid, CommandView, "prompt")
+
+      :error ->
+        # error: room id is missing
+        context
+        |> assign(:room_id, room_string)
+        |> assign(:self, event.acting_character)
+        |> prompt(event.from_pid, BuildView, "room-not-found")
+        |> render(event.from_pid, CommandView, "prompt")
+    end
   end
 
   defp destination_coords(start_exit_name, x, y, z) when is_integer(x) when is_integer(y) when is_integer(z) do

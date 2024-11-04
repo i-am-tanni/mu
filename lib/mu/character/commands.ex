@@ -315,6 +315,14 @@ defmodule Mu.Character.Commands do
     end)
 
     parse("@save_zone", :zone_save)
+
+    parse("@put_exit", :put_exit, fn command ->
+      command
+      |> spaces()
+      |> word(:destination_id)
+      |> spaces()
+      |> word(:exit_name)
+    end)
   end
 
   dynamic(SocialCommand, :social, [])
