@@ -15,7 +15,7 @@ defmodule Mu.World do
       {Mu.World.Items, [id: Mu.World.Items, name: Mu.World.Items]},
       {Mu.World.NonPlayers, [id: Mu.World.NonPlayers, name: Mu.World.NonPlayers]},
       {Mu.World.RoomIds, [id: Mu.World.RoomIds, name: Mu.World.RoomIds]},
-      {Mu.World.WorldMap, [id: Mu.World.WorldMap, name: Mu.World.WorldMap]},
+      {Mu.World.Mapper, [id: Mu.World.Mapper, name: Mu.World.Mapper]},
       {Kalevala.World, [name: Mu.World]},
       {Mu.World.Kickoff, [name: Mu.World.Kickoff, start: kickoff]}
     ]

@@ -76,7 +76,7 @@ defmodule Mu.Character.BuildCommand do
   alias Mu.World.Zone
   alias Mu.World.Room
   alias Mu.World.RoomIds
-  alias Mu.World.WorldMap
+  alias Mu.World.Mapper
   alias Mu.World.Kickoff
   alias Mu.Character.TeleportAction
   alias Mu.Character.Action
@@ -167,7 +167,7 @@ defmodule Mu.Character.BuildCommand do
 
         Kickoff.start_zone(zone)
         Kickoff.start_room(room)
-        WorldMap.put(room)
+        Mapper.put(room)
 
         conn
         |> Action.cancel()

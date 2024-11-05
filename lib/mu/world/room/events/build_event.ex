@@ -9,7 +9,7 @@ defmodule Mu.World.Room.BuildEvent do
   alias Mu.World.Exit
   alias Mu.World.Exit.Door
   alias Mu.World.RoomIds
-  alias Mu.World.WorldMap
+  alias Mu.World.Mapper
   alias Mu.World.Item
 
   @default_symbol "[]"
@@ -68,9 +68,9 @@ defmodule Mu.World.Room.BuildEvent do
         }
 
         Kickoff.start_room(room)
-        WorldMap.put(room)
-        WorldMap.add_path(start_room_id, end_room_id)
-        WorldMap.add_path(end_room_id, start_room_id)
+        Mapper.put(room)
+        Mapper.add_path(start_room_id, end_room_id)
+        Mapper.add_path(end_room_id, start_room_id)
         sorted_exits = Exit.sort([start_exit | context.data.exits])
 
         context
@@ -84,7 +84,7 @@ defmodule Mu.World.Room.BuildEvent do
     if key in @world_map_keys do
       context.data
       |> Map.put(key, val)
-      |> WorldMap.put()
+      |> Mapper.put()
     end
 
     context
@@ -104,7 +104,7 @@ defmodule Mu.World.Room.BuildEvent do
       {:ok, end_room_id} ->
         exit_name = data.exit_name
         start_room_id = context.data.id
-        WorldMap.add_path(start_room_id, end_room_id)
+        Mapper.add_path(start_room_id, end_room_id)
         new_exit = Exit.new(exit_name, start_room_id, end_room_id, end_template_id)
         sorted_exits =
           [new_exit | Enum.reject(context.data.exits, &Exit.matches?(&1, exit_name))]

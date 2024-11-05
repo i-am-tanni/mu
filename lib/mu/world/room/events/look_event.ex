@@ -10,7 +10,7 @@ defmodule Mu.World.Room.LookEvent do
   alias Mu.World.Exit
   alias Mu.Character.CommandView
   alias Mu.World.Room
-  alias Mu.World.WorldMap
+  alias Mu.World.Mapper
 
   def call(context, event) do
     characters =
@@ -27,7 +27,7 @@ defmodule Mu.World.Room.LookEvent do
 
     context
     |> assign(:room, room)
-    |> assign(:mini_map, WorldMap.mini_map(room.id))
+    |> assign(:mini_map, Mapper.mini_map(room.id))
     |> assign(:characters, characters)
     |> assign(:item_instances, item_instances)
     |> assign(:self, event.acting_character)

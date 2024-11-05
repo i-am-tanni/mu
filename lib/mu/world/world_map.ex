@@ -1,14 +1,14 @@
-defmodule Mu.World.WorldMap.Vertex do
+defmodule Mu.World.Mapper.Vertex do
   defstruct [:id, :symbol, :x, :y, :z]
 end
 
-defmodule Mu.World.WorldMap do
+defmodule Mu.World.Mapper do
   @moduledoc """
   Loads vertex and edge information from area files concurrently and puts them in a directed graph.
   Remaining information for each vertex is stored in a map.
 
   ## Mini Map
-  Mu.World.WorldMap.Helpers.mini_map/1 outputs the mini map based on the room_id.
+  Mu.World.Mapper.Helpers.mini_map/1 outputs the mini map based on the room_id.
   """
   use GenServer
   require Logger
@@ -17,9 +17,9 @@ defmodule Mu.World.WorldMap do
 
   @default_path "data/world"
 
-  alias Mu.World.WorldMap
-  alias Mu.World.WorldMap.Helpers
-  alias Mu.World.WorldMap.Vertex
+  alias Mu.World.Mapper
+  alias Mu.World.Mapper.Helpers
+  alias Mu.World.Mapper.Vertex
   alias Mu.World.RoomIds
 
   def start_link(opts) do
@@ -171,7 +171,7 @@ defmodule Mu.World.WorldMap do
   def handle_cast(:reset, state) do
     # only used by tests
     :digraph.delete(state.graph)
-    {:noreply, %WorldMap{graph: :digraph.new()}}
+    {:noreply, %Mapper{graph: :digraph.new()}}
   end
 
 
@@ -190,10 +190,10 @@ defmodule Mu.World.WorldMap do
 
 end
 
-defmodule Mu.World.WorldMap.Helpers do
+defmodule Mu.World.Mapper.Helpers do
 
-  alias Mu.World.WorldMap
-  alias Mu.World.WorldMap.Vertex
+  alias Mu.World.Mapper
+  alias Mu.World.Mapper.Vertex
   alias Mu.World.Zone
 
   @xsize 5
@@ -267,7 +267,7 @@ defmodule Mu.World.WorldMap.Helpers do
   ```
   """
   def mini_map(world_map, room_id) do
-    %WorldMap{vertices: vertices, graph: graph} = world_map
+    %Mapper{vertices: vertices, graph: graph} = world_map
 
     case Map.get(vertices, room_id, :uncharted) do
       %Vertex{x: x, y: y, z: z} = center ->

@@ -1,7 +1,7 @@
-defmodule Mu.World.WorldMapTest do
+defmodule Mu.World.MapperTest do
   use ExUnit.Case
 
-  alias Mu.World.WorldMap
+  alias Mu.World.Mapper
 
   test "simple mini map" do
     room0 = %{
@@ -54,17 +54,17 @@ defmodule Mu.World.WorldMapTest do
       rooms: [room0, room1, room2, room3, room4]
     }
 
-    WorldMap.add_zone(zone)
+    Mapper.add_zone(zone)
 
     expect = "      **  \n      **  \n    <>    \n  **      \n  **      "
 
     result =
-      WorldMap.mini_map(0)
+      Mapper.mini_map(0)
       |> Enum.intersperse("\n")
       |> to_string()
 
     # clean up
-    WorldMap.reset()
+    Mapper.reset()
 
     assert expect == result
   end
@@ -135,13 +135,13 @@ defmodule Mu.World.WorldMapTest do
     rooms: rooms
   }
 
-  WorldMap.add_zone(zone)
+  Mapper.add_zone(zone)
 
 
   expect = "          \n          \n    <>    \n    **  **\n    ******"
 
   result =
-    WorldMap.mini_map(0)
+    Mapper.mini_map(0)
     |> Enum.intersperse("\n")
     |> to_string()
 
