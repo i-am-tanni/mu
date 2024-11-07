@@ -109,10 +109,11 @@ defmodule Mu.World.Room.BuildEvent do
     case id_result do
       {:ok, end_room_id} ->
         # create and add exit to room
+        local = context.data
         start_exit_name = data.start_exit_name
-        start_room_id = context.data.id
+        start_room_id = local.id
         end_template_id =
-          if context.data.zone_id == zone_id,
+          if local.zone_id == zone_id,
           do: end_template_id,
         else: room_string
 
@@ -127,6 +128,7 @@ defmodule Mu.World.Room.BuildEvent do
         |> put_data(:exits, sorted_exits)
         |> assign(:exit_name, start_exit_name)
         |> assign(:room_template_id, room_string)
+        |> assign(:local_id, "#{local.zone_id}.#{local.template_id}")
         |> prompt(event.from_pid, BuildView, "exit-added")
         |> pass_bexit(event, end_room_id)
 

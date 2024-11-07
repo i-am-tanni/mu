@@ -13,8 +13,9 @@ defmodule Mu.Character.BuildView do
     ~i(Zone saved successfully!)
   end
 
-  def render("exit-added", %{exit_name: exit_name, room_template_id: room_template_id}) do
-    ~i(Exit to #{room_template_id} added #{exit_name}.)
+  def render("exit-added", assigns) do
+    %{exit_name: exit_name, room_template_id: room_template_id, local_id: local_id} = assigns
+    ~i(Exit #{exit_name} to #{room_template_id} added in #{local_id}.)
   end
 
   # errors
