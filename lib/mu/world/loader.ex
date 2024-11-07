@@ -3,6 +3,7 @@ defmodule Mu.World.Loader do
   alias Mu.World.Zone
   alias Mu.World.Room
   alias Mu.World.Exit
+  alias Mu.World.Exits
   alias Mu.World.Exit.Door
   alias Mu.World.Item
   alias Kalevala.Character
