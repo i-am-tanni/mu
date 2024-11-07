@@ -2,6 +2,26 @@ defmodule Mu.World.Exit.Door do
   defstruct [:id, :closed?, :locked?]
 end
 
+defmodule Mu.World.Exits do
+  def sort(exits), do: Enum.sort(exits, & exit_sort_order(&1) < exit_sort_order(&2))
+
+  defp exit_sort_order(%{exit_name: exit_name}) do
+    case exit_name do
+      "north"     -> 0
+      "northeast" -> 1
+      "east"      -> 2
+      "southeast" -> 3
+      "south"     -> 4
+      "southwest" -> 5
+      "west"      -> 6
+      "northwest" -> 7
+      "up"        -> 8
+      "down"      -> 9
+      _           -> 10
+    end
+  end
+end
+
 defmodule Mu.World.Exit do
   @valid_exit_names ~w(north south east west up down)
 
@@ -34,8 +54,6 @@ defmodule Mu.World.Exit do
       door: nil
     }
   end
-
-  def sort(exits), do: Enum.sort(exits, & exit_sort_order(&1) < exit_sort_order(&2))
 
   def valid?(exit_name), do: exit_name in @valid_exit_names
 
@@ -72,22 +90,6 @@ defmodule Mu.World.Exit do
       "up" -> "down"
       "down" -> "up"
       _ -> nil
-    end
-  end
-
-  defp exit_sort_order(%{exit_name: exit_name}) do
-    case exit_name do
-      "north"     -> 0
-      "northeast" -> 1
-      "east"      -> 2
-      "southeast" -> 3
-      "south"     -> 4
-      "southwest" -> 5
-      "west"      -> 6
-      "northwest" -> 7
-      "up"        -> 8
-      "down"      -> 9
-      _           -> 10
     end
   end
 

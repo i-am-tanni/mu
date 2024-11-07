@@ -131,7 +131,7 @@ defmodule Mu.World.Loader do
     exits =
       Map.get(room, :exits, [])
       |> Enum.map(&parse_exit(&1, exit_context))
-      |> Exit.sort()
+      |> Exits.sort()
 
     extra_descs =
       Map.get(room, :extra_descs, [])

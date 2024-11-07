@@ -71,7 +71,7 @@ defmodule Mu.World.Room.BuildEvent do
         Mapper.put(room)
         Mapper.add_path(start_room_id, end_room_id)
         Mapper.add_path(end_room_id, start_room_id)
-        sorted_exits = Exit.sort([start_exit | context.data.exits])
+        sorted_exits = Exits.sort([start_exit | context.data.exits])
 
         context
         |> put_data(:exits, sorted_exits)
@@ -120,7 +120,7 @@ defmodule Mu.World.Room.BuildEvent do
         new_exit = Exit.new(start_exit_name, start_room_id, end_room_id, end_template_id)
         sorted_exits =
           [new_exit | Enum.reject(context.data.exits, &Exit.matches?(&1, start_exit_name))]
-          |> Exit.sort()
+          |> Exits.sort()
 
         Mapper.add_path(start_room_id, end_room_id)
 
