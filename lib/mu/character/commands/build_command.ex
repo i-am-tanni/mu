@@ -187,17 +187,35 @@ defmodule Mu.Character.BuildCommand do
   end
 
   @doc """
-  Syntax: @put_exit <exit_keyword> <destination_id>
+  Syntax: @put_exit <destination_id> <start_exit_keyword> (end_exit_keyword)
 
   Note: destination_id is in "Zone.room_template_id" or "template_id" format
   If no Zone destination is supplied, the current zone is assumed.
 
   Places an exit to destination_id usable with the supplied exit_keyword
-  in the current room.
+  in the current room. If an optional end_exit_keyword is supplied,
+  then the exit will be bi-directional.
   """
   def put_exit(conn, params) do
-    exit_name = Exit.to_long(params["exit_name"])
-    case Exit.valid?(exit_name) do
+    start_exit_name = Exit.to_long(params["start_exit_name"])
+    end_exit_name = Exit.to_long(params["end_exit_name"])
+
+    cond do
+      not Exit.valid?(start_exit_name) ->
+        # Error: Invalid Exit Name
+        conn
+        |> assign(:exit_name, start_exit_name)
+        |> assign(:prompt, true)
+        |> prompt(BuildView, "invalid-exit-name")
+
+      end_exit_name && not Exit.valid?(end_exit_name) ->
+        IO.puts "!!"
+        # Error: Invalid Exit Name
+        conn
+        |> assign(:exit_name, end_exit_name)
+        |> assign(:prompt, true)
+        |> prompt(BuildView, "invalid-exit-name")
+
       true ->
         to_template_id = params["destination_id"]
         [room_template_id | zone_id] = String.split(to_template_id, ".") |> Enum.reverse()
@@ -209,21 +227,15 @@ defmodule Mu.Character.BuildCommand do
           end
 
         params = %{
-          zone_template_id: zone_template_id,
+          zone_id: zone_template_id,
           room_template_id: room_template_id,
-          exit_name: exit_name
+          start_exit_name: start_exit_name,
+          end_exit_name: end_exit_name
         }
 
       conn
       |> assign(:prompt, :false)
       |> event("put-exit", params)
-
-    false ->
-      # Error: Invalid Exit Name
-      conn
-      |> assign(:exit_name, exit_name)
-      |> assign(:prompt, true)
-      |> prompt(BuildView, "invalid-exit-name")
     end
   end
 

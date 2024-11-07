@@ -27,19 +27,19 @@ defmodule Mu.Character.BuildView do
   end
 
   def render("room-id-taken", %{room_id: room_id}) do
-    ~i(The room id "#{room_id}" is already assigned. Please choose a different room id.\r\n)
+    ~i(Error: The room id "#{room_id}" is already assigned. Please choose a different room id.\r\n)
   end
 
   def render("invalid-exit-name", %{exit_name: exit_name}) do
-    ~i(Exit keyword #{exit_name} is invalid.)
+    ~i(Error: Exit keyword #{exit_name} is invalid.)
   end
 
   def render("room-id-missing", %{room_id: room_id}) do
-    ~i(The room id "#{room_id}" is missing.)
+    ~i(Error: No room hash found for "#{room_id}".)
   end
 
-  def render("room-not-found", %{room_id: room_id}) do
-    ~i(Cannot find "#{room_id}".)
+  def render("room-pid-missing", %{room_id: room_id}) do
+    ~i(Error: Could not locate process for "#{room_id}".)
   end
 
   def render({:room, "invalid-field"}, %{key: key, val: val}) do

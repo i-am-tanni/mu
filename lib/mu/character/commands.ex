@@ -298,7 +298,7 @@ defmodule Mu.Character.Commands do
       |> word(:end_exit_name)
     end)
 
-    parse("@set_room", :set_room, fn command ->
+    parse("@room_set", :set_room, fn command ->
       command
       |> spaces()
       |> word(:key)
@@ -306,7 +306,7 @@ defmodule Mu.Character.Commands do
       |> text(:val)
     end)
 
-    parse("@new_zone", :new_zone, fn command ->
+    parse("@zone_new", :new_zone, fn command ->
       command
       |> spaces()
       |> word(:zone_id)
@@ -314,14 +314,18 @@ defmodule Mu.Character.Commands do
       |> word(:room_id)
     end)
 
-    parse("@save_zone", :zone_save)
+    parse("@zone_save", :zone_save)
 
-    parse("@put_exit", :put_exit, fn command ->
+    parse("@room_exit_put", :put_exit, fn command ->
       command
       |> spaces()
       |> word(:destination_id)
       |> spaces()
-      |> word(:exit_name)
+      |> word(:start_exit_name)
+      |> optional(
+        spaces()
+        |> word(:end_exit_name)
+      )
     end)
   end
 
