@@ -69,6 +69,14 @@ defmodule Mu.Character.Commands.Helpers do
     |> unwrap_and_tag("count")
   end
 
+  def opts() do
+    repeat(
+      ignore(spaces())
+      |> concat(key_val())
+    )
+    |> tag("opts")
+  end
+
   defp reference(tag_parent, tag_child, delim \\ "/") do
     case tag_parent != "" do
       true -> "#{tag_parent}#{delim}#{tag_child}"
@@ -94,6 +102,21 @@ defmodule Mu.Character.Commands.Helpers do
     ignore(string("-"))
     |> concat(positive_integer())
     |> map({:negate, []})
+  end
+
+  defp key_val() do
+    utf8_string([not: ?:, not: ?\s], min: 1)
+    |> ignore(string(":"))
+    |> choice([boolean(), utf8_string([not: ?:, not: ?\s], min: 1)])
+    |> wrap()
+    |> map({List, :to_tuple, []})
+  end
+
+  defp boolean() do
+    choice([
+      replace(string("true"), :true),
+      replace(string("false"), :false),
+    ])
   end
 end
 
@@ -298,7 +321,7 @@ defmodule Mu.Character.Commands do
       |> word(:end_exit_name)
     end)
 
-    parse("@room_set", :set_room, fn command ->
+    parse("@redit", :set_room, fn command ->
       command
       |> spaces()
       |> word(:key)
@@ -306,7 +329,7 @@ defmodule Mu.Character.Commands do
       |> text(:val)
     end)
 
-    parse("@zone_new", :new_zone, fn command ->
+    parse("@znew", :new_zone, fn command ->
       command
       |> spaces()
       |> word(:zone_id)
@@ -314,9 +337,9 @@ defmodule Mu.Character.Commands do
       |> word(:room_id)
     end)
 
-    parse("@zone_save", :zone_save)
+    parse("@zsave", :zone_save)
 
-    parse("@room_exit_put", :put_exit, fn command ->
+    parse("@rexit_add", :put_exit, fn command ->
       command
       |> spaces()
       |> word(:destination_id)
@@ -326,6 +349,13 @@ defmodule Mu.Character.Commands do
         spaces()
         |> word(:end_exit_name)
       )
+    end)
+
+    parse("@rm", :remove, fn command ->
+      command
+      |> spaces()
+      |> word(:keyword)
+      |> optional(opts())
     end)
   end
 
