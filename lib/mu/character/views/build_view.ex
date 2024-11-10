@@ -18,6 +18,13 @@ defmodule Mu.Character.BuildView do
     ~i(Exit #{exit_name} to #{room_template_id} added in #{local_id}.)
   end
 
+  def render("exit-destroy", %{exit_name: exit_name, end_template_id: end_template_id, bi_directional?: bi_directional?}) do
+    case bi_directional? do
+      true -> ~i(Bi-directional exit #{exit_name} to #{end_template_id} destroyed.)
+      false -> ~i(Exit #{exit_name} to #{end_template_id} destroyed.)
+    end
+  end
+
   # errors
 
   def render("exit-exists", %{exit_name: exit_name}) do
@@ -44,15 +51,23 @@ defmodule Mu.Character.BuildView do
   end
 
   def render({:room, "invalid-field"}, %{key: key, val: val}) do
-    ~i(Input #{val} is invalid for room #{key})
+    ~i(Error: Input #{val} is invalid for room #{key})
   end
 
   def render({:room, "invalid-field"}, %{key: key}) do
-    ~i(Room field #{key} is invalid.)
+    ~i(Error: Room field #{key} is invalid.)
   end
 
   def render("zone-process-missing", _) do
     ~i(Error: Zone process cannot be found!)
+  end
+
+  def render("invalid-type", %{type: type}) do
+    ~i(Error: Invalid type for removal: #{type})
+  end
+
+  def render({:exit, "not-found"}, %{keyword: keyword}) do
+    ~i(Error: no exit keyword found for #{keyword}.)
   end
 
 end

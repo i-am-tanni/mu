@@ -87,12 +87,12 @@ defmodule Mu.Character.BuildCommand do
   Sends the room a request to dig a two-way exit to the destination id.
   """
   def dig(conn, params) do
-    start_exit_name = Exit.to_long(params["start_exit_name"])
+    start_exit_name = to_long(params["start_exit_name"])
 
     end_exit_name =
       case params["end_exit_name"] do
-        nil -> Exit.opposite(start_exit_name)
-        exit_name -> Exit.to_long(exit_name)
+        nil -> opposite(start_exit_name)
+        exit_name -> to_long(exit_name)
       end
 
     cond do
@@ -124,7 +124,7 @@ defmodule Mu.Character.BuildCommand do
   def set_room(conn, params), do: BuildCommand.Room.set(conn, params)
 
   @doc """
-  Syntax: @new_zone <zone_id> <room_id>
+  Syntax: @znew <zone_id> <room_id>
 
   Creates a new room (room_id) in new or existing zone_id.
   """
@@ -176,7 +176,7 @@ defmodule Mu.Character.BuildCommand do
   end
 
   @doc """
-  Syntax: @save_zone
+  Syntax: @zsave
 
   Write current zone to a file on disk.
   """
@@ -187,7 +187,7 @@ defmodule Mu.Character.BuildCommand do
   end
 
   @doc """
-  Syntax: @put_exit <destination_id> <start_exit_keyword> (end_exit_keyword)
+  Syntax: @rexit <destination_id> <start_exit_keyword> (end_exit_keyword)
 
   Note: destination_id is in "Zone.room_template_id" or "template_id" format
   If no Zone destination is supplied, the current zone is assumed.
@@ -197,8 +197,8 @@ defmodule Mu.Character.BuildCommand do
   then the exit will be bi-directional.
   """
   def put_exit(conn, params) do
-    start_exit_name = Exit.to_long(params["start_exit_name"])
-    end_exit_name = Exit.to_long(params["end_exit_name"])
+    start_exit_name = to_long(params["start_exit_name"])
+    end_exit_name = to_long(params["end_exit_name"])
 
     cond do
       not Exit.valid?(start_exit_name) ->
@@ -209,7 +209,6 @@ defmodule Mu.Character.BuildCommand do
         |> prompt(BuildView, "invalid-exit-name")
 
       end_exit_name && not Exit.valid?(end_exit_name) ->
-        IO.puts "!!"
         # Error: Invalid Exit Name
         conn
         |> assign(:exit_name, end_exit_name)
@@ -235,8 +234,118 @@ defmodule Mu.Character.BuildCommand do
 
       conn
       |> assign(:prompt, :false)
-      |> event("put-exit", params)
+      |> event("exit/create", params)
     end
   end
 
+  @doc """
+  Syntax: @rm <type> <keyword> (opts)
+
+  Removes something from the room.
+
+  ## Options
+  Opts is an optional keyword list.
+
+  # Exit Options
+  bi:boolean - if true, will remove both sides of the exit (default false)
+  """
+
+  def remove(conn, params) do
+    type = params["type"]
+    opts = to_keyword_list(type, Map.get(params, "opts", []))
+
+    cond do
+      type not in ~w(exit) ->
+        # Error: invalid type to remove
+        conn
+        |> assign(:type, type)
+        |> assign(:prompt, true)
+        |> prompt(BuildView, "invalid-type")
+
+      match?({:error, _}, opts) ->
+        # Error: invalid options
+        {:error, errors} = opts
+
+        conn
+        |> assign(:type, type)
+        |> assign(:errors, errors)
+        |> assign(:prompt, true)
+        |> prompt(BuildView, "invalid-option")
+
+      true ->
+        {:ok, opts} = opts
+
+        data = %{
+          type: type,
+          keyword: params["keyword"],
+          opts: opts
+        }
+        |> tap(fn x -> IO.inspect(x, label: "DATA") end)
+
+        event(conn, "room/remove", data)
+    end
+  end
+
+  defp to_long(exit_name) when byte_size(exit_name) == 1 do
+    case exit_name do
+      "n" -> "north"
+      "s" -> "south"
+      "e" -> "east"
+      "w" -> "west"
+      "u" -> "up"
+      "d" -> "down"
+      _ -> exit_name
+    end
+  end
+
+  defp to_long(exit_name) when byte_size(exit_name) == 2 do
+    case exit_name do
+      "nw" -> "northwest"
+      "ne" -> "northeast"
+      "sw" -> "southwest"
+      "se" -> "southeast"
+      _ -> exit_name
+    end
+  end
+
+  defp to_long(exit_name), do: exit_name
+
+  defp opposite(exit_name) do
+    case exit_name do
+      "north" -> "south"
+      "south" -> "north"
+      "east" -> "west"
+      "west" -> "east"
+      "up" -> "down"
+      "down" -> "up"
+      _ -> nil
+    end
+  end
+
+  defp to_keyword_list(_, []), do: {:ok, []}
+
+  defp to_keyword_list(type, opts) do
+    {kw_list, errors} =
+      Enum.map_reduce(opts, [], fn {key, val}, acc ->
+        case option_to_atom(type, key) do
+          {:ok, atom} -> {{atom, val}, acc}
+          :error -> {:error, [key | acc]}
+        end
+      end)
+
+    case Enum.empty?(errors) do
+      true -> {:ok, kw_list}
+      false -> {:error, errors}
+    end
+  end
+
+  defp option_to_atom("exit", key) do
+    result =
+      case key do
+        "bi" -> :bi
+        _ -> :error
+      end
+
+    if result != :error, do: {:ok, result}, else: :error
+  end
 end

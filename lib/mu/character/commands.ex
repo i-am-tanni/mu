@@ -354,6 +354,8 @@ defmodule Mu.Character.Commands do
     parse("@rm", :remove, fn command ->
       command
       |> spaces()
+      |> word(:type)
+      |> spaces()
       |> word(:keyword)
       |> optional(opts())
     end)

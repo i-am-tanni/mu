@@ -38,12 +38,12 @@ defmodule Mu.World.Mapper do
     GenServer.cast(__MODULE__, :reset)
   end
 
-  def delete_path(from, to) do
-    GenServer.cast(__MODULE__, {:delete_path, from, to})
+  def path_destroy(from, to) do
+    GenServer.cast(__MODULE__, {:path_destroy, from, to})
   end
 
-  def add_path(from, to) do
-    GenServer.cast(__MODULE__, {:add_path, from, to})
+  def path_create(from, to) do
+    GenServer.cast(__MODULE__, {:path_create, from, to})
   end
 
   def put(room) when is_struct(room, Mu.World.Room) do
@@ -156,14 +156,14 @@ defmodule Mu.World.Mapper do
   end
 
   @impl true
-  def handle_cast({:del_path, from, to}, state) do
-    :digraph.del_path(state.graph, from, to)
+  def handle_cast({:path_create, from, to}, state) do
+    :digraph.add_edge(state.graph, from, to)
     {:noreply, state}
   end
 
   @impl true
-  def handle_cast({:add_path, from, to}, state) do
-    :digraph.add_edge(state.graph, from, to)
+  def handle_cast({:path_destroy, from, to}, state) do
+    :digraph.del_path(state.graph, from, to)
     {:noreply, state}
   end
 

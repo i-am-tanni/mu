@@ -8,10 +8,8 @@ defmodule Mu.World.Room.BuildEvent do
   alias Mu.World.Zone
   alias Mu.World.Exit
   alias Mu.World.Exits
-  alias Mu.World.Exit.Door
   alias Mu.World.RoomIds
   alias Mu.World.Mapper
-  alias Mu.World.Item
 
   @default_symbol "[]"
   @world_map_keys [:x, :y, :z, :symbol]
@@ -70,8 +68,8 @@ defmodule Mu.World.Room.BuildEvent do
 
         Kickoff.start_room(room)
         Mapper.put(room)
-        Mapper.add_path(start_room_id, end_room_id)
-        Mapper.add_path(end_room_id, start_room_id)
+        Mapper.path_create(start_room_id, end_room_id)
+        Mapper.path_create(end_room_id, start_room_id)
         sorted_exits = Exits.sort([start_exit | context.data.exits])
 
         context
@@ -81,7 +79,7 @@ defmodule Mu.World.Room.BuildEvent do
     end
   end
 
-  def set(context, %{data: %{key: key, val: val}} = event) do
+  def room_edit(context, %{data: %{key: key, val: val}} = event) do
     if key in @world_map_keys do
       context.data
       |> Map.put(key, val)
@@ -95,90 +93,155 @@ defmodule Mu.World.Room.BuildEvent do
     |> event(event.from_pid, self(), "room/look", %{})
   end
 
-  def put_exit(context, event) do
+  def remove(context, event) do
+    case event.data.type do
+      "exit" -> exit_destroy(context, event)
+    end
+  end
+
+  def exit_create(context, event) do
+    # for renders
+    acting_character = with nil <- event.acting_character, do: event.data.acting_character
+    from_pid = event.from_pid
+
     data = event.data
     end_template_id = data.room_template_id
     zone_id = with :current <- data.zone_id, do: context.data.zone_id
     room_string = "#{zone_id}.#{end_template_id}"
 
-    id_result =
+    end_room_id =
       case Map.get(data, :end_room_id) do
         nil -> RoomIds.get(room_string)
         id -> {:ok, id}
       end
 
-    case id_result do
+    case end_room_id do
       {:ok, end_room_id} ->
-        # create and add exit to room
+        # create new exit, add to room exits list, and sort
         local = context.data
         start_exit_name = data.start_exit_name
         start_room_id = local.id
-        end_template_id =
-          if local.zone_id == zone_id,
-          do: end_template_id,
-        else: room_string
+        end_template_id = if local.zone_id == zone_id, do: end_template_id, else: room_string
 
         new_exit = Exit.new(start_exit_name, start_room_id, end_room_id, end_template_id)
+
         sorted_exits =
           [new_exit | Enum.reject(context.data.exits, &Exit.matches?(&1, start_exit_name))]
           |> Exits.sort()
 
-        Mapper.add_path(start_room_id, end_room_id)
+        Mapper.path_create(start_room_id, end_room_id)
 
-        context
-        |> put_data(:exits, sorted_exits)
-        |> assign(:exit_name, start_exit_name)
-        |> assign(:room_template_id, room_string)
-        |> assign(:local_id, "#{local.zone_id}.#{local.template_id}")
-        |> prompt(event.from_pid, BuildView, "exit-added")
-        |> pass_bexit(event, end_room_id)
+        context =
+          context
+          |> put_data(:exits, sorted_exits)
+          |> assign(:exit_name, start_exit_name)
+          |> assign(:room_template_id, room_string)
+          |> assign(:local_id, "#{local.zone_id}.#{local.template_id}")
+          |> prompt(from_pid, BuildView, "exit-added")
+
+        end_exit_name = Map.get(data, :end_exit_name)
+        bi_directional? = is_binary(end_exit_name)
+
+        case bi_directional? && Room.whereis(end_room_id) do
+          end_room_pid when is_pid(end_room_pid) ->
+            # if bi-directional and end_room_pid found, pass exit info to partner room
+            local = context.data
+
+            params = %{
+              zone_id: local.zone_id,
+              room_template_id: local.template_id,
+              start_exit_name: end_exit_name,
+              end_room_id: local.id,
+              acting_character: event.acting_character
+            }
+
+            event(context, end_room_pid, event.from_pid, event.topic, params)
+
+          nil when bi_directional? ->
+            # Error: end_room_pid not found
+            context
+            |> assign(:room_id, end_room_id)
+            |> render(from_pid, BuildView, "room-pid-missing")
+
+          _ ->
+            # if not bi-directional, finish by looking at the result
+            event(context, from_pid, self(), "room/look", %{})
+        end
 
       :error ->
-        # error: room id is missing
-        acting_character = with nil <- event.acting_character, do: event.data.acting_character
-
         context
         |> assign(:room_id, room_string)
         |> assign(:self, acting_character)
-        |> prompt(event.from_pid, BuildView, "room-id-missing")
-        |> render(event.from_pid, CommandView, "prompt")
+        |> prompt(from_pid, BuildView, "room-id-missing")
+        |> render(from_pid, CommandView, "prompt")
+
     end
   end
 
-  # if bi-directional exit, pass data to end room pid to build exit #2
-  defp pass_bexit(context, %{data: %{end_exit_name: end_exit_name}} = event, end_room_id)
-      when is_binary(end_exit_name) do
-
-    case Room.whereis(end_room_id) do
-      end_room_pid when is_pid(end_room_pid) ->
-        local = context.data
-        # build data for the end room exit to be created
-        params = %{
-          zone_id: local.zone_id,
-          room_template_id: local.template_id,
-          start_exit_name: end_exit_name,
-          end_room_id: local.id,
-          acting_character: event.acting_character
-        }
-
-        event(context, end_room_pid, event.from_pid, event.topic, params)
-
-      nil ->
-        context
-        |> assign(:room_id, end_room_id)
-        |> assign(:self, event.acting_character)
-        |> prompt(event.from_pid, BuildView, "room-pid-missing")
-        |> render(event.from_pid, CommandView, "prompt")
-    end
-  end
-
-  # if not a bi-directional exit, nothing left to do but render the prompt
-  defp pass_bexit(context, event, _) do
+  defp exit_destroy(context, event) do
+    # for renders
+    from_pid = event.from_pid
     acting_character = with nil <- event.acting_character, do: event.data.acting_character
 
-    context
-    |> assign(:self, acting_character)
-    |> render(event.from_pid, CommandView, "prompt")
+    %{keyword: keyword, opts: opts} = event.data
+
+    case Enum.find(context.data.exits, &Exit.matches?(&1, keyword)) do
+      room_exit when is_struct(room_exit, Exit) ->
+        end_room_id = room_exit.end_room_id
+
+        # consider if the exit is bi-directional and notify partner room if that is the case
+        bi_directional? = Keyword.get(opts, :bi, false)
+        context =
+          with context when bi_directional? <- context do
+            case Room.whereis(end_room_id) do
+              end_room_pid when is_pid(end_room_pid) ->
+                # if bi-directional and end_room_pid is an active process
+                opts = Keyword.delete(opts, :bi)
+                data = %{
+                  type: "exit",
+                  keyword: Exit.opposite(keyword),
+                  opts: [notify: false] ++ opts,
+                  acting_character: acting_character
+                }
+                context
+                |> event(end_room_pid, from_pid, event.topic, data)
+                |> assign(:bi_directional?, true)
+
+              nil ->
+                # else, end_room_pid was not found
+                context
+                |> assign(:room_id, end_room_id)
+                |> prompt(event.from_pid, BuildView, "room-pid-missing")
+                |> assign(:bi_directional?, :false)
+            end
+          end
+
+        # only notify on destruction of the first side of an exit
+        notify? = Keyword.get(opts, :notify, true)
+        context =
+          with context when notify? <- context do
+            assigns = %{
+              exit_name: room_exit.exit_name,
+              end_template_id: room_exit.end_template_id,
+            }
+
+            prompt(context, from_pid, BuildView, "exit-destroy", assigns)
+          end
+
+        updated_exits = Enum.reject(context.data.exits, &Exit.matches?(&1, keyword))
+        Mapper.path_destroy(room_exit.start_room_id, end_room_id)
+
+        context
+        |> put_data(:exits, updated_exits)
+        |> event(from_pid, self(), "room/look", %{})
+
+      nil ->
+        # Error: exit keyword not found
+        context
+        |> assign(:keyword, keyword)
+        |> prompt(from_pid, BuildView, {:exit, "not-found"})
+        |> render(from_pid, CommandView, "prompt", %{self: acting_character})
+    end
   end
 
   defp destination_coords(start_exit_name, x, y, z) when is_integer(x) when is_integer(y) when is_integer(z) do
