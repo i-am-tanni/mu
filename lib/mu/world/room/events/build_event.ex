@@ -100,9 +100,10 @@ defmodule Mu.World.Room.BuildEvent do
   end
 
   def exit_create(context, event) do
-    # for renders
+    # start render vars
     acting_character = with nil <- event.acting_character, do: event.data.acting_character
     from_pid = event.from_pid
+    # end render vars
 
     data = event.data
     end_template_id = data.room_template_id
@@ -179,9 +180,10 @@ defmodule Mu.World.Room.BuildEvent do
   end
 
   defp exit_destroy(context, event) do
-    # for renders
+    # start render vars
     from_pid = event.from_pid
     acting_character = with nil <- event.acting_character, do: event.data.acting_character
+    # end render vars
 
     %{keyword: keyword, opts: opts} = event.data
 
@@ -211,7 +213,7 @@ defmodule Mu.World.Room.BuildEvent do
                 # else, end_room_pid was not found
                 context
                 |> assign(:room_id, end_room_id)
-                |> prompt(event.from_pid, BuildView, "room-pid-missing")
+                |> prompt(from_pid, BuildView, "room-pid-missing")
                 |> assign(:bi_directional?, :false)
             end
           end
