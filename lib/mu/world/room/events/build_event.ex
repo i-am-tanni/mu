@@ -14,6 +14,12 @@ defmodule Mu.World.Room.BuildEvent do
   @default_symbol "[]"
   @world_map_keys [:x, :y, :z, :symbol]
 
+  def room_stats(context, event) do
+    context
+    |> prompt(event.from_pid, BuildView, "rstat", %{room: context.data})
+    |> prompt(event.from_pid, CommandView, "prompt", %{self: event.acting_character})
+  end
+
   def dig(context, event = %{data: data}) do
     start_exit_name = data.start_exit_name
     local = context.data
@@ -88,7 +94,7 @@ defmodule Mu.World.Room.BuildEvent do
 
     context
     |> assign(:key, key)
-    |> prompt(event.from_pid, BuildView, "set")
+    |> prompt(event.from_pid, BuildView, "rset")
     |> put_data(key, val)
     |> event(event.from_pid, self(), "room/look", %{})
   end

@@ -149,6 +149,7 @@ defmodule Mu.World.Room.Events do
       event("room/set", :room_edit)
       event("exit/create", :exit_create)
       event("room/remove", :remove)
+      event("rstat", :room_stats)
     end
 
     module(CombatEvent) do

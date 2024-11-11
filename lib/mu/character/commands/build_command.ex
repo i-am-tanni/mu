@@ -253,6 +253,12 @@ defmodule Mu.Character.BuildCommand do
     put_exit(conn, params)
   end
 
+  def room_stats(conn, _params) do
+    conn
+    |> assign(:prompt, false)
+    |> event("rstat")
+  end
+
   @doc """
   Syntax: @rm <type> <keyword> (opts)
 

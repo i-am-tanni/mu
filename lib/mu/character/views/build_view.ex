@@ -1,11 +1,25 @@
 defmodule Mu.Character.BuildView do
   use Kalevala.Character.View
 
+  def render("rstat", %{room: room}) do
+    ~E"""
+    Template_id: <%= room.template_id %>
+    Zone: <%= room.zone_id %>
+    Hash: <%= ~i(#{room.id}) %>
+    Name: <%= room.name %>
+    Coords_xyz: (<%= ~i(#{room.x}, #{room.y}, #{room.z}) %>)
+    Symbol: <%= room.symbol %>
+    Exits: [<%= Enum.map(room.exits, & &1.exit_name) |> View.join(", ") %>]
+    Extra descs: [<%= Enum.map(room.extra_descs, & &1.keyword) |> View.join(", ") %>]
+    Description: <%= room.description %>
+    """
+  end
+
   def render("dig", %{exit_name: exit_name}) do
     ~i(You dig #{exit_name}.\r\n)
   end
 
-  def render("set", %{key: key}) do
+  def render("rset", %{key: key}) do
     ~i(Room #{key} updated.)
   end
 
