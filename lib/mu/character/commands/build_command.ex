@@ -238,6 +238,12 @@ defmodule Mu.Character.BuildCommand do
     end
   end
 
+  def put_bexit(conn, params) do
+    end_exit_name = opposite(params["start_exit_name"])
+    params = Map.put(params, "end_exit_name", end_exit_name)
+    put_exit(conn, params)
+  end
+
   @doc """
   Syntax: @rm <type> <keyword> (opts)
 

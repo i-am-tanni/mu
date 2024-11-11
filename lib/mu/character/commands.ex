@@ -329,16 +329,6 @@ defmodule Mu.Character.Commands do
       |> text(:val)
     end)
 
-    parse("@znew", :new_zone, fn command ->
-      command
-      |> spaces()
-      |> word(:zone_id)
-      |> spaces()
-      |> word(:room_id)
-    end)
-
-    parse("@zsave", :zone_save)
-
     parse("@rexit", :put_exit, fn command ->
       command
       |> spaces()
@@ -351,6 +341,14 @@ defmodule Mu.Character.Commands do
       )
     end)
 
+    parse("@rbexit", :put_bexit, fn command ->
+      command
+      |> spaces()
+      |> word(:destination_id)
+      |> spaces()
+      |> word(:start_exit_name)
+    end)
+
     parse("@rm", :remove, fn command ->
       command
       |> spaces()
@@ -359,6 +357,17 @@ defmodule Mu.Character.Commands do
       |> word(:keyword)
       |> optional(opts())
     end)
+
+    parse("@znew", :new_zone, fn command ->
+      command
+      |> spaces()
+      |> word(:zone_id)
+      |> spaces()
+      |> word(:room_id)
+    end)
+
+    parse("@zsave", :zone_save)
+
   end
 
   dynamic(SocialCommand, :social, [])
