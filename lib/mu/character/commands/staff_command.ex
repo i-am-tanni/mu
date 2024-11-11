@@ -19,6 +19,7 @@ defmodule Mu.Character.StaffCommand do
     case RoomIds.get(destination_id) do
       {:ok, room_id} ->
         conn
+        |> assign(:prompt, false)
         |> Action.cancel()
         |> TeleportAction.run(%{room_id: room_id})
 
