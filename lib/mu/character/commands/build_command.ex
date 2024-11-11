@@ -238,6 +238,15 @@ defmodule Mu.Character.BuildCommand do
     end
   end
 
+  @doc """
+  Syntax: @rbexit <destination_id> <start_exit_keyword>
+
+  Note: destination_id is in "Zone.room_template_id" or "template_id" format
+  If no Zone destination is supplied, the current zone is assumed.
+
+  Places a bi-directional exit to destination_id usable with the supplied exit_keyword
+  in the current room.
+  """
   def put_bexit(conn, params) do
     end_exit_name = opposite(params["start_exit_name"])
     params = Map.put(params, "end_exit_name", end_exit_name)

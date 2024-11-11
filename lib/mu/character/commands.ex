@@ -349,6 +349,8 @@ defmodule Mu.Character.Commands do
       |> word(:start_exit_name)
     end)
 
+    parse("@rstat", :room_stats)
+
     parse("@rm", :remove, fn command ->
       command
       |> spaces()
