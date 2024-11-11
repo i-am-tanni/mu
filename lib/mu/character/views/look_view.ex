@@ -141,7 +141,7 @@ defmodule Mu.Character.LookView do
         Enum.map(iolist, &highlight_keywords(&1, extra_desc))
 
       binary when is_binary(binary) ->
-        %{keyword: keyword, highlight_color_override: color_override} = extra_desc
+        %{keyword: keyword, color_override: color_override} = extra_desc
         color = with nil <- color_override, do: "white"
         highlight_text = ~i({color foreground="#{color}"}#{keyword}{/color})
 

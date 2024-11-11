@@ -194,7 +194,7 @@ defmodule Mu.World.Loader do
       keyword: keyword,
       description: data.description,
       hidden?: Map.get(data, :hidden) == true,
-      highlight_color_override: Map.get(data, :highlight_color_override)
+      color_override: Map.get(data, :color_override)
     }
   end
 

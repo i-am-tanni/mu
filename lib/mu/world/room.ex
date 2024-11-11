@@ -3,7 +3,7 @@ defmodule Mu.World.Room.ExtraDesc do
   A keyword that can be examined in the room
   Any instances of the keyword will be highlighted in the description unless hidden is true
   """
-  defstruct [:keyword, :description, :hidden?, :highlight_color_override]
+  defstruct [:keyword, :description, :hidden?, :color_override]
 end
 
 defmodule Mu.World.Room do

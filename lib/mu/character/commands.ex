@@ -339,7 +339,7 @@ defmodule Mu.Character.Commands do
 
     parse("@zsave", :zone_save)
 
-    parse("@rexit_add", :put_exit, fn command ->
+    parse("@rexit", :put_exit, fn command ->
       command
       |> spaces()
       |> word(:destination_id)

@@ -12,7 +12,7 @@ defmodule Mu.Character.LookViewTest do
 
     extra_desc2 = %ExtraDesc{
       keyword: "This",
-      highlight_color_override: "green",
+      color_override: "green",
       description: "This is a test."
     }
 
