@@ -30,7 +30,7 @@ defmodule Mu.Character.MoveEvent do
       end
 
     conn
-    |> Action.stop()
+    |> Action.cancel()
     |> render(MoveView, "fail", event)
     |> prompt(CommandView, "prompt")
   end

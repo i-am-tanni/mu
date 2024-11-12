@@ -62,7 +62,7 @@ defmodule Mu.Character.Action do
   @doc """
   Halts all current and pending actions.
   """
-  def stop(conn) do
+  def cancel(conn) do
     conn
     |> put_meta(:actions, [])
     |> put_meta(:processing_action, nil)
@@ -118,12 +118,6 @@ defmodule Mu.Character.Action do
         |> put_meta(:actions, [])
         |> put_meta(:processing_action, nil)
     end
-  end
-
-  def cancel(conn) do
-    conn
-    |> put_meta(:actions, [])
-    |> put_meta(:processing_action, nil)
   end
 
   # private functions

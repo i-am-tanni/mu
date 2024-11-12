@@ -13,7 +13,7 @@ defmodule Mu.Character.PathController.MoveEvent do
     destination = get_flash(conn, :destination_id)
 
     conn
-    |> Action.stop()
+    |> Action.cancel()
     |> TeleportAction.put(%{room_id: destination})
     |> put_controller(NonPlayerController)
   end

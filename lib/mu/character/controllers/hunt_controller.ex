@@ -131,7 +131,7 @@ defmodule Mu.Character.HuntController do
 
     conn
     |> put_flash(:attempts, 0)
-    |> Action.stop()
+    |> Action.cancel()
     |> MoveAction.put(%{direction: exit_name}, pre_delay: pre_delay)
     |> LookAction.put(%{at: :characters})
   end

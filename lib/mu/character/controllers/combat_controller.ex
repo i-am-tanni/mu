@@ -22,7 +22,7 @@ defmodule Mu.Character.CombatController.MoveEvent do
     vitals = %{vitals | health_points: vitals.max_health_points}
 
     conn
-    |> Mu.Character.Action.stop()
+    |> Mu.Character.Action.cancel()
     |> put_meta(:threat_table, %{})
     |> put_meta(:vitals, vitals)
   end

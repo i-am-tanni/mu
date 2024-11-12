@@ -26,7 +26,7 @@ defmodule Mu.Character.AiCombatController.MoveEvent do
   # if self died
   def death_notice(conn, event) when conn.character.id == event.data.victim.id do
     conn
-    |> Mu.Character.Action.stop()
+    |> Mu.Character.Action.cancel()
     |> move(:from, conn.character.room_id, MoveView, :suppress, %{})
     |> halt()
   end
