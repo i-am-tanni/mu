@@ -106,35 +106,28 @@ defmodule Mu.World.Room.BuildEvent do
   end
 
   def exit_create(context, event) do
-    # start render vars
-    acting_character = with nil <- event.acting_character, do: event.data.acting_character
     from_pid = event.from_pid
-    # end render vars
-
     data = event.data
-    end_template_id = data.room_template_id
-    zone_id = with :current <- data.zone_id, do: context.data.zone_id
+
+    %{zone_id: zone_id, end_template_id: end_template_id} = data
+    zone_id = with :current <- zone_id, do: context.data.zone_id
     room_string = "#{zone_id}.#{end_template_id}"
 
     end_room_id =
-      case Map.get(data, :end_room_id) do
-        nil -> RoomIds.get(room_string)
-        id -> {:ok, id}
-      end
+      with :error <- Map.fetch(data, :end_room_id),
+        do: RoomIds.get(room_string)
 
     case end_room_id do
       {:ok, end_room_id} ->
         # create new exit, add to room exits list, and sort
         local = context.data
-        start_exit_name = data.start_exit_name
+
         start_room_id = local.id
         end_template_id = if local.zone_id == zone_id, do: end_template_id, else: room_string
+        start_exit_name = data.start_exit_name
 
         new_exit = Exit.new(start_exit_name, start_room_id, end_room_id, end_template_id)
-
-        sorted_exits =
-          [new_exit | Enum.reject(context.data.exits, &Exit.matches?(&1, start_exit_name))]
-          |> Exits.sort()
+        sorted_exits = Exits.sort([new_exit | reject_exit(context, start_exit_name)])
 
         Mapper.path_create(start_room_id, end_room_id)
 
@@ -176,6 +169,8 @@ defmodule Mu.World.Room.BuildEvent do
         end
 
       :error ->
+        acting_character = with nil <- event.acting_character, do: event.data.acting_character
+
         context
         |> assign(:room_id, room_string)
         |> assign(:self, acting_character)
@@ -186,14 +181,11 @@ defmodule Mu.World.Room.BuildEvent do
   end
 
   defp exit_destroy(context, event) do
-    # start render vars
     from_pid = event.from_pid
-    acting_character = with nil <- event.acting_character, do: event.data.acting_character
-    # end render vars
 
     %{keyword: keyword, opts: opts} = event.data
 
-    case Enum.find(context.data.exits, &Exit.matches?(&1, keyword)) do
+    case find_local_exit(context, keyword) do
       room_exit when is_struct(room_exit, Exit) ->
         end_room_id = room_exit.end_room_id
 
@@ -209,7 +201,7 @@ defmodule Mu.World.Room.BuildEvent do
                   type: "exit",
                   keyword: Exit.opposite(keyword),
                   opts: [notify: false] ++ opts,
-                  acting_character: acting_character
+                  acting_character: event.acting_character
                 }
                 context
                 |> event(end_room_pid, from_pid, event.topic, data)
@@ -236,7 +228,7 @@ defmodule Mu.World.Room.BuildEvent do
             prompt(context, from_pid, BuildView, "exit-destroy", assigns)
           end
 
-        updated_exits = Enum.reject(context.data.exits, &Exit.matches?(&1, keyword))
+        updated_exits = reject_exit(context, keyword)
         Mapper.path_destroy(room_exit.start_room_id, end_room_id)
 
         context
@@ -245,11 +237,21 @@ defmodule Mu.World.Room.BuildEvent do
 
       nil ->
         # Error: exit keyword not found
+        acting_character = with nil <- event.acting_character, do: event.data.acting_character
+
         context
         |> assign(:keyword, keyword)
         |> prompt(from_pid, BuildView, {:exit, "not-found"})
         |> render(from_pid, CommandView, "prompt", %{self: acting_character})
     end
+  end
+
+  defp find_local_exit(context, keyword) do
+    Enum.find(context.data.exits, &Exit.matches?(&1, keyword))
+  end
+
+  defp reject_exit(context, keyword) do
+    Enum.reject(context.data.exits, &Exit.matches?(&1, keyword))
   end
 
   defp destination_coords(start_exit_name, x, y, z) when is_integer(x) when is_integer(y) when is_integer(z) do
