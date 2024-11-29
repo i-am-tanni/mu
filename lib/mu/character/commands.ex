@@ -321,12 +321,14 @@ defmodule Mu.Character.Commands do
       |> word(:end_exit_name)
     end)
 
-    parse("@redit", :set_room, fn command ->
+    parse("@redit", :redit, fn command ->
       command
       |> spaces()
       |> word(:key)
-      |> spaces()
-      |> text(:val)
+      |> optional(
+        spaces()
+        |> text(:val)
+      )
     end)
 
     parse("@rexit", :put_exit, fn command ->

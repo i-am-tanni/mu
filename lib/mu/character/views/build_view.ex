@@ -64,12 +64,20 @@ defmodule Mu.Character.BuildView do
     ~i(Error: Could not locate process for "#{room_id}".)
   end
 
+  def render({:room, "invalid-field"}, %{key: key}) do
+    ~i(Error: Room field #{key} is invalid.)
+  end
+
   def render({:room, "invalid-field"}, %{key: key, val: val}) do
     ~i(Error: Input #{val} is invalid for room #{key})
   end
 
-  def render({:room, "invalid-field"}, %{key: key}) do
-    ~i(Error: Room field #{key} is invalid.)
+  def render({:room, "invalid-val"}, %{key: key, val: val}) do
+    ~i(Error: Room field #{val} is invalid for #{key})
+  end
+
+  def render({:room, "missing-val"}, %{key: key}) do
+    ~i(Error: Room field is invalid for #{key})
   end
 
   def render("zone-process-missing", _) do

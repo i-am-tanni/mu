@@ -1,6 +1,9 @@
 defmodule Mu.Character.BuildCommand.Room do
   use Kalevala.Character.Command
 
+  alias Mu.Character.WriteController
+  alias Mu.Character.BuildView
+
   def set(conn, params) do
     key = key_to_atom(params["key"])
     val = prepare(params["val"], key)
@@ -13,19 +16,37 @@ defmodule Mu.Character.BuildCommand.Room do
         |> assign(:field, key)
         |> prompt(BuildView, {:room, "invalid-field"})
 
+      val == :error and is_nil(params["val"]) ->
+        conn
+        |> assign(:prompt, true)
+        |> assign(:key, key)
+        |> prompt(BuildView, {:room, "missing-val"})
+
       val == :error ->
         # error: could not validate room value
         conn
         |> assign(:prompt, true)
         |> assign(:key, key)
-        |> assign(:val, val)
+        |> assign(:val, params["val"])
         |> prompt(BuildView, {:room, "invalid-val"})
 
+      key == :description ->
+        conn
+        |> assign(:prompt, false)
+        |> WriteController.put("Description", fn conn, description ->
+          data = %{
+            key: :description,
+            val: description
+          }
+
+          event(conn, "room/set", data)
+        end)
+
       true ->
-        params = %{key: key, val: val}
+        data = %{key: key, val: val}
 
         conn
-        |> event("room/set", params)
+        |> event("room/set", data)
         |> assign(:prompt, false)
     end
   end
@@ -43,6 +64,8 @@ defmodule Mu.Character.BuildCommand.Room do
   end
 
   defp prepare(_, :error), do: :error
+
+  defp prepare(nil, key) when key not in [:description], do: :error
 
   defp prepare(val, key) when key not in [:x, :y, :z, :symbol], do: val
 
@@ -121,7 +144,7 @@ defmodule Mu.Character.BuildCommand do
     end
   end
 
-  def set_room(conn, params), do: BuildCommand.Room.set(conn, params)
+  def redit(conn, params), do: BuildCommand.Room.set(conn, params)
 
   @doc """
   Syntax: @znew <zone_id> <room_id>
@@ -301,7 +324,6 @@ defmodule Mu.Character.BuildCommand do
           keyword: params["keyword"],
           opts: opts
         }
-        |> tap(fn x -> IO.inspect(x, label: "DATA") end)
 
         event(conn, "room/remove", data)
     end
