@@ -340,10 +340,6 @@ defmodule Mu.Character.EditController do
         curr_line = Enum.reverse(curr_line)
         _word_wrap(text, [curr_line | chunks] , [curr_word], [], length(curr_word), max_cols)
 
-      ?\s when index + 1 < max_cols ->
-        curr_word = Enum.reverse(curr_word)
-        _word_wrap(text, chunks, [curr_word | curr_line], [], index + 1, max_cols)
-
       ?\s ->
         curr_word = Enum.reverse(curr_word)
         _word_wrap(text, chunks, [curr_word | curr_line], [], index + 1, max_cols)
