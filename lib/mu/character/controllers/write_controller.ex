@@ -96,6 +96,22 @@ defmodule Mu.Character.EditController do
 
   defparsec(:parse, __MODULE__.EditParser.run())
 
+  def put(conn, topic, text, callback_fun) do
+    flash = %{
+      topic: topic,
+      callback: callback_fun,
+      buffer: word_wrap(text),
+      saved: [],
+      insert: [],
+      index: nil,
+      unsaved_changes?: false,
+      mode: :write,
+      line_count: 0
+    }
+
+    put_controller(conn, __MODULE__, flash)
+  end
+
   @impl true
   def init(conn) do
     %{topic: topic, buffer: buffer} = conn.flash
@@ -291,6 +307,54 @@ defmodule Mu.Character.EditController do
 
   defdelegate confirm(conn, prompt, callback_fun), to: ConfirmController, as: :put
 
+  # chunks text by max width without breaking up words
+  def word_wrap(text, max_cols \\ 80) do
+    _word_wrap(text, [], [], [], 0, max_cols)
+    |> Enum.reverse()
+    |> Enum.map(&Enum.join(&1, " "))
+  end
+
+  defp _word_wrap("", chunks, [], [], _, _), do: chunks
+
+  defp _word_wrap("", chunks, curr_line, [], _, _) do
+    curr_line = Enum.reverse(curr_line)
+    [curr_line | chunks]
+  end
+
+  defp _word_wrap("", chunks, curr_line, curr_word, index, max_cols) when index < max_cols do
+    curr_word = Enum.reverse(curr_word)
+    curr_line = Enum.reverse([curr_word | curr_line])
+    [curr_line | chunks]
+  end
+
+  defp _word_wrap("", chunks, curr_line, curr_word, _, _) do
+    curr_word = Enum.reverse(curr_word)
+    curr_line = Enum.reverse([curr_word | curr_line])
+    [[curr_word], curr_line | chunks]
+  end
+
+  defp _word_wrap(<<grapheme::utf8, text::binary>>, chunks, curr_line, curr_word, index, max_cols) do
+    case grapheme do
+      ?\s when index >= max_cols ->
+        curr_word = Enum.reverse(curr_word)
+        curr_line = Enum.reverse(curr_line)
+        _word_wrap(text, [curr_line | chunks] , [curr_word], [], length(curr_word), max_cols)
+
+      ?\s when index + 1 < max_cols ->
+        curr_word = Enum.reverse(curr_word)
+        _word_wrap(text, chunks, [curr_word | curr_line], [], index + 1, max_cols)
+
+      ?\s ->
+        curr_word = Enum.reverse(curr_word)
+        _word_wrap(text, chunks, [curr_word | curr_line], [], index + 1, max_cols)
+
+      x when x in [?\r, ?\n] ->
+        _word_wrap(text, chunks, curr_line, curr_word, index, max_cols)
+
+      _ ->
+        _word_wrap(text, chunks, curr_line, [grapheme | curr_word], index + 1, max_cols)
+    end
+  end
 end
 
 defmodule Mu.Character.WriteController do
@@ -354,6 +418,7 @@ defmodule Mu.Character.WriteController do
   def recv(conn, ""), do: render(conn, CommandView, ">")
 
   def recv(conn, data) when conn.flash.line_count < @max_line_count do
+    data = String.replace_trailing(data, "\r\n", "")
     case get_flash(conn, :mode) do
       :write -> write(conn, data)
       :insert -> insert(conn, data)
