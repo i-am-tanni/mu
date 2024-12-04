@@ -9,7 +9,7 @@ defmodule Mu.Character.WriteView do
     {buffer, _} =
       Enum.map_reduce(buffer, 0, fn line, i ->
         line_count = String.pad_leading(Integer.to_string(i), 2)
-        {~i(#{line_count}: #{line}), i + 1}
+        {~i(#{line_count}: #{line}\r\n), i + 1}
       end)
 
     buffer

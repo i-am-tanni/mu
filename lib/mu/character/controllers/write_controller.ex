@@ -181,7 +181,7 @@ defmodule Mu.Character.EditController do
 
   defp save_quit(conn) do
     %{buffer: buffer, callback: callback_fun} = conn.flash
-    text = Enum.join(buffer)
+    text = Enum.join(buffer, " ")
 
     conn
     |> callback_fun.(text)
