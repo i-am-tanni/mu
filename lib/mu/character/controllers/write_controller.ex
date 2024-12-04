@@ -6,7 +6,7 @@ defmodule Mu.Character.TextEditData do
     mode: :write,
     buffer: [],
     insert: [],
-    saved: "",
+    saved: [],
     line_count: 0,
     unsaved_changes?: false
   ]
@@ -110,6 +110,7 @@ defmodule Mu.Character.EditController do
   alias Mu.Character.LookCommand
 
   defparsec(:parse, __MODULE__.EditParser.run())
+  defdelegate confirm(conn, prompt, callback_fun), to: ConfirmController, as: :put
 
   def put(conn, topic, text, callback_fun) do
     flash = %TextEditData{
@@ -320,10 +321,8 @@ defmodule Mu.Character.EditController do
     end
   end
 
-  defdelegate confirm(conn, prompt, callback_fun), to: ConfirmController, as: :put
-
   # chunks text by max width without breaking up words
-  @spec word_wrap(binary(), integer()) :: list()
+  @spec word_wrap(binary(), integer) :: list()
   def word_wrap(text, max_cols \\ 80) do
     _word_wrap(text, [], [], [], 0, max_cols)
     |> Enum.reverse()
