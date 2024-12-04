@@ -1,3 +1,17 @@
+defmodule Mu.Character.TextEditData do
+  defstruct [
+    :topic,
+    :callback,
+    :index,
+    mode: :write,
+    buffer: [],
+    insert: [],
+    saved: "",
+    line_count: 0,
+    unsaved_changes?: false
+  ]
+end
+
 defmodule Mu.Character.EditController.EditParser do
   import NimbleParsec
 
@@ -86,18 +100,19 @@ defmodule Mu.Character.EditController do
 
   import NimbleParsec, only: [defparsec: 2]
 
+  alias Mu.Character.TextEditData
   alias Mu.Character.WriteController
-  alias Mu.Character.WriteView
-  alias Mu.Character.CommandView
   alias Mu.Character.CommandController
   alias Mu.Character.ConfirmController
-  alias Mu.Character.LookCommand
   alias Mu.Character.EditController
+  alias Mu.Character.WriteView
+  alias Mu.Character.CommandView
+  alias Mu.Character.LookCommand
 
   defparsec(:parse, __MODULE__.EditParser.run())
 
   def put(conn, topic, text, callback_fun) do
-    flash = %{
+    flash = %TextEditData{
       topic: topic,
       callback: callback_fun,
       buffer: word_wrap(text),
@@ -308,6 +323,7 @@ defmodule Mu.Character.EditController do
   defdelegate confirm(conn, prompt, callback_fun), to: ConfirmController, as: :put
 
   # chunks text by max width without breaking up words
+  @spec word_wrap(binary(), integer()) :: list()
   def word_wrap(text, max_cols \\ 80) do
     _word_wrap(text, [], [], [], 0, max_cols)
     |> Enum.reverse()
@@ -357,23 +373,12 @@ defmodule Mu.Character.WriteController do
   @moduledoc """
   Controller for entering and editing multi-line text such as room descriptions.
   """
-  defstruct [
-    :topic,
-    :callback,
-    :index,
-    mode: :write,
-    buffer: [],
-    insert: [],
-    saved: "",
-    line_count: 0,
-    unsaved_changes?: false
-  ]
-
   use Kalevala.Character.Controller
 
   alias Mu.Character.EditController
   alias Mu.Character.CommandView
   alias Mu.Character.WriteView
+  alias Mu.Character.TextEditData
 
   @max_line_count 20
 
@@ -388,7 +393,7 @@ defmodule Mu.Character.WriteController do
   """
 
   def put(conn, topic, callback_fun) do
-    flash = %__MODULE__{
+    flash = %TextEditData{
       topic: topic,
       callback: callback_fun,
       index: nil,
