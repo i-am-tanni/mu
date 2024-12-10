@@ -42,7 +42,10 @@ defmodule Mu.Character.ConfirmController do
   @impl true
   def recv(conn, data) do
     callback_fun = get_flash(conn, :callback)
-    callback_fun.(conn, parse(data))
+
+    data
+    |> parse()
+    |> callback_fun.()
   end
 
   def parse(<<?Y, _::binary>>), do: true

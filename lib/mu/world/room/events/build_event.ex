@@ -105,6 +105,11 @@ defmodule Mu.World.Room.BuildEvent do
     end
   end
 
+  def edit_desc(context, event) do
+    data = %{description: context.data.description}
+    event(context, event.from_pid, self(), event.topic, data)
+  end
+
   def exit_create(context, event) do
     from_pid = event.from_pid
     data = event.data

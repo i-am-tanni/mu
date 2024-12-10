@@ -33,14 +33,7 @@ defmodule Mu.Character.BuildCommand.Room do
       key == :description ->
         conn
         |> assign(:prompt, false)
-        |> WriteController.put("Description", fn conn, description ->
-          data = %{
-            key: :description,
-            val: description
-          }
-
-          event(conn, "room/set", data)
-        end)
+        |> event("redit/desc")
 
       true ->
         data = %{key: key, val: val}

@@ -30,7 +30,8 @@ defmodule Mu.Character.Events do
     end
 
     module(BuildEvent) do
-      event("room/dig", :call)
+      event("room/dig", :dig)
+      event("redit/desc", :edit_desc)
     end
 
     module(CloseEvent) do

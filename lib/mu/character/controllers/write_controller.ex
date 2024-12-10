@@ -192,8 +192,8 @@ defmodule Mu.Character.EditController do
     flash = conn.flash
 
     confirm(conn, "Discard unsaved changes?", fn
-      conn, true -> quit_firm(conn)
-      conn, false -> put_controller(conn, EditController, flash)
+      true -> quit_firm(conn)
+      false -> put_controller(conn, EditController, flash)
     end)
   end
 
