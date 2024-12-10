@@ -27,9 +27,7 @@ defmodule Mu.Character.ConfirmController do
   @doc """
   Wrapper function that prepares the data for the controller before it adds the controller
 
-  The callback_fun is called on exit of this controller and accepts two arguments:
-  1. conn
-  2. a boolean, which is the user's response, either positive or negative
+  The callback_fun is called on exit of this controller and accepts a bool as argument.
   """
   def put(conn, prompt, callback_fun) do
     flash = %{prompt: prompt, callback: callback_fun}
