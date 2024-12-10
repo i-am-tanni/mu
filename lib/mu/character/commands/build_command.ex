@@ -54,7 +54,7 @@ defmodule Mu.Character.BuildCommand.Room do
   defp key_to_atom(key) do
     case key do
       "name" -> :name
-      "description" -> :description
+      "desc" -> :description
       "x" -> :x
       "y" -> :y
       "z" -> :z
