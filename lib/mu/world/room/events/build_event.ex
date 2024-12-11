@@ -27,32 +27,18 @@ defmodule Mu.World.Room.BuildEvent do
     to_room_template_id = data.room_id
     room_string = "#{zone_id}.#{to_room_template_id}"
     zone_pid = Zone.whereis(context.data.zone_id)
+    exit_exists? = Enum.any?(context.data.exits, &Exit.matches?(&1, start_exit_name))
 
-    cond do
-      Enum.any?(context.data.exits, &Exit.matches?(&1, start_exit_name)) ->
-        # error: exit name is already taken
-        context
-        |> assign(:exit_name, data.start_exit_name)
-        |> assign(:self, event.acting_character)
-        |> render(event.from_pid, BuildView, "exit-exists")
-        |> render(event.from_pid, CommandView, "prompt")
+    can_proceed =
+      cond do
+        exit_exists?                  -> {:error, "exit-exists"}
+        RoomIds.has_key?(room_string) -> {:error, "room-id-taken"}
+        is_nil(zone_pid)              -> {:error, "zone-process-missing"}
+        true                          -> :ok
+      end
 
-      RoomIds.has_key?(room_string) ->
-        # error: room id is unavailable
-        context
-        |> assign(:room_id, room_string)
-        |> assign(:self, event.acting_character)
-        |> render(event.from_pid, BuildView, "room-id-taken")
-        |> render(event.from_pid, CommandView, "prompt")
-
-      is_nil(zone_pid) ->
-        context
-        |> assign(:zone_id, context.data.zone_id)
-        |> assign(:self, event.acting_character)
-        |> render(event.from_pid, BuildView, "zone-process-missing")
-        |> render(event.from_pid, CommandView, "prompt")
-
-      true ->
+    case can_proceed do
+      :ok ->
         start_room_id = local.id
         end_room_id = RoomIds.put(room_string)
         start_exit = Exit.new(data.start_exit_name, start_room_id, end_room_id, to_room_template_id)
@@ -82,6 +68,29 @@ defmodule Mu.World.Room.BuildEvent do
         |> put_data(:exits, sorted_exits)
         |> event(event.from_pid, self(), event.topic, %{exit_name: data.start_exit_name})
         |> event(zone_pid, self(), "put/room", %{room_id: room.id})
+
+      {:error, "exit-exists"} ->
+        # error: exit name is already taken
+        context
+        |> assign(:exit_name, data.start_exit_name)
+        |> assign(:self, event.acting_character)
+        |> render(event.from_pid, BuildView, "exit-exists")
+        |> render(event.from_pid, CommandView, "prompt")
+
+      {:error, "room-id-taken"} ->
+        # error: room id is unavailable
+        context
+        |> assign(:room_id, room_string)
+        |> assign(:self, event.acting_character)
+        |> render(event.from_pid, BuildView, "room-id-taken")
+        |> render(event.from_pid, CommandView, "prompt")
+
+      {:error, "zone-process-missing"} ->
+        context
+        |> assign(:zone_id, context.data.zone_id)
+        |> assign(:self, event.acting_character)
+        |> render(event.from_pid, BuildView, "zone-process-missing")
+        |> render(event.from_pid, CommandView, "prompt")
     end
   end
 
