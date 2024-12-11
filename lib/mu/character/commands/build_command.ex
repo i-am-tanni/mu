@@ -1,7 +1,6 @@
 defmodule Mu.Character.BuildCommand.Room do
   use Kalevala.Character.Command
 
-  alias Mu.Character.WriteController
   alias Mu.Character.BuildView
 
   def set(conn, params) do
