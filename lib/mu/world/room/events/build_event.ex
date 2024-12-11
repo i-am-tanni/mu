@@ -244,7 +244,7 @@ defmodule Mu.World.Room.BuildEvent do
         |> assign(:bi_directional?, true)
 
       nil ->
-        # else, end_room_pid was not found
+        # Error: end_room_pid was not found
         context
         |> assign(:room_id, end_room_id)
         |> prompt(event.from_pid, BuildView, "room-pid-missing")
