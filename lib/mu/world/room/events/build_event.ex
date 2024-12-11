@@ -144,33 +144,9 @@ defmodule Mu.World.Room.BuildEvent do
           |> assign(:local_id, "#{local.zone_id}.#{local.template_id}")
           |> prompt(from_pid, BuildView, "exit-added")
 
-        end_exit_name = Map.get(data, :end_exit_name)
-        bi_directional? = is_binary(end_exit_name)
-
-        case bi_directional? && Room.whereis(end_room_id) do
-          end_room_pid when is_pid(end_room_pid) ->
-            # if bi-directional and end_room_pid found, pass exit info to partner room
-            local = context.data
-
-            params = %{
-              zone_id: local.zone_id,
-              room_template_id: local.template_id,
-              start_exit_name: end_exit_name,
-              end_room_id: local.id,
-              acting_character: event.acting_character
-            }
-
-            event(context, end_room_pid, event.from_pid, event.topic, params)
-
-          nil when bi_directional? ->
-            # Error: end_room_pid not found
-            context
-            |> assign(:room_id, end_room_id)
-            |> render(from_pid, BuildView, "room-pid-missing")
-
-          _ ->
-            # if not bi-directional, finish by looking at the result
-            event(context, from_pid, self(), "room/look", %{})
+        case data.bidirectional? do
+          true -> bexit_create(context, event, end_room_id)
+          false -> event(context, from_pid, self(), "room/look", %{})
         end
 
       :error ->
@@ -185,60 +161,63 @@ defmodule Mu.World.Room.BuildEvent do
     end
   end
 
+  # For bi-directional exits, pass exit info to partner room
+  defp bexit_create(context, event, end_room_id) do
+
+    case Room.whereis(end_room_id) |> maybe() do
+      {:ok, end_room_pid} ->
+        local = context.data
+        data = event.data
+
+        data = %{
+          zone_id: local.zone_id,
+          end_template_id: local.template_id,
+          start_exit_name: data.end_exit_name,
+          end_room_id: local.id,
+          acting_character: event.acting_character,
+          bidirectional?: false
+        }
+
+        event(context, end_room_pid, event.from_pid, event.topic, data)
+
+      nil ->
+        # Error: end_room_pid not found
+        context
+        |> assign(:room_id, end_room_id)
+        |> render(event.from_pid, BuildView, "room-pid-missing")
+    end
+  end
+
   defp exit_destroy(context, event) do
     from_pid = event.from_pid
-
     %{keyword: keyword, opts: opts} = event.data
 
-    case find_local_exit(context, keyword) do
-      room_exit when is_struct(room_exit, Exit) ->
+    case find_local_exit(context, keyword) |> maybe() do
+      {:ok, room_exit} ->
         end_room_id = room_exit.end_room_id
 
-        # consider if the exit is bi-directional and notify partner room if that is the case
-        bi_directional? = Keyword.get(opts, :bi, false)
         context =
-          with context when bi_directional? <- context do
-            case Room.whereis(end_room_id) do
-              end_room_pid when is_pid(end_room_pid) ->
-                # if bi-directional and end_room_pid is an active process
-                opts = Keyword.delete(opts, :bi)
-                data = %{
-                  type: "exit",
-                  keyword: Exit.opposite(keyword),
-                  opts: [notify: false] ++ opts,
-                  acting_character: event.acting_character
-                }
-                context
-                |> event(end_room_pid, from_pid, event.topic, data)
-                |> assign(:bi_directional?, true)
-
-              nil ->
-                # else, end_room_pid was not found
-                context
-                |> assign(:room_id, end_room_id)
-                |> prompt(from_pid, BuildView, "room-pid-missing")
-                |> assign(:bi_directional?, :false)
-            end
+          case _bi_directional? = Keyword.get(opts, :bi, false) do
+            true -> bexit_destroy(context, event, end_room_id)
+            false -> context
           end
 
-        # only notify on destruction of the first side of an exit
-        notify? = Keyword.get(opts, :notify, true)
-        context =
-          with context when notify? <- context do
+        updated_exits = reject_exit(context, keyword)
+        Mapper.path_destroy(room_exit.start_room_id, end_room_id)
+        context = put_data(context, :exits, updated_exits)
+
+        case _notify? = Keyword.get(opts, :notify, true) do
+          true ->
             assigns = %{
               exit_name: room_exit.exit_name,
               end_template_id: room_exit.end_template_id,
             }
 
             prompt(context, from_pid, BuildView, "exit-destroy", assigns)
-          end
 
-        updated_exits = reject_exit(context, keyword)
-        Mapper.path_destroy(room_exit.start_room_id, end_room_id)
-
-        context
-        |> put_data(:exits, updated_exits)
-        |> event(from_pid, self(), "room/look", %{})
+          false ->
+            event(context, from_pid, self(), "room/look", %{})
+        end
 
       nil ->
         # Error: exit keyword not found
@@ -250,6 +229,36 @@ defmodule Mu.World.Room.BuildEvent do
         |> render(from_pid, CommandView, "prompt", %{self: acting_character})
     end
   end
+
+  # For destruction of bi-directional exits, pass destruction info to partner room
+  defp bexit_destroy(context, event, end_room_id) do
+    %{keyword: keyword, opts: opts} = event.data
+
+    case Room.whereis(end_room_id) |> maybe() do
+      {:ok, end_room_pid} ->
+        opts = Keyword.delete(opts, :bi)
+        data = %{
+          type: "exit",
+          keyword: Exit.opposite(keyword),
+          opts: [notify: false] ++ opts,
+          acting_character: event.acting_character
+        }
+
+        context
+        |> event(end_room_pid, event.from_pid, event.topic, data)
+        |> assign(:bi_directional?, true)
+
+      nil ->
+        # else, end_room_pid was not found
+        context
+        |> assign(:room_id, end_room_id)
+        |> prompt(event.from_pid, BuildView, "room-pid-missing")
+        |> assign(:bi_directional?, :false)
+    end
+  end
+
+  defp maybe(nil), do: nil
+  defp maybe(val), do: {:ok, val}
 
   defp find_local_exit(context, keyword) do
     Enum.find(context.data.exits, &Exit.matches?(&1, keyword))

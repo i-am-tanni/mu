@@ -241,16 +241,17 @@ defmodule Mu.Character.BuildCommand do
             items -> Enum.join(items, ".") |> Inflex.camelize()
           end
 
-        params = %{
+        data = %{
           zone_id: zone_template_id,
-          room_template_id: room_template_id,
+          end_template_id: room_template_id,
           start_exit_name: start_exit_name,
-          end_exit_name: end_exit_name
+          end_exit_name: end_exit_name,
+          bidirectional?: !is_nil(end_exit_name)
         }
 
       conn
       |> assign(:prompt, :false)
-      |> event("exit/create", params)
+      |> event("exit/create", data)
     end
   end
 
