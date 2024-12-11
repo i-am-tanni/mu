@@ -235,7 +235,7 @@ defmodule Mu.World.Room.BuildEvent do
         data = %{
           type: "exit",
           keyword: Exit.opposite(keyword),
-          opts: Keyword.delete(opts, :bi),
+          opts: Keyword.replace(opts, :bi, false),
           acting_character: event.acting_character
         }
 
