@@ -196,24 +196,20 @@ defmodule Mu.World.Room.BuildEvent do
       {:ok, room_exit} ->
         end_room_id = room_exit.end_room_id
 
-        context =
-          case _bi_directional? = Keyword.get(opts, :bi, false) do
-            true -> bexit_destroy(context, event, end_room_id)
-            false -> context
-          end
-
         updated_exits = reject_exit(context, keyword)
         Mapper.path_destroy(room_exit.start_room_id, end_room_id)
         context = put_data(context, :exits, updated_exits)
 
-        case _notify? = Keyword.get(opts, :notify, true) do
+        case _bidirectional? = Keyword.get(opts, :bi, false) do
           true ->
             assigns = %{
               exit_name: room_exit.exit_name,
               end_template_id: room_exit.end_template_id,
             }
 
-            prompt(context, from_pid, BuildView, "exit-destroy", assigns)
+            context
+            |> bexit_destroy(event, end_room_id)
+            |> prompt(from_pid, BuildView, "exit-destroy", assigns)
 
           false ->
             event(context, from_pid, self(), "room/look", %{})
@@ -236,11 +232,10 @@ defmodule Mu.World.Room.BuildEvent do
 
     case Room.whereis(end_room_id) |> maybe() do
       {:ok, end_room_pid} ->
-        opts = Keyword.delete(opts, :bi)
         data = %{
           type: "exit",
           keyword: Exit.opposite(keyword),
-          opts: [notify: false] ++ opts,
+          opts: Keyword.delete(opts, :bi),
           acting_character: event.acting_character
         }
 
