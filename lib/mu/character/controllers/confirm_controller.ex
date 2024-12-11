@@ -41,8 +41,7 @@ defmodule Mu.Character.ConfirmController do
   def recv(conn, data) do
     callback_fun = get_flash(conn, :callback)
 
-    data
-    |> parse()
+    parse(data)
     |> callback_fun.()
   end
 
