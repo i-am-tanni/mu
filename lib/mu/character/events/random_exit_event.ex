@@ -1,5 +1,6 @@
 defmodule Mu.Character.RandomExitEvent do
   use Kalevala.Character.Event
+  alias Mu.Character.MoveView
 
   def call(conn, %{data: %{exits: []}}) do
     conn
