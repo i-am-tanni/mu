@@ -170,7 +170,8 @@ defmodule Mu.World.Room.BuildEvent do
     end
   end
 
-  # For bi-directional exits, pass exit info to partner room
+  # Helper function for creation of bi-directional exits.
+  # Pass exit creation info to destination.
   defp bexit_create(context, event, end_room_id) do
 
     case Room.whereis(end_room_id) |> maybe() do
@@ -235,7 +236,8 @@ defmodule Mu.World.Room.BuildEvent do
     end
   end
 
-  # For destruction of bi-directional exits, pass destruction info to partner room
+  # Helper function for destruction of bi-directional exits.
+  # Pass destruction info to destination.
   defp bexit_destroy(context, event, end_room_id) do
     %{keyword: keyword, opts: opts} = event.data
 
