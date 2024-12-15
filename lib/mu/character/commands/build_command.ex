@@ -7,39 +7,48 @@ defmodule Mu.Character.BuildCommand.Room do
     key = key_to_atom(params["key"])
     val = prepare(params["val"], key)
 
-    cond do
-      key == :error ->
+    can_proceed =
+      cond do
+        key == :error                           -> {:error, "invalid-field"}
+        val == :error and is_nil(params["val"]) -> {:error, "missing-val"}
+        val == :error                           -> {:error, "invalid-val"}
+        key == :description                     -> {:ok, :description}
+        true                                    -> :ok
+      end
+
+    case can_proceed do
+      :ok ->
+        data = %{key: key, val: val}
+
+        conn
+        |> event("room/set", data)
+        |> assign(:prompt, false)
+
+      {:ok, :description} ->
+        conn
+        |> assign(:prompt, false)
+        |> event("redit/desc")
+
+      {:error, "invalid-field"} ->
         # error: invalid room field
         conn
         |> assign(:prompt, true)
         |> assign(:field, key)
         |> prompt(BuildView, {:room, "invalid-field"})
 
-      val == :error and is_nil(params["val"]) ->
+      {:error, "missing-val"} ->
         conn
         |> assign(:prompt, true)
         |> assign(:key, key)
         |> prompt(BuildView, {:room, "missing-val"})
 
-      val == :error ->
         # error: could not validate room value
+      {:error, "invalid-val"}
         conn
         |> assign(:prompt, true)
         |> assign(:key, key)
         |> assign(:val, params["val"])
         |> prompt(BuildView, {:room, "invalid-val"})
-
-      key == :description ->
-        conn
-        |> assign(:prompt, false)
-        |> event("redit/desc")
-
-      true ->
-        data = %{key: key, val: val}
-
-        conn
-        |> event("room/set", data)
-        |> assign(:prompt, false)
     end
   end
 
@@ -110,20 +119,15 @@ defmodule Mu.Character.BuildCommand do
         exit_name -> to_long(exit_name)
       end
 
-    cond do
-      not Exit.valid?(start_exit_name) ->
-        conn
-        |> assign(:prompt, true)
-        |> assign(:exit_name, start_exit_name)
-        |> prompt(BuildView, "invalid-exit-name")
+    validate_exit_kws =
+      cond do
+        not Exit.valid?(start_exit_name) -> {:error, "invalid-exit-name", start_exit_name}
+        not Exit.valid?(end_exit_name)   -> {:error, "invalid-exit-name", end_exit_name}
+        true                             -> :ok
+      end
 
-      not Exit.valid?(end_exit_name) ->
-        conn
-        |> assign(:prompt, true)
-        |> assign(:exit_name, end_exit_name)
-        |> prompt(BuildView, "invalid-exit-name")
-
-      true ->
+    case validate_exit_kws do
+      :ok ->
         params = %{
           start_exit_name: start_exit_name,
           end_exit_name: end_exit_name,
@@ -133,6 +137,12 @@ defmodule Mu.Character.BuildCommand do
         conn
         |> event("room/dig", params)
         |> assign(:prompt, false)
+
+      {:error, "invalid-exit-name", exit_name} ->
+        conn
+        |> assign(:prompt, true)
+        |> assign(:exit_name, exit_name)
+        |> prompt(BuildView, "invalid-exit-name")
     end
   end
 
@@ -148,15 +158,13 @@ defmodule Mu.Character.BuildCommand do
     template_id = Inflex.underscore(params["room_id"])
     room_string = "#{zone_id}.#{template_id}"
 
-    case RoomIds.has_key?(room_string) do
-      true ->
-        # error: room id is unavailable
-        conn
-        |> assign(:prompt, true)
-        |> assign(:room_id, room_string)
-        |> render(BuildView, "room-id-taken")
+    room_id_available =
+      if RoomIds.has_key?(room_string),
+      do: {:error, "room-id-taken"},
+    else: :ok
 
-      false ->
+    case room_id_available do
+      :ok ->
         end_room_id = RoomIds.put(room_string)
 
         room = %Room{
@@ -187,6 +195,13 @@ defmodule Mu.Character.BuildCommand do
         conn
         |> Action.cancel()
         |> TeleportAction.run(%{room_id: end_room_id})
+
+      {:error, "room-id-taken"} ->
+        # error: room id is unavailable
+        conn
+        |> assign(:prompt, true)
+        |> assign(:room_id, room_string)
+        |> render(BuildView, "room-id-taken")
     end
   end
 
@@ -215,22 +230,15 @@ defmodule Mu.Character.BuildCommand do
     start_exit_name = to_long(params["start_exit_name"])
     end_exit_name = to_long(params["end_exit_name"])
 
-    cond do
-      not Exit.valid?(start_exit_name) ->
-        # Error: Invalid Exit Name
-        conn
-        |> assign(:exit_name, start_exit_name)
-        |> assign(:prompt, true)
-        |> prompt(BuildView, "invalid-exit-name")
+    validate_exit_names =
+      cond do
+        not Exit.valid?(start_exit_name)                -> {:error, "invalid-exit-name", start_exit_name}
+        end_exit_name && not Exit.valid?(end_exit_name) -> {:error, "invalid-exit-name", end_exit_name}
+        true                                            -> :ok
+      end
 
-      end_exit_name && not Exit.valid?(end_exit_name) ->
-        # Error: Invalid Exit Name
-        conn
-        |> assign(:exit_name, end_exit_name)
-        |> assign(:prompt, true)
-        |> prompt(BuildView, "invalid-exit-name")
-
-      true ->
+    case validate_exit_names do
+      :ok ->
         to_template_id = params["destination_id"]
         [room_template_id | zone_id] = String.split(to_template_id, ".") |> Enum.reverse()
         room_template_id = Inflex.underscore(room_template_id)
@@ -248,9 +256,15 @@ defmodule Mu.Character.BuildCommand do
           bidirectional?: !is_nil(end_exit_name)
         }
 
-      conn
-      |> assign(:prompt, :false)
-      |> event("exit/create", data)
+        conn
+        |> assign(:prompt, :false)
+        |> event("exit/create", data)
+
+      {:error, "invalid-exit-name", exit_name} ->
+        conn
+        |> assign(:prompt, true)
+        |> assign(:exit_name, exit_name)
+        |> prompt(BuildView, "invalid-exit-name")
     end
   end
 
@@ -291,25 +305,15 @@ defmodule Mu.Character.BuildCommand do
     type = params["type"]
     opts = to_keyword_list(type, Map.get(params, "opts", []))
 
-    cond do
-      type not in ~w(exit) ->
-        # Error: invalid type to remove
-        conn
-        |> assign(:type, type)
-        |> assign(:prompt, true)
-        |> prompt(BuildView, "invalid-type")
+    validate_input =
+      cond do
+        type not in ~w(exit)      -> {:error, "invalid-type"}
+        match?({:error, _}, opts) -> {:error, "invalid-option"}
+        true                      -> :ok
+      end
 
-      match?({:error, _}, opts) ->
-        # Error: invalid options
-        {:error, errors} = opts
-
-        conn
-        |> assign(:type, type)
-        |> assign(:errors, errors)
-        |> assign(:prompt, true)
-        |> prompt(BuildView, "invalid-option")
-
-      true ->
+    case validate_input do
+      :ok ->
         {:ok, opts} = opts
 
         data = %{
@@ -319,6 +323,23 @@ defmodule Mu.Character.BuildCommand do
         }
 
         event(conn, "room/remove", data)
+
+      {:error, "invalid-type"} ->
+        # Error: invalid type to remove
+        conn
+        |> assign(:type, type)
+        |> assign(:prompt, true)
+        |> prompt(BuildView, "invalid-type")
+
+      {:error, "invalid-option"} ->
+        # Error: invalid options
+        {:error, errors} = opts
+
+        conn
+        |> assign(:type, type)
+        |> assign(:errors, errors)
+        |> assign(:prompt, true)
+        |> prompt(BuildView, "invalid-option")
     end
   end
 
