@@ -66,25 +66,28 @@ defmodule Mu.Character.BuildCommand.Room do
 
   defp prepare(_, :error), do: :error
 
-  defp prepare(nil, key) when key not in [:description], do: :error
+  defp prepare(val, key) do
+    case {val, key} do
+      {nil, _} when key != :description ->
+        :error
 
-  defp prepare(val, key) when key not in [:x, :y, :z, :symbol], do: val
+      {val, key} when key in [:x, :y, :z] ->
+        case Integer.parse(val) do
+          {val, _} -> val
+          :error -> :error
+        end
 
-  defp prepare(val, key) when key in [:x, :y, :z] do
-    case Integer.parse(val) do
-      {val, _} -> val
-      :error -> :error
+      {val, :symbol} ->
+        case String.length(val) >= 2 do
+          true -> String.slice(val, 0..1)
+          false -> :error
+        end
+
+      {val, _} ->
+        val
     end
   end
 
-  defp prepare(val, :symbol) do
-    case String.length(val) >= 2 do
-      true -> String.slice(val, 0..1)
-      false -> :error
-    end
-  end
-
-  defp prepare(_, _), do: :error
 end
 
 defmodule Mu.Character.BuildCommand do
