@@ -1,5 +1,7 @@
 # Mu
 
+**Early Stages. Work in progress.**
+
 Mu is a work in process text-based MMORPG server written in elixir and built on the Kalevala MUD framework.
 
 # Setup
