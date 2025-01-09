@@ -17,8 +17,7 @@ defmodule Mu.World.Zone.SpawnEvent do
   import Kalevala.World.Zone.Context
   require Logger
 
-  alias Kalevala.World.CharacterSupervisor
-  alias Mu.World.NonPlayers
+  alias Mu.World.Kickoff
 
 
   def call(context, event = %{topic: "init" <> _}) do
@@ -134,14 +133,7 @@ defmodule Mu.World.Zone.SpawnEvent do
     loadout_override = Keyword.get(opts, :loadout, [])
     character = prepare_character(spawner.prototype_id, room_id, loadout_override)
 
-    config = [
-      supervisor_name: CharacterSupervisor.global_name(character.meta.zone_id),
-      communication_module: Mu.Communication,
-      initial_controller: Mu.Character.SpawnController,
-      quit_view: {Mu.Character.QuitView, "disconnected"}
-    ]
-
-    case Kalevala.World.start_character(character, config) do
+    case Kickoff.spawn_mobile(character) do
       {:ok, _} ->
         timestamp = DateTime.utc_now()
 
@@ -149,7 +141,7 @@ defmodule Mu.World.Zone.SpawnEvent do
           id: spawner.prototype_id,
           character_id: character.id,
           created_at: timestamp
-          # TODO: consider expires_at units
+          # TODO: consider expires_at field
           # expires_at: expires_in && DateTime.add(timestamp, expires_in)
         }
 

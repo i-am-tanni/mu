@@ -2,6 +2,7 @@ defmodule Mu.World.Kickoff do
   use GenServer
 
   alias Kalevala.World.RoomSupervisor
+  alias Kalevala.World.CharacterSupervisor
   alias Mu.World.Loader
   alias Mu.World.Item
 
@@ -99,6 +100,20 @@ defmodule Mu.World.Kickoff do
       pid ->
         Kalevala.World.Room.update_items(pid, item_instances)
         Kalevala.World.Room.update(pid, room)
+    end
+  end
+
+  def spawn_mobile(mobile) do
+    config = [
+      supervisor_name: CharacterSupervisor.global_name(mobile.meta.zone_id),
+      communication_module: Mu.Communication,
+      initial_controller: Mu.Character.SpawnController,
+      quit_view: {Mu.Character.QuitView, "disconnected"}
+    ]
+
+    case Kalevala.World.start_character(mobile, config) do
+      {:ok, pid} -> {:ok, pid}
+      _ -> {:error, :spawn_failed}
     end
   end
 
