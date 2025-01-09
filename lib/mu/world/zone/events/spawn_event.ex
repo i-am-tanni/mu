@@ -18,6 +18,7 @@ defmodule Mu.World.Zone.SpawnEvent do
   require Logger
 
   alias Mu.World.Kickoff
+  alias Mu.World.NonPlayers
 
 
   def call(context, event = %{topic: "init" <> _}) do
