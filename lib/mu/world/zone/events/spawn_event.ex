@@ -191,7 +191,7 @@ defmodule Mu.World.Zone.SpawnEvent do
 
   defp prepare_character(character_id, room_id, loadout_override) do
     character = NonPlayers.get!(character_id)
-    instance_id = "#{character_id}:#{Kalevala.Character.generate_id()}"
+    instance_id = "#{character_id}.#{Kalevala.Character.generate_id()}"
     loadout = loadout(character.inventory, loadout_override)
     %{character | id: instance_id, room_id: room_id, inventory: loadout}
   end

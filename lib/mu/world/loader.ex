@@ -276,7 +276,7 @@ defmodule Mu.World.Loader do
         %{spawner | room_ids: room_ids}
       end
 
-    id = "#{zone_id}:#{key}"
+    id = "#{zone_id}.#{key}"
 
     spawner = %Spawner{
       prototype_id: id,
@@ -345,7 +345,7 @@ defmodule Mu.World.Loader do
 
 
     %Character{
-      id: "#{context.zone_id}:#{key}",
+      id: "#{context.zone_id}.#{key}",
       name: character.name,
       description: character.description,
       brain: brain,
