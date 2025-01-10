@@ -11,7 +11,7 @@ defmodule Mu.Character.Instance do
   @moduledoc """
   Used for spawners to keep data about instances of characters they create
   """
-  defstruct [:id, :pid, :created_at, :expires_at]
+  defstruct [:id, :instance_id, :created_at, :expires_at]
 end
 
 defmodule Mu.Character.InitialEvent do
