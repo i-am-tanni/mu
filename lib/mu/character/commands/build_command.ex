@@ -90,6 +90,36 @@ defmodule Mu.Character.BuildCommand.Room do
 
 end
 
+defmodule Mu.Character.BuildCommand.Mobile do
+  use Kalevala.Character.Command
+
+  @std_move_delay 60_000
+
+  def prototype_mobile(mob_id, zone_id, keywords) do
+    brain = %Mu.Brain{
+      id: :brain_not_loaded,
+      root: %Kalevala.Brain.NullNode{}
+    }
+
+    %Kalevala.Character{
+      id: "#{zone_id}.#{mob_id}.#{Kalevala.Character.generate_id()}",
+      name: "Mobile Prototype",
+      description: "",
+      brain: brain,
+      meta: %Mu.Character.NonPlayerMeta{
+        move_delay: @std_move_delay,
+        keywords: keywords,
+        pose: :pos_standing,
+        pronouns: Mu.Character.Pronouns.get(:male),
+        zone_id: zone_id,
+        initial_events: [],
+        in_combat?: false,
+        flags: %Mu.Character.NonPlayerFlags{}
+      }
+    }
+  end
+end
+
 defmodule Mu.Character.BuildCommand do
   @moduledoc """
   Commands for building areas.

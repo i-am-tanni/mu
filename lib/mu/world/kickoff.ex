@@ -110,9 +110,15 @@ defmodule Mu.World.Kickoff do
       initial_controller: Mu.Character.SpawnController,
       quit_view: {Mu.Character.QuitView, "disconnected"}
     ]
+    _spawn_mobile(mobile, config)
+  end
 
-    case Kalevala.World.start_character(mobile, config) do
+  defp _spawn_mobile(mobile, config) do
+    instance_id = "#{mobile.id}##{Kalevala.Character.generate_id()}"
+    # if there is a collision, try again
+    case Kalevala.World.start_character(%{mobile | id: instance_id}, config) do
       {:ok, pid} -> {:ok, pid}
+      {:error, {:already_started, _}}  -> _spawn_mobile(mobile, config)
       _ -> {:error, :spawn_failed}
     end
   end

@@ -135,12 +135,12 @@ defmodule Mu.World.Zone.SpawnEvent do
     character = prepare_character(spawner.prototype_id, room_id, loadout_override)
 
     case Kickoff.spawn_mobile(character) do
-      {:ok, _} ->
+      {:ok, pid} ->
         timestamp = DateTime.utc_now()
 
         instance = %Mu.Character.Instance{
           id: spawner.prototype_id,
-          character_id: character.id,
+          pid: pid,
           created_at: timestamp
           # TODO: consider expires_at field
           # expires_at: expires_in && DateTime.add(timestamp, expires_in)
@@ -150,7 +150,7 @@ defmodule Mu.World.Zone.SpawnEvent do
 
         %{spawner | count: spawner.count + 1, instances: instances}
 
-      _ ->
+      {:error, :spawn_failed} ->
         Logger.error("Character #{spawner.prototype_id} failed to spawn.")
         spawner
     end
@@ -191,9 +191,8 @@ defmodule Mu.World.Zone.SpawnEvent do
 
   defp prepare_character(character_id, room_id, loadout_override) do
     character = NonPlayers.get!(character_id)
-    instance_id = "#{character_id}.#{Kalevala.Character.generate_id()}"
     loadout = loadout(character.inventory, loadout_override)
-    %{character | id: instance_id, room_id: room_id, inventory: loadout}
+    %{character | room_id: room_id, inventory: loadout}
   end
 
   defp loadout(base_loadout, override) do
