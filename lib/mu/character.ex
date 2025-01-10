@@ -10,8 +10,9 @@ end
 defmodule Mu.Character.Instance do
   @moduledoc """
   Used for spawners to keep data about instances of characters they create
+  Character_id is formatted as zone_id.template_id#instance_id}
   """
-  defstruct [:id, :instance_id, :created_at, :expires_at]
+  defstruct [:id, :character_id, :created_at, :expires_at]
 end
 
 defmodule Mu.Character.InitialEvent do
