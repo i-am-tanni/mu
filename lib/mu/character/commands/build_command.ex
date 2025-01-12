@@ -92,18 +92,22 @@ end
 
 defmodule Mu.Character.BuildCommand.Mobile do
   use Kalevala.Character.Command
+  alias Mu.World.NonPlayers
 
   @std_move_delay 60_000
 
   def create(conn, params) do
-    id = validate_id(params["id"])
-    keywords = validate_keywords(params["keywords"])
+    id = params["id"]
+    keywords =
+      Enum.filter(params["keywords"], fn s ->
+        String.match?(s, ~r/^[a-z,A-Z]+$/)
+      end)
 
     can_proceed =
       cond do
-        id == {:error, "invalid_id"} -> id
-        id == {:error, "id_unavailable"} -> id
-        keywords == :error -> {:error, "invalid_keywords"}
+        not String.match?(id, ~r/^[a-z,A-Z,_]+$/) -> {:error, "invalid_key"}
+        match?({:ok, _}, NonPlayers.get(id)) -> {:error, "id-already-taken"}
+        keywords != [] -> {:error, "invalid_keywords"}
         true -> :ok
       end
 
@@ -145,6 +149,7 @@ defmodule Mu.Character.BuildCommand.Mobile do
       }
     }
   end
+
 end
 
 defmodule Mu.Character.BuildCommand do
