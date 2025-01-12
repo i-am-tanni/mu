@@ -124,8 +124,9 @@ defmodule Mu.World.Zone.SpawnEvent do
 
   defp spawn_instances(spawner, count, opts \\ []) do
     Enum.reduce(1..count, spawner, fn _, acc ->
-      {room_id, updated_acc} = get_room_id(acc)
-      spawn_instance(updated_acc, room_id, opts)
+      {room_id, rules} = get_room_id(acc.rules)
+      acc = Map.put(acc, :rules, rules)
+      spawn_instance(acc, room_id, opts)
     end)
   end
 
@@ -222,11 +223,11 @@ defmodule Mu.World.Zone.SpawnEvent do
     end
   end
 
-  defp get_room_id(spawner) when spawner.rules.strategy == :random do
-    {Enum.random(spawner.rules.room_ids), spawner}
+  defp get_room_id(rules) when rules.strategy == :random do
+    {Enum.random(rules.room_ids), rules}
   end
 
-  defp get_room_id(spawner = %{rules: rules}) when rules.strategy == :round_robin do
+  defp get_room_id(rules) when rules.strategy == :round_robin do
     {room_id, round_robin_tail} =
       case {rules.room_ids, rules.round_robin_tail} do
         # if cycle is complete, start a new cycle from room_id list
@@ -236,8 +237,7 @@ defmodule Mu.World.Zone.SpawnEvent do
       end
 
    rules = %{rules | round_robin_tail: round_robin_tail}
-   spawner = %{spawner | rules: rules}
-   {room_id, spawner}
+   {room_id, rules}
   end
 
   defp spawner_type(_event = %{topic: topic}) do
