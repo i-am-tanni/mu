@@ -95,6 +95,33 @@ defmodule Mu.Character.BuildCommand.Mobile do
 
   @std_move_delay 60_000
 
+  def create(conn, params) do
+    id = validate_id(params["id"])
+    keywords = validate_keywords(params["keywords"])
+
+    can_proceed =
+      cond do
+        id == {:error, "invalid_id"} -> id
+        id == {:error, "id_unavailable"} -> id
+        keywords == :error -> {:error, "invalid_keywords"}
+        true -> :ok
+      end
+
+    case can_proceed do
+      :ok ->
+        conn
+          |> assign(:prompt, false)
+          |> event("mobile/create", %{id: id, keyword: keywords})
+
+      {:error, error} ->
+        conn
+        |> assign(:id, params["id"])
+        |> assign(:keywords, params["keywords"])
+        |> prompt(BuildView, {:room, error})
+    end
+
+  end
+
   def prototype_mobile(mob_id, zone_id, keywords) do
     brain = %Mu.Brain{
       id: :brain_not_loaded,

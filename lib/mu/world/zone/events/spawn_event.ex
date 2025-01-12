@@ -134,12 +134,12 @@ defmodule Mu.World.Zone.SpawnEvent do
     character = prepare_character(spawner.prototype_id, room_id, loadout_override)
 
     case Kickoff.spawn_mobile(character) do
-      {:ok, instance_id} ->
+      {:ok, pid} ->
         timestamp = DateTime.utc_now()
 
         instance = %Mu.Character.Instance{
           id: spawner.prototype_id,
-          character_id: instance_id,
+          pid: instance_id,
           created_at: timestamp
           # TODO: consider expires_at field
           # expires_at: expires_in && DateTime.add(timestamp, expires_in)
