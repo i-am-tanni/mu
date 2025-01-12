@@ -5,6 +5,7 @@ defmodule Mu.World.Kickoff do
   alias Kalevala.World.CharacterSupervisor
   alias Mu.World.Loader
   alias Mu.World.Item
+  alias Mu.World.NonPlayerRegistry
 
   @doc false
   def start_link(opts) do
@@ -110,15 +111,25 @@ defmodule Mu.World.Kickoff do
       initial_controller: Mu.Character.SpawnController,
       quit_view: {Mu.Character.QuitView, "disconnected"}
     ]
-    _spawn_mobile(mobile, config)
+    instance_id = generate_mobile_id(mobile)
+    mobile = %{mobile | id: instance_id}
+    case Kalevala.World.start_character(mobile, config) do
+      {:ok, pid} ->
+        NonPlayerRegistry.register(instance_id, pid)
+        {:ok, pid}
+
+      error ->
+        error
+    end
   end
 
-  defp _spawn_mobile(mobile, config) do
-    instance_id = "#{mobile.id}##{Kalevala.Character.generate_id()}"
+  defp generate_mobile_id(%{id: id}), do: generate_mobile_id(id)
+  defp generate_mobile_id(id) do
+    instance_id = "#{id}##{Kalevala.Character.generate_id()}"
     # if there is a collision, try again
-    case Kalevala.World.start_character(%{mobile | id: instance_id}, config) do
-      {:error, {:already_started, _}} -> _spawn_mobile(mobile, config)
-      spawn_result -> spawn_result
+    case NonPlayerRegistry.registered?(instance_id) do
+      true -> generate_mobile_id(id)
+      false -> instance_id
     end
   end
 
