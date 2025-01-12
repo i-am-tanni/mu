@@ -140,7 +140,7 @@ defmodule Mu.World.Zone.SpawnEvent do
 
         instance = %Mu.Character.Instance{
           id: spawner.prototype_id,
-          pid: instance_id,
+          pid: pid,
           created_at: timestamp
           # TODO: consider expires_at field
           # expires_at: expires_in && DateTime.add(timestamp, expires_in)
