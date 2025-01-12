@@ -150,8 +150,8 @@ defmodule Mu.World.Zone.SpawnEvent do
 
         %{spawner | count: spawner.count + 1, instances: instances}
 
-      {:error, :spawn_failed} ->
-        Logger.error("Character #{spawner.prototype_id} failed to spawn.")
+      {:error, error} ->
+        Logger.error("Character #{spawner.prototype_id} failed to spawn: #{inpsect error}")
         spawner
     end
   end

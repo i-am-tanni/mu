@@ -117,9 +117,8 @@ defmodule Mu.World.Kickoff do
     instance_id = "#{mobile.id}##{Kalevala.Character.generate_id()}"
     # if there is a collision, try again
     case Kalevala.World.start_character(%{mobile | id: instance_id}, config) do
-      {:ok, pid} -> {:ok, pid}
       {:error, {:already_started, _}} -> _spawn_mobile(mobile, config)
-      _ -> {:error, :spawn_failed}
+      spawn_result -> spawn_result
     end
   end
 
