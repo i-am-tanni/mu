@@ -125,8 +125,8 @@ defmodule Mu.World.Zone.SpawnEvent do
   defp spawn_instances(spawner, count, opts \\ []) do
     Enum.reduce(1..count, spawner, fn _, acc ->
       {room_id, rules} = get_room_id(acc.rules)
-      acc = Map.put(acc, :rules, rules)
-      spawn_instance(acc, room_id, opts)
+      updated_spawner = %{acc | rules: rules}
+      spawn_instance(updated_spawner, room_id, opts)
     end)
   end
 
@@ -151,7 +151,7 @@ defmodule Mu.World.Zone.SpawnEvent do
         %{spawner | count: spawner.count + 1, instances: instances}
 
       {:error, error} ->
-        Logger.error("Character #{spawner.prototype_id} failed to spawn: #{inpsect error}")
+        Logger.error("Character #{spawner.prototype_id} failed to spawn: #{inspect error}")
         spawner
     end
   end
