@@ -21,7 +21,7 @@ defmodule Mu.World.Room.CommunicationEvent do
 
   def tell(context, event) do
     name = event.data.name
-    character = find_local_character(context, name) || find_player_character(name)
+    character = find_player_character(name)
     data = Map.put(event.data, :character, character)
     event(context, event.from_pid, self(), event.topic, data)
   end
