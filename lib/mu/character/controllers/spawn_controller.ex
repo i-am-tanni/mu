@@ -22,7 +22,6 @@ defmodule Mu.Character.SpawnController do
     |> add_vitals()
     |> move(:to, character.room_id, SpawnView, "spawn", %{from: nil})
     |> subscribe("rooms:#{character.room_id}", [], &MoveEvent.subscribe_error/2)
-    |> register_and_subscribe_character_channel(character)
     |> put_controller(NonPlayerController)
   end
 
@@ -51,11 +50,4 @@ defmodule Mu.Character.SpawnController do
     end
   end
 
-  defp register_and_subscribe_character_channel(conn, character) do
-    options = [character_id: character.id]
-    :ok = Communication.register("characters:#{character.id}", CharacterChannel, options)
-
-    options = [character: character]
-    subscribe(conn, "characters:#{character.id}", options, &TellEvent.subscribe_error/2)
-  end
 end
