@@ -14,7 +14,6 @@ defmodule Mu.World do
     children = [
       {Mu.World.Items, [id: Mu.World.Items, name: Mu.World.Items]},
       {Mu.World.NonPlayers, [id: Mu.World.NonPlayers, name: Mu.World.NonPlayers]},
-      {Mu.World.NonPlayerRegistry, [id: Mu.World.NonPlayerRegistry, name: Mu.World.NonPlayerRegistry]},
       {Mu.World.RoomIds, [id: Mu.World.RoomIds, name: Mu.World.RoomIds]},
       {Mu.World.Mapper, [id: Mu.World.Mapper, name: Mu.World.Mapper]},
       {Kalevala.World, [name: Mu.World]},
