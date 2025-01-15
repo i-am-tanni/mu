@@ -9,11 +9,11 @@ defmodule Mu.Character.BuildCommand.Room do
 
     can_proceed =
       cond do
-        key == :error                           -> {:error, "invalid-field"}
+        key == :error -> {:error, "invalid-field"}
         val == :error and is_nil(params["val"]) -> {:error, "missing-val"}
-        val == :error                           -> {:error, "invalid-val"}
-        key == :description                     -> {:ok, :description}
-        true                                    -> :ok
+        val == :error -> {:error, "invalid-val"}
+        key == :description -> {:ok, :description}
+        true -> :ok
       end
 
     case can_proceed do
@@ -42,8 +42,8 @@ defmodule Mu.Character.BuildCommand.Room do
         |> assign(:key, key)
         |> prompt(BuildView, {:room, "missing-val"})
 
-        # error: could not validate room value
-      {:error, "invalid-val"}
+      # error: could not validate room value
+      {:error, "invalid-val"} ->
         conn
         |> assign(:prompt, true)
         |> assign(:key, key)
@@ -87,69 +87,47 @@ defmodule Mu.Character.BuildCommand.Room do
         val
     end
   end
-
 end
 
 defmodule Mu.Character.BuildCommand.Mobile do
   use Kalevala.Character.Command
-  alias Mu.World.NonPlayers
 
-  @std_move_delay 60_000
+  alias Mu.Character.BuildView
 
   def create(conn, params) do
     id = params["id"]
-    keywords =
-      Enum.filter(params["keywords"], fn s ->
-        String.match?(s, ~r/^[a-z,A-Z]+$/)
-      end)
+
+    keywords = String.split(params["keywords"], " ")
+    valid_keywords = Enum.filter(keywords, &String.match?(&1, ~r/^[a-z,A-Z]+$/))
 
     can_proceed =
       cond do
         not String.match?(id, ~r/^[a-z,A-Z,_]+$/) -> {:error, "invalid_key"}
-        match?({:ok, _}, NonPlayers.get(id)) -> {:error, "id-already-taken"}
-        keywords != [] -> {:error, "invalid_keywords"}
+        valid_keywords == [] -> {:error, "invalid_keywords"}
         true -> :ok
       end
 
     case can_proceed do
       :ok ->
-        conn
-          |> assign(:prompt, false)
-          |> event("mobile/create", %{id: id, keyword: keywords})
+        event_data = %{id: id, keywords: keywords, keys: [:zone_id]}
 
-      {:error, error} ->
         conn
-        |> assign(:id, params["id"])
-        |> assign(:keywords, params["keywords"])
-        |> prompt(BuildView, {:room, error})
+        |> assign(:prompt, false)
+        |> event("mobile/create", event_data)
+
+      {:error, "invalid_key"} ->
+        conn
+        |> assign(:key, id)
+        |> prompt(BuildView, {:mobile, "invalid_key"})
+
+      {:error, "invalid_keywords"} ->
+        invalid_keywords = Enum.reject(keywords, &String.match?(&1, ~r/^[a-z,A-Z]+$/))
+
+        conn
+        |> assign(:keywords, invalid_keywords)
+        |> prompt(BuildView, {:mobile, "invalid_keywords"})
     end
-
   end
-
-  def prototype_mobile(mob_id, zone_id, keywords) do
-    brain = %Mu.Brain{
-      id: :brain_not_loaded,
-      root: %Kalevala.Brain.NullNode{}
-    }
-
-    %Kalevala.Character{
-      id: "#{zone_id}.#{mob_id}.#{Kalevala.Character.generate_id()}",
-      name: "Mobile Prototype",
-      description: "",
-      brain: brain,
-      meta: %Mu.Character.NonPlayerMeta{
-        move_delay: @std_move_delay,
-        keywords: keywords,
-        pose: :pos_standing,
-        pronouns: Mu.Character.Pronouns.get(:male),
-        zone_id: zone_id,
-        initial_events: [],
-        in_combat?: false,
-        flags: %Mu.Character.NonPlayerFlags{}
-      }
-    }
-  end
-
 end
 
 defmodule Mu.Character.BuildCommand do
@@ -187,8 +165,8 @@ defmodule Mu.Character.BuildCommand do
     validate_exit_kws =
       cond do
         not Exit.valid?(start_exit_name) -> {:error, "invalid-exit-name", start_exit_name}
-        not Exit.valid?(end_exit_name)   -> {:error, "invalid-exit-name", end_exit_name}
-        true                             -> :ok
+        not Exit.valid?(end_exit_name) -> {:error, "invalid-exit-name", end_exit_name}
+        true -> :ok
       end
 
     case validate_exit_kws do
@@ -225,8 +203,8 @@ defmodule Mu.Character.BuildCommand do
 
     room_id_available =
       if RoomIds.has_key?(room_string),
-      do: {:error, "room-id-taken"},
-    else: :ok
+        do: {:error, "room-id-taken"},
+        else: :ok
 
     case room_id_available do
       :ok ->
@@ -277,7 +255,7 @@ defmodule Mu.Character.BuildCommand do
   """
   def zone_save(conn, _params) do
     conn
-    |> assign(:prompt, :false)
+    |> assign(:prompt, false)
     |> event("zone/save", %{})
   end
 
@@ -297,9 +275,14 @@ defmodule Mu.Character.BuildCommand do
 
     validate_exit_names =
       cond do
-        not Exit.valid?(start_exit_name)                -> {:error, "invalid-exit-name", start_exit_name}
-        end_exit_name && not Exit.valid?(end_exit_name) -> {:error, "invalid-exit-name", end_exit_name}
-        true                                            -> :ok
+        not Exit.valid?(start_exit_name) ->
+          {:error, "invalid-exit-name", start_exit_name}
+
+        end_exit_name && not Exit.valid?(end_exit_name) ->
+          {:error, "invalid-exit-name", end_exit_name}
+
+        true ->
+          :ok
       end
 
     case validate_exit_names do
@@ -307,6 +290,7 @@ defmodule Mu.Character.BuildCommand do
         to_template_id = params["destination_id"]
         [room_template_id | zone_id] = String.split(to_template_id, ".") |> Enum.reverse()
         room_template_id = Inflex.underscore(room_template_id)
+
         zone_template_id =
           case Enum.reverse(zone_id) do
             [] -> :current
@@ -322,7 +306,7 @@ defmodule Mu.Character.BuildCommand do
         }
 
         conn
-        |> assign(:prompt, :false)
+        |> assign(:prompt, false)
         |> event("exit/create", data)
 
       {:error, "invalid-exit-name", exit_name} ->
@@ -372,9 +356,9 @@ defmodule Mu.Character.BuildCommand do
 
     validate_input =
       cond do
-        type not in ~w(exit)      -> {:error, "invalid-type"}
+        type not in ~w(exit) -> {:error, "invalid-type"}
         match?({:error, _}, opts) -> {:error, "invalid-option"}
-        true                      -> :ok
+        true -> :ok
       end
 
     case validate_input do

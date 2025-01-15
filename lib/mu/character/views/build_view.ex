@@ -80,6 +80,27 @@ defmodule Mu.Character.BuildView do
     ~i(Error: Room field is invalid for #{key})
   end
 
+  def render({:mobile, "failed-to-spawn"}, %{key: key}) do
+    ~i(Error: failed to spawn mobile: #{key})
+  end
+
+  def render({:mobile, "id-already-taken"}, %{key: key}) do
+    ~i(Error: id already taken: #{key})
+  end
+
+  def render({:mobile, "invalid_key"}, %{key: key}) do
+    ~i(Error: invalid key: #{key})
+  end
+
+  def render({:mobile, "invalid_keywords"}, %{keywords: keywords}) do
+    ~i(Error: provided keywords are invalid: #{inspect keywords})
+  end
+
+
+
+
+
+
   def render("zone-process-missing", _) do
     ~i(Error: Zone process cannot be found!)
   end

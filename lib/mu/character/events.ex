@@ -32,6 +32,7 @@ defmodule Mu.Character.Events do
     module(BuildEvent) do
       event("room/dig", :dig)
       event("redit/desc", :edit_desc)
+      event("mobile/create", :create_mobile)
     end
 
     module(CloseEvent) do

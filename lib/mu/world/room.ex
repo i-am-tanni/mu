@@ -76,11 +76,13 @@ defmodule Mu.World.Room do
 
   def confirm_movement(context, event) when context.data.id == event.data.to do
     from_room_id = event.data.from
+
     entrance_name =
-      case  Enum.find(context.data.exits, &(&1.end_room_id == from_room_id)) do
+      case Enum.find(context.data.exits, &(&1.end_room_id == from_room_id)) do
         %{exit_name: exit_name} -> exit_name
         nil -> "somewhere"
       end
+
     event = %{event | data: Map.put(event.data, :entrance_name, entrance_name)}
     {context, event}
   end
@@ -188,6 +190,10 @@ defmodule Mu.World.Room.Events do
       event("zone/save", :call)
     end
 
+    module(GetContextEvent) do
+      event("mobile/create", :call)
+    end
+
     module(ItemEvent) do
       event("room/get-from", :get_from)
       event("room/put-in", :put)
@@ -230,6 +236,25 @@ defmodule Mu.World.Room.ForwardEvent do
 
   def call(context, event) do
     event(context, event.from_pid, self(), event.topic, event.data)
+  end
+end
+
+defmodule Mu.World.Room.GetContextEvent do
+  import Kalevala.World.Room.Context
+
+  def call(context, event) do
+    data = event.data
+
+    data =
+      Enum.reduce(data.keys, data, fn key, acc ->
+        case Map.get(context.data, key) do
+          nil -> acc
+          context_data -> Map.put(acc, key, context_data)
+        end
+      end)
+      |> Map.delete(:keys)
+
+    event(context, event.from_pid, self(), event.topic, data)
   end
 end
 

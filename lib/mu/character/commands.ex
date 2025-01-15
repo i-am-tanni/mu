@@ -114,8 +114,8 @@ defmodule Mu.Character.Commands.Helpers do
 
   defp boolean() do
     choice([
-      replace(string("true"), :true),
-      replace(string("false"), :false),
+      replace(string("true"), true),
+      replace(string("false"), false)
     ])
   end
 end
@@ -371,7 +371,16 @@ defmodule Mu.Character.Commands do
     end)
 
     parse("@zsave", :zone_save)
+  end
 
+  module(BuildCommand.Mobile) do
+    parse("@mcreate", :create, fn command ->
+      command
+      |> spaces()
+      |> word(:id)
+      |> spaces()
+      |> text(:keywords)
+    end)
   end
 
   dynamic(SocialCommand, :social, [])
